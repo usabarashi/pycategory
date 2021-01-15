@@ -17,6 +17,6 @@ setup(
     author_email="",
     url="https://github.com/usabarashi/python-category",
     license=license,
-    packages=find_packages(exclude=("tests", "docs")),
+    packages=find_packages(include="src"),
     install_requires=[],
 )
