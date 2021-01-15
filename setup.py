@@ -15,7 +15,7 @@ setup(
     long_description=readme,
     author="usabarashi",
     author_email="",
-    url="",
+    url="https://github.com/usabarashi/python-category",
     license=license,
     packages=find_packages(exclude=("tests", "docs")),
     install_requires=[],
