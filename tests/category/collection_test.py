@@ -3,7 +3,7 @@ from typing import Generic, TypeVar
 
 from category import Vector
 
-_T = TypeVar("_T")
+T = TypeVar("T")
 
 
 def test_vector_init():
@@ -212,8 +212,8 @@ def test_immutable_sequence_redece():
 
 def test_immutable_sequence_dataclass():
     @dataclass(frozen=True)
-    class SeqEntity(Generic[_T]):
-        value: Vector[_T] = field(default_factory=Vector[_T])
+    class SeqEntity(Generic[T]):
+        value: Vector[T] = field(default_factory=Vector[T])
 
     entity = SeqEntity(value=Vector())
     dict_entity = asdict(entity)
