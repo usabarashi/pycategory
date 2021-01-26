@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import inspect
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Generator, Generic, Literal, TypeVar, Union
 
@@ -21,6 +22,17 @@ class Monad(ABC, Generic[T]):
         if not bool(self):
             return self
         return self.value
+
+
+class Frame:
+    def __init__(self, depth=2):
+        self.filename: str = inspect.stack()[depth].filename
+        self.line: int = inspect.stack()[depth].frame.f_lineno
+        self.function: str = inspect.stack()[depth].function
+        self.args: dict[str, Any] = inspect.getargvalues(
+            inspect.stack()[depth].frame
+        ).locals
+        self.stack: list[inspect.FrameInfo] = inspect.stack()
 
 
 # Try/Failure/Success
@@ -180,6 +192,7 @@ class Left(Either[L, R]):
     """Left"""
 
     value: L
+    frame: Frame = dataclasses.field(default_factory=Frame)
 
     def __bool__(self) -> Literal[False]:
         return False
