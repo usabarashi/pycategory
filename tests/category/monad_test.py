@@ -110,7 +110,7 @@ def test_either():
     assert False is Right[Any, int](0).is_left()
     assert True is Right[Any, int](0).is_right()
 
-    assert Left(0) == Left[int, Any](0)()
+    assert Left(0).value == Left[int, Any](0)().value
     assert 0 == Right[Any, int](0)()
 
 
@@ -126,9 +126,12 @@ def test_either_do():
     assert False is bool(left_context())
     assert True is left_context().is_left()
     assert False is left_context().is_right()
-    assert Left[None, int](None) == left_context()
-    assert Left[int, int](0) == left_context().fold(
-        left=lambda value: 0, right=lambda value: value * 2
+    assert Left[None, int](None).value == left_context().value
+    assert (
+        Left[int, int](0).value
+        == left_context()
+        .fold(left=lambda value: 0, right=lambda value: value * 2)
+        .value
     )
 
     @Either.do
