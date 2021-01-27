@@ -1,2 +1,2 @@
 from .collection import Vector
-from .monad import Either, Failure, Left, Right, Success, Try
+from .monad import Either, Failure, Future, Left, Right, Success, Try

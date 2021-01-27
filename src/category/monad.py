@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
+import concurrent.futures
 import dataclasses
 import inspect
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Generator, Generic, Literal, TypeVar, Union
+from typing import Any, Awaitable, Callable, Generator, Generic, Literal, TypeVar, Union
 
 T = TypeVar("T")
 
@@ -93,7 +95,35 @@ class Try(Monad, ABC, Generic[T]):
 
 
 @dataclasses.dataclass(frozen=True)
-class Failure(Try, Generic[T]):
+class Future(Monad, Generic[T]):
+    value: Awaitable[T]
+
+    def __bool__(self) -> Literal[True]:
+        return True
+
+    async def __call__(self) -> Union[Failure[Exception], T]:
+        result = await self.value
+        if isinstance(result, Exception):
+            return Failure(result)
+        return result
+
+    @staticmethod
+    def hold(function: Callable[..., T]):
+        def wrapper(*args: Any, **kwargs: Any):
+            def context(
+                loop: asyncio.AbstractEventLoop,
+                executor: concurrent.futures.ThreadPoolExecutor,
+            ) -> Awaitable[T]:
+                task = loop.run_in_executor(executor, function, *args)
+                return task
+
+            return context
+
+        return wrapper
+
+
+@dataclasses.dataclass(frozen=True)
+class Failure(Try, Future, Generic[T]):
     """Failure"""
 
     value: Exception
@@ -116,7 +146,7 @@ class Failure(Try, Generic[T]):
 
 
 @dataclasses.dataclass(frozen=True)
-class Success(Try, Generic[T]):
+class Success(Try, Future, Generic[T]):
     """Success"""
 
     value: T
