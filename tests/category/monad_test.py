@@ -1,9 +1,6 @@
-from typing import Any, Generator
-
-from category import Either, Failure, Left, Right, Success, Try
-
-
 def test_try():
+    from category import Failure, Success
+
     assert isinstance(Failure(Exception()).value, Exception)
     assert isinstance(Failure(ValueError()).value, Exception)
     assert 0 == Success(0).value
@@ -20,6 +17,8 @@ def test_try():
 
 
 def test_try_hold():
+    from category import Failure, Success, Try
+
     @Try.hold
     def multi_context(value: int) -> int:
         if not value:
@@ -39,6 +38,10 @@ def test_try_hold():
 
 
 def test_try_do():
+    from typing import Any, Generator
+
+    from category import Failure, Success, Try
+
     @Try.do
     def failure_context() -> Generator[Try[int], Any, int]:
         one = yield Success(1)()
@@ -100,7 +103,66 @@ def test_try_do():
     assert 6 == mix_success_context().value
 
 
+def test_future():
+    import asyncio
+    import concurrent.futures
+
+    from category import Future
+
+    loop = asyncio.get_event_loop()
+
+    @Future.hold
+    def context(
+        value: int = 0,
+        /,
+        loop: asyncio.AbstractEventLoop = None,
+        executor: concurrent.futures.ThreadPoolExecutor = None,
+    ) -> int:
+        return value
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        assert False is bool(context(1)(loop=loop, executor=executor))
+
+
+def test_future_hold():
+    import asyncio
+    import concurrent.futures
+    from typing import Awaitable
+
+    from category import Failure, Future
+
+    loop = asyncio.get_event_loop()
+
+    @Future.hold
+    def context(
+        value: int = 0,
+        /,
+        loop: asyncio.AbstractEventLoop = None,
+        executor: concurrent.futures.ThreadPoolExecutor = None,
+    ) -> int:
+        if not value:
+            raise Exception("Future Failure")
+        return value
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        assert isinstance(context(1)(loop=loop, executor=executor), Future)
+        assert isinstance(context(1)(loop=loop, executor=executor).value, Awaitable)
+        assert 1 == loop.run_until_complete(context(1)(loop=loop, executor=executor)())
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        assert isinstance(context(0)(loop=loop, executor=executor), Future)
+        assert isinstance(context(0)(loop=loop, executor=executor).value, Awaitable)
+        assert isinstance(
+            loop.run_until_complete(context(0)(loop=loop, executor=executor)()),
+            Failure,
+        )
+
+
 def test_either():
+    from typing import Any
+
+    from category import Left, Right
+
     assert 0 == Left[int, Any](0).value
     assert 0 == Right[Any, int](0).value
     assert False is bool(Left[int, Any](0))
@@ -115,6 +177,10 @@ def test_either():
 
 
 def test_either_do():
+    from typing import Any, Generator
+
+    from category import Either, Left, Right
+
     @Either.do
     def left_context() -> Generator[Either[None, int], Any, int]:
         one = yield Right[None, int](1)()
