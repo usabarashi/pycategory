@@ -96,26 +96,26 @@ class Try(Monad, ABC, Generic[T]):
 
 @dataclasses.dataclass(frozen=True)
 class Future(Monad, Generic[T]):
+
     value: Awaitable[T]
 
-    def __bool__(self) -> Literal[True]:
-        return True
+    def __bool__(self) -> Literal[False]:
+        return False
 
     async def __call__(self) -> Union[Failure[Exception], T]:
-        result = await self.value
-        if isinstance(result, Exception):
-            return Failure(result)
-        return result
+        try:
+            return await self.value
+        except Exception as error:
+            return Failure(error)
 
     @staticmethod
     def hold(function: Callable[..., T]):
-        def wrapper(*args: Any, **kwargs: Any):
+        def wrapper(*args: Any):
             def context(
                 loop: asyncio.AbstractEventLoop,
                 executor: concurrent.futures.ThreadPoolExecutor,
-            ) -> Awaitable[T]:
-                task = loop.run_in_executor(executor, function, *args)
-                return task
+            ) -> Future[T]:
+                return Future(loop.run_in_executor(executor, function, *args))
 
             return context
 
@@ -123,7 +123,7 @@ class Future(Monad, Generic[T]):
 
 
 @dataclasses.dataclass(frozen=True)
-class Failure(Try, Future, Generic[T]):
+class Failure(Try, Generic[T]):
     """Failure"""
 
     value: Exception
@@ -146,7 +146,7 @@ class Failure(Try, Future, Generic[T]):
 
 
 @dataclasses.dataclass(frozen=True)
-class Success(Try, Future, Generic[T]):
+class Success(Try, Generic[T]):
     """Success"""
 
     value: T
