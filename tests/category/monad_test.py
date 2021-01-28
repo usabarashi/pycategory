@@ -145,17 +145,82 @@ def test_future_hold():
         return value
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        assert isinstance(context(1)(loop=loop, executor=executor), Future)
-        assert isinstance(context(1)(loop=loop, executor=executor).value, Awaitable)
-        assert 1 == loop.run_until_complete(context(1)(loop=loop, executor=executor)())
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
         assert isinstance(context(0)(loop=loop, executor=executor), Future)
         assert isinstance(context(0)(loop=loop, executor=executor).value, Awaitable)
         assert isinstance(
-            loop.run_until_complete(context(0)(loop=loop, executor=executor)()),
+            context(0)(loop=loop, executor=executor)(),
             Failure,
         )
+        assert isinstance(
+            context(0)(loop=loop, executor=executor)().value,
+            Exception,
+        )
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        assert isinstance(context(1)(loop=loop, executor=executor), Future)
+        assert isinstance(context(1)(loop=loop, executor=executor).value, Awaitable)
+        assert 1 == context(1)(loop=loop, executor=executor)()
+
+
+def test_future_do():
+    import asyncio
+    import concurrent.futures
+    from typing import Awaitable
+
+    from category import Failure, Future
+
+    loop = asyncio.get_event_loop()
+
+    @Future.hold
+    def context(
+        value: int = 0,
+        /,
+        loop: asyncio.AbstractEventLoop = None,
+        executor: concurrent.futures.ThreadPoolExecutor = None,
+    ) -> int:
+        if not value:
+            raise Exception("Future Failure")
+        return value
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+
+        @Future.do
+        def mix_failure_context(
+            *,
+            loop: asyncio.AbstractEventLoop,
+            executor: concurrent.futures.ThreadPoolExecutor,
+        ):
+            one = yield context(1)(loop=loop, executor=executor)()
+            two = 2
+            three = yield context(0)(loop=loop, executor=executor)()
+            return one + two + three
+
+        assert isinstance(
+            mix_failure_context()(loop=loop, executor=executor), Failure
+        )  # FIXME Parametric polymorphism
+        assert isinstance(
+            mix_failure_context()(loop=loop, executor=executor)(), Failure
+        )
+        assert isinstance(
+            mix_failure_context()(loop=loop, executor=executor)().value, Exception
+        )
+
+        @Future.do
+        def mix_success_context(
+            *,
+            loop: asyncio.AbstractEventLoop,
+            executor: concurrent.futures.ThreadPoolExecutor,
+        ):
+            one = yield context(1)(loop=loop, executor=executor)()
+            two = 2
+            three = yield context(3)(loop=loop, executor=executor)()
+            return one + two + three
+
+        assert isinstance(mix_success_context()(loop=loop, executor=executor), Future)
+        assert isinstance(
+            mix_success_context()(loop=loop, executor=executor).value, Awaitable
+        )
+        assert 6 == mix_success_context()(loop=loop, executor=executor)()
 
 
 def test_either():
