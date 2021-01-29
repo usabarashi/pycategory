@@ -48,6 +48,10 @@ class Try(Monad, ABC, Generic[T]):
     value: Union[Exception, T]
 
     @abstractmethod
+    def __call__(self) -> Union[Failure[Exception], T]:
+        raise NotImplementedError
+
+    @abstractmethod
     def is_failure(self) -> bool:
         raise NotImplementedError
 
@@ -95,13 +99,88 @@ class Try(Monad, ABC, Generic[T]):
 
 
 @dataclasses.dataclass(frozen=True)
-class Failure(Try, Generic[T]):
+class Future(Monad, Generic[T]):
+
+    value: tuple[Awaitable[T], asyncio.AbstractEventLoop]  # FIXME
+
+    def __bool__(self) -> Literal[False]:
+        return False
+
+    def __call__(self) -> Union[Failure[Exception], T]:
+        try:
+            return self.value[1].run_until_complete(future=self.value[0])
+        except Exception as error:
+            return Failure(value=error)
+
+    @staticmethod
+    def hold(function: Callable[..., T]):
+        def wrapper(*args: Any, **kwargs):
+            def context(
+                *,
+                loop: asyncio.AbstractEventLoop,
+                executor: Union[
+                    concurrent.futures.ProcessPoolExecutor,
+                    concurrent.futures.ThreadPoolExecutor,
+                ],
+            ) -> Future[T]:
+                return Future(
+                    value=(
+                        loop.run_in_executor(executor, function, *args, **kwargs),
+                        loop,
+                    )
+                )
+
+            return context
+
+        return wrapper
+
+    @staticmethod
+    def do(fuction: Callable[..., Generator[Any, Any, T]]):
+        def wrapper(*args: Any, **kwargs):
+            def context(
+                *,
+                loop: asyncio.AbstractEventLoop,
+                executor: Union[
+                    concurrent.futures.ProcessPoolExecutor,
+                    concurrent.futures.ThreadPoolExecutor,
+                ],
+            ):
+                kwargs.update({"loop": loop, "executor": executor})
+
+                def recur(generator: Generator, prev: Any):
+                    try:
+                        result = generator.send(prev)
+                    except StopIteration as last:
+                        # Success case
+                        def future(stop_iteration: StopIteration) -> T:
+                            return stop_iteration.value
+
+                        return Future(
+                            value=(loop.run_in_executor(executor, future, last), loop)
+                        )
+                    # Failure case
+                    if isinstance(result, Failure):
+                        return result
+                    return recur(generator, result)
+
+                return recur(fuction(*args, **kwargs), None)
+
+            return context
+
+        return wrapper
+
+
+@dataclasses.dataclass(frozen=True)
+class Failure(Try, Future, Generic[T]):
     """Failure"""
 
     value: Exception
 
     def __bool__(self) -> Literal[False]:
         return False
+
+    def __call__(self) -> Failure[Exception]:
+        return self
 
     def is_success(self) -> Literal[False]:
         return False
@@ -118,13 +197,16 @@ class Failure(Try, Generic[T]):
 
 
 @dataclasses.dataclass(frozen=True)
-class Success(Try, Generic[T]):
+class Success(Try, Future, Generic[T]):
     """Success"""
 
     value: T
 
     def __bool__(self) -> Literal[True]:
         return True
+
+    def __call__(self) -> T:
+        return self.value
 
     def is_failure(self) -> Literal[False]:
         return False
@@ -138,74 +220,6 @@ class Success(Try, Generic[T]):
         success: Callable[[T], S],
     ) -> Try[S]:
         return Success(success(self.value))
-
-
-@dataclasses.dataclass(frozen=True)
-class Future(Monad, Generic[T]):
-
-    value: Awaitable[T]
-    loop: asyncio.AbstractEventLoop
-
-    def __bool__(self) -> Literal[False]:
-        return False
-
-    def __call__(self) -> Union[Failure[Exception], T]:
-        try:
-            return self.loop.run_until_complete(self.value)
-        except Exception as error:
-            return Failure(error)
-
-    @staticmethod
-    def hold(function: Callable[..., T]):
-        def wrapper(*args: Any, **kwargs):
-            def context(
-                *,
-                loop: asyncio.AbstractEventLoop,
-                executor: concurrent.futures.ThreadPoolExecutor,
-            ) -> Future[T]:
-                return Future(
-                    value=loop.run_in_executor(executor, function, *args, **kwargs),
-                    loop=loop,
-                )
-
-            return context
-
-        return wrapper
-
-    @staticmethod
-    def do(
-        fuction: Callable[..., Generator[Union[Failure[Exception], Future[T]], Any, T]]
-    ):
-        def wrapper(*args: Any, **kwargs):
-            def context(
-                *,
-                loop: asyncio.AbstractEventLoop,
-                executor: concurrent.futures.ThreadPoolExecutor,
-            ):
-                kwargs.update({"loop": loop, "executor": executor})
-
-                def recur(generator: Generator, prev: Any):
-                    try:
-                        result = generator.send(prev)
-                    except StopIteration as last:
-                        # Success case
-                        def future(stop_iteration: StopIteration) -> T:
-                            return stop_iteration.value
-
-                        return Future(
-                            value=loop.run_in_executor(executor, future, last),
-                            loop=loop,
-                        )
-                    # Failure case
-                    if isinstance(result, Failure):
-                        return result
-                    return recur(generator, result)
-
-                return recur(fuction(*args, **kwargs), None)
-
-            return context
-
-        return wrapper
 
 
 # Either/Left/Right

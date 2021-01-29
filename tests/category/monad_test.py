@@ -43,7 +43,7 @@ def test_try_do():
     from category import Failure, Success, Try
 
     @Try.do
-    def failure_context() -> Generator[Try[int], Any, int]:
+    def failure_context() -> Generator[Any, Any, int]:
         one = yield Success(1)()
         two = 2
         three = yield Failure(ValueError())()
@@ -62,7 +62,7 @@ def test_try_do():
     )
 
     @Try.do
-    def success_context() -> Generator[Try[int], Any, int]:
+    def success_context() -> Generator[Any, Any, int]:
         one = yield Success(1)()
         two = 2
         three = yield Success(3)()
@@ -84,7 +84,7 @@ def test_try_do():
         return value
 
     @Try.do
-    def mix_failure_context() -> Generator[Try[int], Any, int]:
+    def mix_failure_context() -> Generator[Any, Any, int]:
         success = yield multi_context(1)()
         _ = yield multi_context(0)()
         return success
@@ -93,7 +93,7 @@ def test_try_do():
     assert isinstance(mix_failure_context().value, Exception)
 
     @Try.do
-    def mix_success_context() -> Generator[Try[int], Any, int]:
+    def mix_success_context() -> Generator[Any, Any, int]:
         one = yield multi_context(1)()
         two = 2
         three = yield multi_context(3)()
@@ -127,7 +127,7 @@ def test_future():
 def test_future_hold():
     import asyncio
     import concurrent.futures
-    from typing import Awaitable
+    from typing import Awaitable, Union
 
     from category import Failure, Future
 
@@ -138,7 +138,10 @@ def test_future_hold():
         value: int = 0,
         /,
         loop: asyncio.AbstractEventLoop = None,
-        executor: concurrent.futures.ThreadPoolExecutor = None,
+        executor: Union[
+            concurrent.futures.ProcessPoolExecutor,
+            concurrent.futures.ThreadPoolExecutor,
+        ] = None,
     ) -> int:
         if not value:
             raise Exception("Future Failure")
@@ -146,7 +149,7 @@ def test_future_hold():
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         assert isinstance(context(0)(loop=loop, executor=executor), Future)
-        assert isinstance(context(0)(loop=loop, executor=executor).value, Awaitable)
+        assert isinstance(context(0)(loop=loop, executor=executor).value[0], Awaitable)
         assert isinstance(
             context(0)(loop=loop, executor=executor)(),
             Failure,
@@ -158,14 +161,14 @@ def test_future_hold():
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         assert isinstance(context(1)(loop=loop, executor=executor), Future)
-        assert isinstance(context(1)(loop=loop, executor=executor).value, Awaitable)
+        assert isinstance(context(1)(loop=loop, executor=executor).value[0], Awaitable)
         assert 1 == context(1)(loop=loop, executor=executor)()
 
 
 def test_future_do():
     import asyncio
     import concurrent.futures
-    from typing import Awaitable
+    from typing import Any, Awaitable, Generator, Union
 
     from category import Failure, Future
 
@@ -188,16 +191,17 @@ def test_future_do():
         def mix_failure_context(
             *,
             loop: asyncio.AbstractEventLoop,
-            executor: concurrent.futures.ThreadPoolExecutor,
+            executor: Union[
+                concurrent.futures.ProcessPoolExecutor,
+                concurrent.futures.ThreadPoolExecutor,
+            ],
         ):
             one = yield context(1)(loop=loop, executor=executor)()
             two = 2
             three = yield context(0)(loop=loop, executor=executor)()
             return one + two + three
 
-        assert isinstance(
-            mix_failure_context()(loop=loop, executor=executor), Failure
-        )  # FIXME Parametric polymorphism
+        assert isinstance(mix_failure_context()(loop=loop, executor=executor), Future)
         assert isinstance(
             mix_failure_context()(loop=loop, executor=executor)(), Failure
         )
@@ -210,7 +214,7 @@ def test_future_do():
             *,
             loop: asyncio.AbstractEventLoop,
             executor: concurrent.futures.ThreadPoolExecutor,
-        ):
+        ) -> Generator[Any, Any, int]:
             one = yield context(1)(loop=loop, executor=executor)()
             two = 2
             three = yield context(3)(loop=loop, executor=executor)()
@@ -218,7 +222,7 @@ def test_future_do():
 
         assert isinstance(mix_success_context()(loop=loop, executor=executor), Future)
         assert isinstance(
-            mix_success_context()(loop=loop, executor=executor).value, Awaitable
+            mix_success_context()(loop=loop, executor=executor).value[0], Awaitable
         )
         assert 6 == mix_success_context()(loop=loop, executor=executor)()
 
