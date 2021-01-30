@@ -37,7 +37,7 @@ class Frame:
         self.stack: list[inspect.FrameInfo] = inspect.stack()
 
 
-# Try/Failure/Success
+# Try/Future/Failure/Success
 S = TypeVar("S")
 
 
@@ -89,7 +89,7 @@ class Try(Monad, ABC, Generic[T]):
                     # Success case
                     return Success(value=last.value)
                 # Failure case
-                if isinstance(result, Failure):
+                if Failure is type(result):
                     return result
                 return recur(generator, result)
 
@@ -159,7 +159,7 @@ class Future(Monad, Generic[T]):
                             value=(loop.run_in_executor(executor, future, last), loop)
                         )
                     # Failure case
-                    if isinstance(result, Failure):
+                    if Failure is type(result):
                         return result
                     return recur(generator, result)
 
@@ -259,11 +259,11 @@ class Either(Monad, ABC, Generic[L, R]):
                 try:
                     result = generator.send(prev)
                 except StopIteration as last:
+                    # Regura case
                     return Right(last.value)
-                # Irregular case
-                if isinstance(result, Left):
+                if Left is type(result):
+                    # Irregular case
                     return result
-                # Regura case
                 return recur(generator, result)
 
             return recur(generator_fuction(*args, **kwargs), None)
