@@ -13,7 +13,9 @@
 			"NODE_VERSION": "lts/*"
 		}
 	},
+	"workspaceFolder": "/workspaces/python-category",
 	"remoteEnv": {
+		"PYTHONPATH": "src",
 		"PIPENV_VENV_IN_PROJECT": "1",
 	},
 	// Set *default* container specific settings.json values on container create.
@@ -30,6 +32,9 @@
 		},
 		"terminal.integrated.shell.linux": "/bin/bash",
 		"python.pythonPath": "/usr/local/bin/python",
+		"python.analysis.extraPaths": [
+			"${workspaceFolder}/src"
+		],
 		"python.linting.enabled": true,
 		"python.linting.pylintEnabled": false,
 		"python.linting.flake8Enabled": true,
@@ -42,6 +47,7 @@
 		"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
 		"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
 		"python.linting.flake8Args": [
+			"--ignore=E721",
 			"--max-line-length=100"
 		],
 		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",

@@ -1,8 +1,8 @@
 def test_try():
     from category import Failure, Success
 
-    assert isinstance(Failure(Exception()).value, Exception)
-    assert isinstance(Failure(ValueError()).value, Exception)
+    assert Failure is type(Failure(Exception()))
+    assert ValueError is type(Failure(ValueError()).value)
     assert 0 == Success(0).value
     assert True is bool(Success(0))
     assert False is bool(Failure(Exception()))
@@ -12,8 +12,8 @@ def test_try():
     assert True is Failure(Exception()).is_failure()
 
     assert 0 == Success(0)()
-    assert isinstance(Failure(Exception())(), Failure)
-    assert isinstance(Failure(Exception())().value, Exception)
+    assert Failure is type(Failure(Exception())())
+    assert Exception is type(Failure(Exception())().value)
 
 
 def test_try_hold():
@@ -25,9 +25,9 @@ def test_try_hold():
             raise Exception("error")
         return value
 
-    assert isinstance(multi_context(0), Failure)
-    assert isinstance(multi_context(0).value, Exception)
-    assert isinstance(multi_context(1), Success)
+    assert Failure is type(multi_context(0))
+    assert Exception is type(multi_context(0).value)
+    assert Success is type(multi_context(1))
     assert 1 == multi_context(1).value
     assert False is bool(multi_context(0))
     assert True is bool(multi_context(1))
@@ -49,16 +49,15 @@ def test_try_do():
         three = yield Failure(ValueError())()
         return one + two + three
 
-    assert isinstance(failure_context(), Failure)
-    assert isinstance(failure_context().value, Exception)
+    assert Failure is type(failure_context())
+    assert ValueError is type(failure_context().value)
     assert False is bool(failure_context())
     assert False is failure_context().is_success()
     assert True is failure_context().is_failure()
-    assert isinstance(
+    assert Failure is type(
         failure_context().fold(
             failure=lambda value: EOFError(), success=lambda value: value * 2
-        ),
-        Failure,
+        )
     )
 
     @Try.do
@@ -89,8 +88,8 @@ def test_try_do():
         _ = yield multi_context(0)()
         return success
 
-    assert isinstance(mix_failure_context(), Failure)
-    assert isinstance(mix_failure_context().value, Exception)
+    assert Failure is type(mix_failure_context())
+    assert Exception is type(mix_failure_context().value)
 
     @Try.do
     def mix_success_context() -> Generator[Any, Any, int]:
@@ -127,7 +126,7 @@ def test_future():
 def test_future_hold():
     import asyncio
     import concurrent.futures
-    from typing import Awaitable, Union
+    from typing import Union
 
     from category import Failure, Future
 
@@ -148,27 +147,19 @@ def test_future_hold():
         return value
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        assert isinstance(context(0)(loop=loop, executor=executor), Future)
-        assert isinstance(context(0)(loop=loop, executor=executor).value[0], Awaitable)
-        assert isinstance(
-            context(0)(loop=loop, executor=executor)(),
-            Failure,
-        )
-        assert isinstance(
-            context(0)(loop=loop, executor=executor)().value,
-            Exception,
-        )
+        assert Future is type(context(0)(loop=loop, executor=executor))
+        assert Failure is type(context(0)(loop=loop, executor=executor)())
+        assert Exception is type(context(0)(loop=loop, executor=executor)().value)
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        assert isinstance(context(1)(loop=loop, executor=executor), Future)
-        assert isinstance(context(1)(loop=loop, executor=executor).value[0], Awaitable)
+        assert Future is type(context(1)(loop=loop, executor=executor))
         assert 1 == context(1)(loop=loop, executor=executor)()
 
 
 def test_future_do():
     import asyncio
     import concurrent.futures
-    from typing import Any, Awaitable, Generator, Union
+    from typing import Any, Generator, Union
 
     from category import Failure, Future
 
@@ -201,12 +192,10 @@ def test_future_do():
             three = yield context(0)(loop=loop, executor=executor)()
             return one + two + three
 
-        assert isinstance(mix_failure_context()(loop=loop, executor=executor), Future)
-        assert isinstance(
-            mix_failure_context()(loop=loop, executor=executor)(), Failure
-        )
-        assert isinstance(
-            mix_failure_context()(loop=loop, executor=executor)().value, Exception
+        assert Failure is type(mix_failure_context()(loop=loop, executor=executor))
+        assert Failure is type(mix_failure_context()(loop=loop, executor=executor)())
+        assert Exception is type(
+            mix_failure_context()(loop=loop, executor=executor)().value
         )
 
         @Future.do
@@ -220,10 +209,7 @@ def test_future_do():
             three = yield context(3)(loop=loop, executor=executor)()
             return one + two + three
 
-        assert isinstance(mix_success_context()(loop=loop, executor=executor), Future)
-        assert isinstance(
-            mix_success_context()(loop=loop, executor=executor).value[0], Awaitable
-        )
+        assert Future is type(mix_success_context()(loop=loop, executor=executor))
         assert 6 == mix_success_context()(loop=loop, executor=executor)()
 
 
@@ -241,7 +227,7 @@ def test_either():
     assert False is Right[Any, int](0).is_left()
     assert True is Right[Any, int](0).is_right()
 
-    assert Left(0).value == Left[int, Any](0)().value
+    assert Left(0).value is Left[int, Any](0)().value
     assert 0 == Right[Any, int](0)()
 
 
