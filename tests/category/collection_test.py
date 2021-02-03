@@ -12,7 +12,7 @@ def test_vector_init():
     assert [] == Vector(()) == []
     # assert [] == Vector({}) == [] # Syntax Error
     vector = Vector([0, 1, 2])
-    assert isinstance(vector, Vector)
+    assert Vector is type(vector)
     assert 0 == vector[0] == 0
     assert [0, 1, 2] == vector == [0, 1, 2]
     assert (0, 1, 2) != vector != (0, 1, 2)
@@ -25,7 +25,7 @@ def test_vector_add():
     vector = Vector([0, 1, 2])
     im_vector = vector + [3]
     assert im_vector is not vector
-    assert isinstance(im_vector, Vector)
+    assert Vector is type(im_vector)
     assert [0, 1, 2, 3] == im_vector == [0, 1, 2, 3]
     assert [0, 1, 2] == vector == [0, 1, 2]
     assert im_vector != vector
@@ -35,7 +35,7 @@ def test_vector_add():
     ii_vector = vector + other_vector
     assert ii_vector is not vector
     assert ii_vector is not other_vector
-    assert isinstance(ii_vector, Vector)
+    assert Vector is type(ii_vector)
     assert [0, 1, 2, 3, 4, 5] == ii_vector == [0, 1, 2, 3, 4, 5]
     assert [0, 1, 2] == vector == [0, 1, 2]
     assert [3, 4, 5] == other_vector == [3, 4, 5]
@@ -48,8 +48,8 @@ def test_vector_add_warning_case():
     vector = Vector([0, 1, 2])
     mi_vector = [3] + vector
     assert mi_vector is not vector
-    assert not isinstance(mi_vector, Vector)
-    assert isinstance(mi_vector, list)
+    assert list is type(mi_vector)
+    assert Vector is not type(mi_vector)
     assert [3, 0, 1, 2] == mi_vector == [3, 0, 1, 2]
     assert [0, 1, 2] == vector == [0, 1, 2]
     assert mi_vector != [3]
@@ -80,8 +80,8 @@ def test_vector_append():
     vector = Vector([0, 1, 2])
     appended_vector = vector.append(3)
     assert appended_vector is not vector
-    assert isinstance(appended_vector, Vector)
-    assert isinstance(vector, Vector)
+    assert Vector is type(vector)
+    assert Vector is type(appended_vector)
     assert [0, 1, 2, 3] == appended_vector == [0, 1, 2, 3]
 
 
@@ -91,8 +91,8 @@ def test_vector_extend():
     extended_vector = vector.extend(extend_vector)
     assert extended_vector is not vector
     assert extended_vector is not extend_vector
-    assert isinstance(extended_vector, Vector)
-    assert isinstance(vector, Vector)
+    assert Vector is type(vector)
+    assert Vector is type(extended_vector)
     assert [0, 1, 2, 3, 4, 5] == extended_vector == [0, 1, 2, 3, 4, 5]
 
 
@@ -100,8 +100,8 @@ def test_vector_insert():
     vector = Vector([0, 1, 2])
     inserted_vector = vector.insert(1, 9)
     assert inserted_vector is not vector
-    assert isinstance(inserted_vector, Vector)
-    assert isinstance(vector, Vector)
+    assert Vector is type(vector)
+    assert Vector is type(inserted_vector)
     assert [0, 9, 1, 2] == inserted_vector == [0, 9, 1, 2]
     assert [0, 1, 2] == vector == [0, 1, 2]
 
@@ -110,8 +110,8 @@ def test_vector_remove():
     vector = Vector([0, 1, 2])
     removed_vector = vector.remove(1)
     assert removed_vector is not vector
-    assert isinstance(removed_vector, Vector)
-    assert isinstance(vector, Vector)
+    assert Vector is type(vector)
+    assert Vector is type(removed_vector)
     assert [0, 2] == removed_vector == [0, 2]
     assert [0, 1, 2] == vector == [0, 1, 2]
 
@@ -120,8 +120,8 @@ def test_vector_pop():
     vector = Vector([0, 1, 2])
     poped_vector = vector.pop(1)
     assert poped_vector is not vector
-    assert isinstance(poped_vector, Vector)
-    assert isinstance(vector, Vector)
+    assert Vector is type(vector)
+    assert Vector is type(poped_vector)
     assert [0, 2] == poped_vector == [0, 2]
     assert [0, 1, 2] == vector == [0, 1, 2]
 
@@ -129,7 +129,7 @@ def test_vector_pop():
 def test_vector_index():
     vector = Vector([0, 1, 2])
     index = vector.index(1, 0, 2)
-    assert isinstance(vector, Vector)
+    assert Vector is type(vector)
     assert 1 == index
     assert [0, 1, 2] == vector == [0, 1, 2]
 
@@ -154,8 +154,8 @@ def test_vector_sort():
     vector = Vector([0, 1, 2])
     sorted_vector = vector.sort(reverse=True)
     assert sorted_vector is not vector
-    assert isinstance(sorted_vector, Vector)
-    assert isinstance(vector, Vector)
+    assert Vector is type(vector)
+    assert Vector is type(sorted_vector)
     assert [2, 1, 0] == sorted_vector == [2, 1, 0]
     assert [0, 1, 2] == vector == [0, 1, 2]
 
@@ -164,8 +164,8 @@ def test_vector_reverse():
     vector = Vector([0, 1, 2])
     reversed_vector = vector.reverse()
     assert reversed_vector is not vector
-    assert isinstance(reversed_vector, Vector)
-    assert isinstance(vector, Vector)
+    assert Vector is type(vector)
+    assert Vector is type(reversed_vector)
     assert [2, 1, 0] == reversed_vector == [2, 1, 0]
     assert [0, 1, 2] == vector == [0, 1, 2]
 
@@ -174,8 +174,8 @@ def test_vector_copy():
     vector = Vector([0, 1, 2])
     copied_vector = vector.copy()
     assert copied_vector is not vector
-    assert isinstance(copied_vector, Vector)
-    assert isinstance(vector, Vector)
+    assert Vector is type(vector)
+    assert Vector is type(copied_vector)
     assert copied_vector == vector == copied_vector
     assert [0, 1, 2] == copied_vector == [0, 1, 2]
     assert [0, 1, 2] == vector == [0, 1, 2]
