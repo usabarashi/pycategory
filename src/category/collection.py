@@ -79,7 +79,7 @@ class Vector(list, Generic[T]):
 
     def reverse(self) -> Vector[T]:
         sequence = list(self)
-        sequence.__reversed__()
+        sequence.reverse()
         return __class__(sequence)
 
     def copy(self) -> Vector[T]:
