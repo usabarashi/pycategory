@@ -1,3 +1,5 @@
+"""Monad
+"""
 from __future__ import annotations
 
 import asyncio
@@ -10,20 +12,14 @@ from typing import Any, Awaitable, Callable, Generator, Generic, Literal, TypeVa
 T = TypeVar("T")
 
 
-@dataclasses.dataclass(frozen=True)
-class Monad(ABC, Generic[T]):
+class Monad(ABC):
     """Monad"""
 
-    value: T
+    value: Any
 
     @abstractmethod
     def __bool__(self) -> bool:
         raise NotImplementedError
-
-    def __call__(self):
-        if not bool(self):
-            return self
-        return self.value
 
 
 class Frame:
@@ -41,8 +37,7 @@ class Frame:
 S = TypeVar("S")
 
 
-@dataclasses.dataclass(frozen=True)
-class Try(Monad, ABC, Generic[T]):
+class Try(Monad, Generic[T]):
     """Try"""
 
     value: Union[Exception, T]
@@ -179,15 +174,15 @@ class Future(Monad, Generic[T]):
 
 
 @dataclasses.dataclass(frozen=True)
-class Failure(Try, Future, Generic[T]):
+class Failure(Try[T], Future[T]):
     """Failure"""
 
-    value: Exception
+    value: Exception = dataclasses.field(default_factory=Exception)
 
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(self) -> Failure[Exception]:
+    def __call__(self) -> Failure[T]:
         return self
 
     def is_success(self) -> Literal[False]:
@@ -205,7 +200,7 @@ class Failure(Try, Future, Generic[T]):
 
 
 @dataclasses.dataclass(frozen=True)
-class Success(Try, Future, Generic[T]):
+class Success(Try[T], Future[T]):
     """Success"""
 
     value: T
@@ -237,7 +232,6 @@ LD = TypeVar("LD")
 RD = TypeVar("RD")
 
 
-@dataclasses.dataclass(frozen=True)
 class Either(Monad, ABC, Generic[L, R]):
     """
     Left: Irregular case
@@ -245,6 +239,11 @@ class Either(Monad, ABC, Generic[L, R]):
     """
 
     value: Union[L, R]
+
+    def __call__(self) -> Union[Left[L, R], R]:
+        if not bool(self):
+            return Left[L, R](value=self.value)
+        return self.value
 
     @abstractmethod
     def is_left(self) -> bool:
