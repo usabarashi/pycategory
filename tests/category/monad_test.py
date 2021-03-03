@@ -1,18 +1,18 @@
 def test_try():
     from category import Failure, Success
 
-    assert Failure is type(Failure(Exception()))
+    assert Failure is type(Failure())
     assert ValueError is type(Failure(ValueError()).value)
     assert 0 == Success(0).value
     assert True is bool(Success(0))
-    assert False is bool(Failure(Exception()))
+    assert False is bool(Failure())
     assert True is Success(0).is_success()
     assert False is Success(0).is_failure()
     assert False is Failure(Exception()).is_success()
     assert True is Failure(Exception()).is_failure()
 
     assert 0 == Success(0)()
-    assert Failure is type(Failure(Exception())())
+    assert Failure is type(Failure()())
     assert Exception is type(Failure(Exception())().value)
 
 
@@ -105,6 +105,7 @@ def test_try_do():
 def test_future():
     import asyncio
     import concurrent.futures
+    from typing import Optional
 
     from category import Future
 
@@ -114,8 +115,8 @@ def test_future():
     def context(
         value: int = 0,
         /,
-        loop: asyncio.AbstractEventLoop = None,
-        executor: concurrent.futures.ThreadPoolExecutor = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        executor: Optional[concurrent.futures.ThreadPoolExecutor] = None,
     ) -> int:
         return value
 
@@ -126,7 +127,7 @@ def test_future():
 def test_future_hold():
     import asyncio
     import concurrent.futures
-    from typing import Union
+    from typing import Optional
 
     from category import Failure, Future
 
@@ -136,11 +137,8 @@ def test_future_hold():
     def context(
         value: int = 0,
         /,
-        loop: asyncio.AbstractEventLoop = None,
-        executor: Union[
-            concurrent.futures.ProcessPoolExecutor,
-            concurrent.futures.ThreadPoolExecutor,
-        ] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        executor: Optional[concurrent.futures.ThreadPoolExecutor] = None,
     ) -> int:
         if not value:
             raise Exception("Future Failure")
@@ -159,7 +157,7 @@ def test_future_hold():
 def test_future_do():
     import asyncio
     import concurrent.futures
-    from typing import Any, Generator, Union
+    from typing import Any, Generator, Optional
 
     from category import Failure, Future
 
@@ -169,8 +167,8 @@ def test_future_do():
     def context(
         value: int = 0,
         /,
-        loop: asyncio.AbstractEventLoop = None,
-        executor: concurrent.futures.ThreadPoolExecutor = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        executor: Optional[concurrent.futures.ThreadPoolExecutor] = None,
     ) -> int:
         if not value:
             raise Exception("Future Failure")
@@ -229,12 +227,14 @@ def test_either():
 
 
 def test_either_do():
-    from typing import Any, Generator
+    from typing import Any, Generator, Union
 
     from category import Either, Left, Right
 
     @Either.do
-    def left_context() -> Generator[Either[None, int], Any, int]:
+    def left_context() -> Generator[
+        Union[Left[None, int], int], Union[Left[None, int], int], int
+    ]:
         one = yield Right[None, int](1)()
         two = 2
         three = yield Left[None, int](None)()
