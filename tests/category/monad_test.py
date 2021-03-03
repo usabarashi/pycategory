@@ -182,11 +182,8 @@ def test_future_do():
         def mix_failure_context(
             *,
             loop: asyncio.AbstractEventLoop,
-            executor: Union[
-                concurrent.futures.ProcessPoolExecutor,
-                concurrent.futures.ThreadPoolExecutor,
-            ],
-        ):
+            executor: concurrent.futures.ThreadPoolExecutor,
+        ) -> Generator[Any, Any, int]:
             one = yield context(1)(loop=loop, executor=executor)()
             two = 2
             three = yield context(0)(loop=loop, executor=executor)()

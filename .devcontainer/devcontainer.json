@@ -32,6 +32,7 @@
 		},
 		"terminal.integrated.shell.linux": "/bin/bash",
 		"python.pythonPath": "/usr/local/bin/python",
+		"python.analysis.typeCheckingMode": "strict",
 		"python.analysis.extraPaths": [
 			"${workspaceFolder}/src"
 		],
@@ -39,7 +40,7 @@
 		"python.linting.pylintEnabled": false,
 		"python.linting.flake8Enabled": true,
 		"python.linting.banditEnabled": true,
-		"python.linting.mypyEnabled": false,
+		"python.linting.mypyEnabled": true,
 		"python.formatting.provider": "black",
 		"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
 		"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
