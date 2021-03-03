@@ -19,5 +19,8 @@ setup(
     license=license,
     packages=find_packages(where="src"),
     package_dir={"": "src"},
+    package_data={
+        "category": ["py.typed"],
+    },
     install_requires=[],
 )
