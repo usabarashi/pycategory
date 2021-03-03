@@ -27,7 +27,7 @@ class Monad(ABC, Generic[T]):
 
 
 class Frame:
-    def __init__(self, depth=2):
+    def __init__(self, depth: int = 2):
         self.filename: str = inspect.stack()[depth].filename
         self.line: int = inspect.stack()[depth].frame.f_lineno
         self.function: str = inspect.stack()[depth].function
@@ -69,11 +69,11 @@ class Try(Monad, ABC, Generic[T]):
 
     @staticmethod
     def hold(fuction: Callable[..., T]) -> Callable[..., Try[T]]:
-        def wrapper(*args: Any, **kwargs: Any) -> Union[Failure[Exception], Success[T]]:
+        def wrapper(*args: Any, **kwargs: Any) -> Try[T]:
             try:
                 return Success(value=fuction(*args, **kwargs))
             except Exception as error:
-                return Failure(value=error)
+                return Failure[T](value=error)
 
         return wrapper
 
@@ -82,7 +82,10 @@ class Try(Monad, ABC, Generic[T]):
         generator_fuction: Callable[..., Generator[Any, Any, T]]
     ) -> Callable[..., Try[T]]:
         def impl(*args: Any, **kwargs: Any) -> Try[T]:
-            def recur(generator: Generator, prev: Any):
+            def recur(
+                generator: Generator[Union[Failure[T], Any], Union[Failure[T], Any], T],
+                prev: Any,
+            ) -> Try[T]:
                 try:
                     result = generator.send(prev)
                 except StopIteration as last:
@@ -114,7 +117,7 @@ class Future(Monad, Generic[T]):
 
     @staticmethod
     def hold(function: Callable[..., T]):
-        def wrapper(*args: Any, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any):
             def context(
                 *,
                 loop: asyncio.AbstractEventLoop,
@@ -136,7 +139,7 @@ class Future(Monad, Generic[T]):
 
     @staticmethod
     def do(fuction: Callable[..., Generator[Any, Any, T]]):
-        def wrapper(*args: Any, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any):
             def context(
                 *,
                 loop: asyncio.AbstractEventLoop,
@@ -147,7 +150,12 @@ class Future(Monad, Generic[T]):
             ):
                 kwargs.update({"loop": loop, "executor": executor})
 
-                def recur(generator: Generator, prev: Any):
+                def recur(
+                    generator: Generator[
+                        Union[Failure[T], Any], Union[Failure[T], Any], T
+                    ],
+                    prev: Any,
+                ) -> Future[T]:
                     try:
                         result = generator.send(prev)
                     except StopIteration as last:
@@ -193,7 +201,7 @@ class Failure(Try, Future, Generic[T]):
         failure: Callable[[Exception], Exception],
         success: Callable[[T], S],
     ) -> Try[S]:
-        return Failure(failure(self.value))
+        return Failure[S](failure(self.value))
 
 
 @dataclasses.dataclass(frozen=True)
@@ -247,15 +255,18 @@ class Either(Monad, ABC, Generic[L, R]):
         raise NotADirectoryError
 
     @abstractmethod
-    def fold(self, left=Callable[[L], LD], right=Callable[[R], RD]):
+    def fold(self, left: Callable[[L], LD], right: Callable[[R], RD]) -> Either[LD, RD]:
         raise NotImplementedError
 
     @staticmethod
     def do(
         generator_fuction: Callable[..., Generator[Either[L, R], Any, R]]
     ) -> Callable[..., Either[L, R]]:
-        def wrapper(*args, **kwargs):
-            def recur(generator: Generator, prev: Any):
+        def wrapper(*args: Any, **kwargs: Any) -> Either[L, R]:
+            def recur(
+                generator: Generator[Union[Left[L, R], Any], Union[Left[L, R], Any], R],
+                prev: Any,
+            ) -> Either[L, R]:
                 try:
                     result = generator.send(prev)
                 except StopIteration as last:
@@ -287,7 +298,7 @@ class Left(Either[L, R]):
     def is_right(self) -> Literal[False]:
         return False
 
-    def fold(self, left=Callable[[L], LD], right=Callable[[R], RD]) -> Either[Any, Any]:
+    def fold(self, left: Callable[[L], LD], right: Callable[[R], RD]) -> Either[LD, RD]:
         return Left[LD, RD](value=left(self.value))
 
 
@@ -306,5 +317,5 @@ class Right(Either[L, R]):
     def is_right(self) -> Literal[True]:
         return True
 
-    def fold(self, left=Callable[[L], LD], right=Callable[[R], RD]) -> Either[Any, Any]:
+    def fold(self, left: Callable[[L], LD], right: Callable[[R], RD]) -> Either[LD, RD]:
         return Right[LD, RD](right(self.value))
