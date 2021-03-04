@@ -215,14 +215,14 @@ def test_immutable_vector_dataclass():
     class SeqEntity(Generic[T]):
         value: Vector[T] = field(default_factory=Vector[T])
 
-    entity = SeqEntity(value=Vector())
+    entity = SeqEntity[T](value=Vector())
     dict_entity = asdict(entity)
-    entity_from_dict = SeqEntity(**dict_entity)
+    entity_from_dict = SeqEntity[T](**dict_entity)
     assert {"value": []} == dict_entity == {"value": []}
     assert entity_from_dict == entity == entity_from_dict
 
     number_entity = SeqEntity(value=Vector([0, 1, 2]))
     dict_number_entity = asdict(number_entity)
-    number_entity_from_dict = SeqEntity(**dict_number_entity)
+    number_entity_from_dict = SeqEntity[T](**dict_number_entity)
     assert {"value": [0, 1, 2]} == dict_number_entity == {"value": [0, 1, 2]}
     assert number_entity_from_dict == number_entity == number_entity_from_dict
