@@ -21,6 +21,10 @@ class Monad(ABC):
     def __bool__(self) -> bool:
         raise NotImplementedError
 
+    @abstractmethod
+    def __call__(self) -> Generator[Monad, None, Any]:
+        raise NotImplementedError
+
 
 class Frame:
     def __init__(self, depth: int = 2):
@@ -33,17 +37,115 @@ class Frame:
         self.stack: list[inspect.FrameInfo] = inspect.stack()
 
 
-# Try/Future/Failure/Success
+# Either/Left/Right
+L = TypeVar("L")
+R = TypeVar("R")
+LL = TypeVar("LL")
+RR = TypeVar("RR")
+
+
+class Either(Monad, ABC, Generic[L, R]):
+    """Either
+
+    Left: Irregular case
+    Right: Regular case
+    """
+
+    value: Union[L, R]
+
+    def __call__(self) -> Generator[Either[L, R], None, Union[L, R]]:
+        yield self
+        return self.value
+
+    @abstractmethod
+    def is_left(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_right(self) -> bool:
+        raise NotADirectoryError
+
+    @abstractmethod
+    def fold(self, left: Callable[[L], LL], right: Callable[[R], RR]) -> Either[LL, RR]:
+        raise NotImplementedError
+
+    @staticmethod
+    def do(
+        generator_fuction: Callable[..., Generator[Either[L, R], Any, R]]
+    ) -> Callable[..., Either[L, R]]:
+        def wrapper(*args: Any, **kwargs: Any) -> Either[L, R]:
+            def recur(
+                generator: Generator[Union[Left[L, R], Any], Union[Left[L, R], Any], R],
+                prev: Any,
+            ) -> Either[L, R]:
+                try:
+                    result = generator.send(prev)
+                except StopIteration as last:
+                    # Regura case
+                    return Right(last.value)
+                if Left is type(result):
+                    # Irregular case
+                    return result
+                return recur(generator, result)
+
+            return recur(generator_fuction(*args, **kwargs), None)
+
+        return wrapper
+
+
+@dataclasses.dataclass(frozen=True)
+class Left(Either[L, R]):
+    """Left"""
+
+    value: L
+    frame: Frame = dataclasses.field(default_factory=Frame)
+
+    def __bool__(self) -> Literal[False]:
+        return False
+
+    def is_left(self) -> Literal[True]:
+        return True
+
+    def is_right(self) -> Literal[False]:
+        return False
+
+    def fold(self, left: Callable[[L], LL], right: Callable[[R], RR]) -> Either[LL, RR]:
+        return Left[LL, RR](value=left(self.value))
+
+
+@dataclasses.dataclass(frozen=True)
+class Right(Either[L, R]):
+    """Right"""
+
+    value: R
+
+    def __bool__(self) -> Literal[True]:
+        return True
+
+    def is_left(self) -> Literal[False]:
+        return False
+
+    def is_right(self) -> Literal[True]:
+        return True
+
+    def fold(self, left: Callable[[L], LL], right: Callable[[R], RR]) -> Either[LL, RR]:
+        return Right[LL, RR](right(self.value))
+
+
+# Try/Failure/Success
 S = TypeVar("S")
 
 
 class Try(Monad, Generic[T]):
-    """Try"""
+    """Try
+
+    試行型
+    """
 
     value: Union[Exception, T]
 
     @abstractmethod
-    def __call__(self) -> Union[Failure[Exception], T]:
+    def __call__(self) -> Generator[Try[T], None, Union[Exception, T]]:
         raise NotImplementedError
 
     @abstractmethod
@@ -97,18 +199,83 @@ class Try(Monad, Generic[T]):
 
 
 @dataclasses.dataclass(frozen=True)
-class Future(Monad, Generic[T]):
+class Failure(Try[T]):
+    """Failure"""
 
-    value: tuple[Awaitable[T], asyncio.AbstractEventLoop]  # FIXME
+    value: Exception
 
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(self) -> Union[Failure[Exception], T]:
+    def __call__(self) -> Generator[Failure[T], None, Exception]:
+        yield self
+        return self.value
+
+    def is_success(self) -> Literal[False]:
+        return False
+
+    def is_failure(self) -> Literal[True]:
+        return True
+
+    def fold(
+        self,
+        failure: Callable[[Exception], Exception],
+        success: Callable[[T], S],
+    ) -> Try[S]:
+        return Failure[S](failure(self.value))
+
+
+@dataclasses.dataclass(frozen=True)
+class Success(Try[T]):
+    """Success"""
+
+    value: T
+
+    def __bool__(self) -> Literal[True]:
+        return True
+
+    def __call__(self) -> Generator[Success[T], None, T]:
+        yield self
+        return self.value
+
+    def is_failure(self) -> Literal[False]:
+        return False
+
+    def is_success(self) -> Literal[True]:
+        return True
+
+    def fold(
+        self,
+        failure: Callable[[Exception], Exception],
+        success: Callable[[T], S],
+    ) -> Try[S]:
+        return Success(success(self.value))
+
+
+# Future
+@dataclasses.dataclass(frozen=True)
+class Future(Monad, Generic[T]):
+
+    value: Awaitable[T]
+    loop: asyncio.AbstractEventLoop
+
+    def __bool__(self) -> Literal[False]:
+        return False
+
+    def __call__(self) -> Generator[Try[T], None, Union[Exception, T]]:
         try:
-            return self.value[1].run_until_complete(future=self.value[0])
+            success = self.loop.run_until_complete(future=self.value)
+            yield Success(value=success)
+            return success
         except Exception as error:
-            return Failure(value=error)
+            yield Failure(value=error)
+            return error
+
+    def on_complete(self) -> Try[T]:
+        try:
+            return Success(value=self.loop.run_until_complete(future=self.value))
+        except Exception as error:
+            return Failure[T](value=error)
 
     @staticmethod
     def hold(function: Callable[..., T]):
@@ -122,10 +289,8 @@ class Future(Monad, Generic[T]):
                 ],
             ) -> Future[T]:
                 return Future(
-                    value=(
-                        loop.run_in_executor(executor, function, *args, **kwargs),
-                        loop,
-                    )
+                    value=loop.run_in_executor(executor, function, *args),
+                    loop=loop,
                 )
 
             return context
@@ -155,15 +320,23 @@ class Future(Monad, Generic[T]):
                         result = generator.send(prev)
                     except StopIteration as last:
                         # Success case
-                        def future(stop_iteration: StopIteration) -> T:
+                        def success(stop_iteration: StopIteration) -> T:
                             return stop_iteration.value
 
                         return Future(
-                            value=(loop.run_in_executor(executor, future, last), loop)
+                            value=loop.run_in_executor(executor, success, last),
+                            loop=loop,
                         )
                     # Failure case
                     if Failure is type(result):
-                        return result
+
+                        def failure(exception: Exception) -> T:
+                            raise exception
+
+                        return Future(
+                            value=loop.run_in_executor(executor, failure, result.value),
+                            loop=loop,
+                        )
                     return recur(generator, result)
 
                 return recur(fuction(*args, **kwargs), None)
@@ -171,150 +344,3 @@ class Future(Monad, Generic[T]):
             return context
 
         return wrapper
-
-
-@dataclasses.dataclass(frozen=True)
-class Failure(Try[T], Future[T]):
-    """Failure"""
-
-    value: Exception = dataclasses.field(default_factory=Exception)
-
-    def __bool__(self) -> Literal[False]:
-        return False
-
-    def __call__(self) -> Failure[T]:
-        return self
-
-    def is_success(self) -> Literal[False]:
-        return False
-
-    def is_failure(self) -> Literal[True]:
-        return True
-
-    def fold(
-        self,
-        failure: Callable[[Exception], Exception],
-        success: Callable[[T], S],
-    ) -> Try[S]:
-        return Failure[S](failure(self.value))
-
-
-@dataclasses.dataclass(frozen=True)
-class Success(Try[T], Future[T]):
-    """Success"""
-
-    value: T
-
-    def __bool__(self) -> Literal[True]:
-        return True
-
-    def __call__(self) -> T:
-        return self.value
-
-    def is_failure(self) -> Literal[False]:
-        return False
-
-    def is_success(self) -> Literal[True]:
-        return True
-
-    def fold(
-        self,
-        failure: Callable[[Exception], Exception],
-        success: Callable[[T], S],
-    ) -> Try[S]:
-        return Success(success(self.value))
-
-
-# Either/Left/Right
-L = TypeVar("L")
-R = TypeVar("R")
-LD = TypeVar("LD")
-RD = TypeVar("RD")
-
-
-class Either(Monad, ABC, Generic[L, R]):
-    """
-    Left: Irregular case
-    Right: Regular case
-    """
-
-    value: Union[L, R]
-
-    def __call__(self) -> Union[Left[L, R], R]:
-        if not bool(self):
-            return Left[L, R](value=self.value)
-        return self.value
-
-    @abstractmethod
-    def is_left(self) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
-    def is_right(self) -> bool:
-        raise NotADirectoryError
-
-    @abstractmethod
-    def fold(self, left: Callable[[L], LD], right: Callable[[R], RD]) -> Either[LD, RD]:
-        raise NotImplementedError
-
-    @staticmethod
-    def do(
-        generator_fuction: Callable[..., Generator[Either[L, R], Any, R]]
-    ) -> Callable[..., Either[L, R]]:
-        def wrapper(*args: Any, **kwargs: Any) -> Either[L, R]:
-            def recur(
-                generator: Generator[Union[Left[L, R], Any], Union[Left[L, R], Any], R],
-                prev: Any,
-            ) -> Either[L, R]:
-                try:
-                    result = generator.send(prev)
-                except StopIteration as last:
-                    # Regura case
-                    return Right(last.value)
-                if Left is type(result):
-                    # Irregular case
-                    return result
-                return recur(generator, result)
-
-            return recur(generator_fuction(*args, **kwargs), None)
-
-        return wrapper
-
-
-@dataclasses.dataclass(frozen=True)
-class Left(Either[L, R]):
-    """Left"""
-
-    value: L
-    frame: Frame = dataclasses.field(default_factory=Frame)
-
-    def __bool__(self) -> Literal[False]:
-        return False
-
-    def is_left(self) -> Literal[True]:
-        return True
-
-    def is_right(self) -> Literal[False]:
-        return False
-
-    def fold(self, left: Callable[[L], LD], right: Callable[[R], RD]) -> Either[LD, RD]:
-        return Left[LD, RD](value=left(self.value))
-
-
-@dataclasses.dataclass(frozen=True)
-class Right(Either[L, R]):
-    """Right"""
-
-    value: R
-
-    def __bool__(self) -> Literal[True]:
-        return True
-
-    def is_left(self) -> Literal[False]:
-        return False
-
-    def is_right(self) -> Literal[True]:
-        return True
-
-    def fold(self, left: Callable[[L], LD], right: Callable[[R], RD]) -> Either[LD, RD]:
-        return Right[LD, RD](right(self.value))

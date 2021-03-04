@@ -1,19 +1,71 @@
+def test_either():
+    from typing import Any
+
+    from category import Left, Right
+
+    assert 0 == Left[int, Any](0).value
+    assert 0 == Right[Any, int](0).value
+    assert False is bool(Left[int, Any](0))
+    assert True is bool(Right[Any, int](0))
+    assert True is Left[int, Any](0).is_left()
+    assert False is Left[int, Any](0).is_right()
+    assert False is Right[Any, int](0).is_left()
+    assert True is Right[Any, int](0).is_right()
+
+
+def test_either_do():
+    from typing import Any, Generator
+
+    from category import Either, Left, Right
+
+    @Either.do
+    def left_context() -> Generator[Either[None, int], Any, int]:
+        one = yield from Right[None, int](1)()
+        two = 2
+        three = yield from Left[None, int](None)()
+        return one + two + three
+
+    assert None is left_context().value
+    assert False is bool(left_context())
+    assert True is left_context().is_left()
+    assert False is left_context().is_right()
+    assert Left[None, int](None).value == left_context().value
+    assert (
+        Left[int, int](0).value
+        == left_context()
+        .fold(left=lambda value: 0, right=lambda value: value * 2)
+        .value
+    )
+
+    @Either.do
+    def right_context() -> Generator[Either[None, int], Any, int]:
+        one = yield from Right[None, int](1)()
+        two = 2
+        three = yield from Right[None, int](3)()
+        return one + two + three
+
+    assert 6 == right_context().value
+    assert True is bool(right_context())
+    assert False is right_context().is_left()
+    assert True is right_context().is_right()
+    assert Right[None, int](6) == right_context()
+    assert Right[None, int](12) == right_context().fold(
+        left=lambda value: 0, right=lambda value: value * 2
+    )
+
+
 def test_try():
     from category import Failure, Success
 
-    assert Failure is type(Failure())
+    assert Failure is type(Failure(Exception()))
     assert ValueError is type(Failure(ValueError()).value)
     assert 0 == Success(0).value
     assert True is bool(Success(0))
-    assert False is bool(Failure())
+    assert False is bool(Failure(Exception()))
     assert True is Success(0).is_success()
     assert False is Success(0).is_failure()
     assert False is Failure(Exception()).is_success()
     assert True is Failure(Exception()).is_failure()
-
-    assert 0 == Success(0)()
-    assert Failure is type(Failure()())
-    assert Exception is type(Failure(Exception())().value)
 
 
 def test_try_hold():
@@ -44,9 +96,9 @@ def test_try_do():
 
     @Try.do
     def failure_context() -> Generator[Any, Any, int]:
-        one = yield Success(1)()
+        one = yield from Success(1)()
         two = 2
-        three = yield Failure(ValueError())()
+        three = yield from Failure(ValueError())()
         return one + two + three
 
     assert Failure is type(failure_context())
@@ -62,9 +114,9 @@ def test_try_do():
 
     @Try.do
     def success_context() -> Generator[Any, Any, int]:
-        one = yield Success(1)()
+        one = yield from Success(1)()
         two = 2
-        three = yield Success(3)()
+        three = yield from Success(3)()
         return one + two + three
 
     assert Success(6) == success_context()
@@ -84,8 +136,8 @@ def test_try_do():
 
     @Try.do
     def mix_failure_context() -> Generator[Any, Any, int]:
-        success = yield multi_context(1)()
-        _ = yield multi_context(0)()
+        success = yield from multi_context(1)()
+        _ = yield from multi_context(0)()
         return success
 
     assert Failure is type(mix_failure_context())
@@ -93,9 +145,9 @@ def test_try_do():
 
     @Try.do
     def mix_success_context() -> Generator[Any, Any, int]:
-        one = yield multi_context(1)()
+        one = yield from multi_context(1)()
         two = 2
-        three = yield multi_context(3)()
+        three = yield from multi_context(3)()
         return one + two + three
 
     assert Success(6) == mix_success_context()
@@ -129,7 +181,7 @@ def test_future_hold():
     import concurrent.futures
     from typing import Optional
 
-    from category import Failure, Future
+    from category import Failure, Future, Success
 
     loop = asyncio.get_event_loop()
 
@@ -146,12 +198,15 @@ def test_future_hold():
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         assert Future is type(context(0)(loop=loop, executor=executor))
-        assert Failure is type(context(0)(loop=loop, executor=executor)())
-        assert Exception is type(context(0)(loop=loop, executor=executor)().value)
+        assert Failure is type(context(0)(loop=loop, executor=executor).on_complete())
+        assert Exception is type(
+            context(0)(loop=loop, executor=executor).on_complete().value
+        )
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         assert Future is type(context(1)(loop=loop, executor=executor))
-        assert 1 == context(1)(loop=loop, executor=executor)()
+        assert Success is type(context(1)(loop=loop, executor=executor).on_complete())
+        assert 1 == context(1)(loop=loop, executor=executor).on_complete().value
 
 
 def test_future_do():
@@ -159,7 +214,7 @@ def test_future_do():
     import concurrent.futures
     from typing import Any, Generator, Optional
 
-    from category import Failure, Future
+    from category import Failure, Future, Success
 
     loop = asyncio.get_event_loop()
 
@@ -182,15 +237,17 @@ def test_future_do():
             loop: asyncio.AbstractEventLoop,
             executor: concurrent.futures.ThreadPoolExecutor,
         ) -> Generator[Any, Any, int]:
-            one = yield context(1)(loop=loop, executor=executor)()
+            one = yield from context(1)(loop=loop, executor=executor)()
             two = 2
-            three = yield context(0)(loop=loop, executor=executor)()
+            three = yield from context(0)(loop=loop, executor=executor)()
             return one + two + three
 
-        assert Failure is type(mix_failure_context()(loop=loop, executor=executor))
-        assert Failure is type(mix_failure_context()(loop=loop, executor=executor)())
+        assert Future is type(mix_failure_context()(loop=loop, executor=executor))
+        assert Failure is type(
+            mix_failure_context()(loop=loop, executor=executor).on_complete()
+        )
         assert Exception is type(
-            mix_failure_context()(loop=loop, executor=executor)().value
+            mix_failure_context()(loop=loop, executor=executor).on_complete().value
         )
 
         @Future.do
@@ -199,71 +256,15 @@ def test_future_do():
             loop: asyncio.AbstractEventLoop,
             executor: concurrent.futures.ThreadPoolExecutor,
         ) -> Generator[Any, Any, int]:
-            one = yield context(1)(loop=loop, executor=executor)()
+            one = yield from context(1)(loop=loop, executor=executor)()
             two = 2
-            three = yield context(3)(loop=loop, executor=executor)()
+            three = yield from context(3)(loop=loop, executor=executor)()
             return one + two + three
 
         assert Future is type(mix_success_context()(loop=loop, executor=executor))
-        assert 6 == mix_success_context()(loop=loop, executor=executor)()
-
-
-def test_either():
-    from typing import Any
-
-    from category import Left, Right
-
-    assert 0 == Left[int, Any](0).value
-    assert 0 == Right[Any, int](0).value
-    assert False is bool(Left[int, Any](0))
-    assert True is bool(Right[Any, int](0))
-    assert True is Left[int, Any](0).is_left()
-    assert False is Left[int, Any](0).is_right()
-    assert False is Right[Any, int](0).is_left()
-    assert True is Right[Any, int](0).is_right()
-
-    assert Left(0).value is Left[int, Any](0)().value
-    assert 0 == Right[Any, int](0)()
-
-
-def test_either_do():
-    from typing import Any, Generator, Union
-
-    from category import Either, Left, Right
-
-    @Either.do
-    def left_context() -> Generator[
-        Union[Left[None, int], int], Union[Left[None, int], int], int
-    ]:
-        one = yield Right[None, int](1)()
-        two = 2
-        three = yield Left[None, int](None)()
-        return one + two + three
-
-    assert None is left_context().value
-    assert False is bool(left_context())
-    assert True is left_context().is_left()
-    assert False is left_context().is_right()
-    assert Left[None, int](None).value == left_context().value
-    assert (
-        Left[int, int](0).value
-        == left_context()
-        .fold(left=lambda value: 0, right=lambda value: value * 2)
-        .value
-    )
-
-    @Either.do
-    def right_context() -> Generator[Either[None, int], Any, int]:
-        one = yield Right[None, int](1)()
-        two = 2
-        three = yield Right[None, int](3)()
-        return one + two + three
-
-    assert 6 == right_context().value
-    assert True is bool(right_context())
-    assert False is right_context().is_left()
-    assert True is right_context().is_right()
-    assert Right[None, int](6) == right_context()
-    assert Right[None, int](12) == right_context().fold(
-        left=lambda value: 0, right=lambda value: value * 2
-    )
+        assert Success is type(
+            mix_success_context()(loop=loop, executor=executor).on_complete()
+        )
+        assert (
+            6 == mix_success_context()(loop=loop, executor=executor).on_complete().value
+        )
