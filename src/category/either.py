@@ -64,10 +64,10 @@ class Either(ABC, Generic[L, R]):
                 try:
                     result = generator.send(prev)
                 except StopIteration as last:
-                    # Regura case
+                    # Right case
                     return Right(value=last.value)
+                # Left case
                 if isinstance(result, Left):
-                    # Irregular case
                     return result
                 return recur(generator, result)
 
@@ -227,9 +227,9 @@ class RightProjection(Generic[L, R]):
 
 
 EitherST = Union[Left[L, R], Right[L, R]]
-EitherDo = Generator[Union[Left[L, Any], Any], Any, R]
+EitherDo = Generator[Union[EitherST[L, Any], Any], Any, R]
 EitherGenerator = Generator[
-    Union[Left[L, Any], Right[L, Any], Any],
-    Union[Left[L, Any], Right[L, Any], Any],
+    Union[EitherST[L, Any], Any],
+    Union[EitherST[L, Any], Any],
     R,
 ]
