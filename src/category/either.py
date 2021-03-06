@@ -8,6 +8,7 @@ L = TypeVar("L")
 R = TypeVar("R")
 LL = TypeVar("LL")
 RR = TypeVar("RR")
+EE = TypeVar("EE")
 
 
 class Either(ABC, Generic[L, R]):
@@ -17,8 +18,8 @@ class Either(ABC, Generic[L, R]):
 
     @abstractmethod
     def __call__(
-        self, if_left_then: Optional[Callable[[L], LL]] = None
-    ) -> Generator[Union[Either[L, R], LL], None, Union[L, R]]:
+        self, /, if_left_then: Optional[Callable[[L], EE]] = None
+    ) -> Generator[Union[EitherST[L, R], EE], None, Union[L, R]]:
         raise NotImplementedError
 
     @abstractmethod
@@ -31,7 +32,7 @@ class Either(ABC, Generic[L, R]):
 
     @abstractmethod
     def fold(
-        self, left: Callable[[L], LL], right: Callable[[R], RR]
+        self, /, left: Callable[[L], LL], right: Callable[[R], RR]
     ) -> EitherST[LL, RR]:
         raise NotImplementedError
 
@@ -75,6 +76,10 @@ class Either(ABC, Generic[L, R]):
         return wrapper
 
 
+class EitherError(Exception):
+    ...
+
+
 @dataclasses.dataclass(frozen=True)
 class Left(Either[L, R]):
     """Left"""
@@ -85,8 +90,8 @@ class Left(Either[L, R]):
         return False
 
     def __call__(
-        self, if_left_then: Optional[Callable[[L], LL]] = None
-    ) -> Generator[Union[Left[L, R], LL], None, L]:
+        self, /, if_left_then: Optional[Callable[[L], EE]] = None
+    ) -> Generator[Union[Left[L, R], EE], None, L]:
         # Type conversion
         if if_left_then is not None:
             converted_left = if_left_then(self.value)
@@ -103,7 +108,7 @@ class Left(Either[L, R]):
         return Left[L, RR](value=self.value)
 
     def fold(
-        self, left: Callable[[L], LL], right: Callable[[R], RR]
+        self, /, left: Callable[[L], LL], right: Callable[[R], RR]
     ) -> EitherST[LL, RR]:
         return Left[LL, RR](value=left(self.value))
 
@@ -142,7 +147,7 @@ class Right(Either[L, R]):
         return functor(self.value)
 
     def fold(
-        self, left: Callable[[L], LL], right: Callable[[R], RR]
+        self, /, left: Callable[[L], LL], right: Callable[[R], RR]
     ) -> EitherST[LL, RR]:
         return Right[LL, RR](value=right(self.value))
 
@@ -159,15 +164,6 @@ class Right(Either[L, R]):
         return True
 
 
-EitherST = Union[Left[L, R], Right[L, R]]
-EitherDo = Generator[Union[Left[L, Any], Any], Any, R]
-EitherGenerator = Generator[
-    Union[Left[L, Any], Right[L, Any], Any],
-    Union[Left[L, Any], Right[L, Any], Any],
-    R,
-]
-
-
 @dataclasses.dataclass(frozen=True)
 class LeftProjection(Generic[L, R]):
     """LeftProjection"""
@@ -177,14 +173,15 @@ class LeftProjection(Generic[L, R]):
     def __bool__(self) -> bool:
         return bool(self.either)
 
-    def get(self, else_then: Optional[Callable[..., LL]] = None) -> Union[L, LL]:
+    def get(self, /, if_right_then: Optional[Callable[[R], RR]] = None) -> Union[L, RR]:
         if isinstance(self.either, Left):
             return self.either.value
         else:
-            if else_then is not None:
-                return else_then()
+            if if_right_then is not None:
+                converted_right = if_right_then(self.either.value)
+                return converted_right
             else:
-                raise ValueError
+                raise EitherError()
 
     def map(self, functor: Callable[[L], LL]) -> EitherST[LL, R]:
         if isinstance(self.either, Left):
@@ -208,11 +205,11 @@ class RightProjection(Generic[L, R]):
     def __bool__(self) -> bool:
         return bool(self.either)
 
-    def get(self, else_then: Optional[Callable[..., RR]] = None) -> Union[R, RR]:
+    def get(self, /, if_left_then: Optional[Callable[[L], LL]] = None) -> Union[LL, R]:
         if isinstance(self.either, Left):
-            if else_then is not None:
-                return else_then()
-            raise ValueError
+            if if_left_then is not None:
+                return if_left_then(self.either.value)
+            raise EitherError()
         else:
             return self.either.value
 
@@ -227,3 +224,12 @@ class RightProjection(Generic[L, R]):
             return Left[L, RR](value=self.either.value)
         else:
             return functor(self.either.value)
+
+
+EitherST = Union[Left[L, R], Right[L, R]]
+EitherDo = Generator[Union[Left[L, Any], Any], Any, R]
+EitherGenerator = Generator[
+    Union[Left[L, Any], Right[L, Any], Any],
+    Union[Left[L, Any], Right[L, Any], Any],
+    R,
+]
