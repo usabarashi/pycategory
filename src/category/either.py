@@ -2,12 +2,23 @@ from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Generator, Generic, Literal, Optional, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    Generic,
+    Literal,
+    NoReturn,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 L = TypeVar("L")
 R = TypeVar("R")
 LL = TypeVar("LL")
 RR = TypeVar("RR")
+TT = TypeVar("TT")
 EE = TypeVar("EE")
 
 
@@ -31,9 +42,7 @@ class Either(ABC, Generic[L, R]):
         raise NotImplementedError
 
     @abstractmethod
-    def fold(
-        self, /, left: Callable[[L], LL], right: Callable[[R], RR]
-    ) -> EitherST[LL, RR]:
+    def fold(self, /, left: Callable[[L], TT], right: Callable[[R], TT]) -> TT:
         raise NotImplementedError
 
     @abstractmethod
@@ -107,10 +116,8 @@ class Left(Either[L, R]):
     def flatmap(self, functor: Callable[[R], EitherST[L, RR]]) -> EitherST[L, RR]:
         return Left[L, RR](value=self.value)
 
-    def fold(
-        self, /, left: Callable[[L], LL], right: Callable[[R], RR]
-    ) -> EitherST[LL, RR]:
-        return Left[LL, RR](value=left(self.value))
+    def fold(self, /, left: Callable[[L], TT], right: Callable[[R], TT]) -> TT:
+        return left(self.value)
 
     def left(self) -> LeftProjection[L, R]:
         return LeftProjection(either=self)
@@ -146,10 +153,8 @@ class Right(Either[L, R]):
     def flatmap(self, functor: Callable[[R], EitherST[L, RR]]) -> EitherST[L, RR]:
         return functor(self.value)
 
-    def fold(
-        self, /, left: Callable[[L], LL], right: Callable[[R], RR]
-    ) -> EitherST[LL, RR]:
-        return Right[LL, RR](value=right(self.value))
+    def fold(self, /, left: Callable[[L], TT], right: Callable[[R], TT]) -> TT:
+        return right(self.value)
 
     def left(self) -> LeftProjection[L, R]:
         return LeftProjection(either=self)
@@ -173,15 +178,17 @@ class LeftProjection(Generic[L, R]):
     def __bool__(self) -> bool:
         return bool(self.either)
 
-    def get(self, /, if_right_then: Optional[Callable[[R], RR]] = None) -> Union[L, RR]:
+    def get(self) -> Union[NoReturn, L]:
         if isinstance(self.either, Left):
             return self.either.value
         else:
-            if if_right_then is not None:
-                converted_right = if_right_then(self.either.value)
-                return converted_right
-            else:
-                raise EitherError()
+            raise EitherError()
+
+    def get_or_else(self, default: Callable[..., RR]) -> Union[L, RR]:
+        if isinstance(self.either, Left):
+            return self.either.value
+        else:
+            return default()
 
     def map(self, functor: Callable[[L], LL]) -> EitherST[LL, R]:
         if isinstance(self.either, Left):
@@ -205,11 +212,15 @@ class RightProjection(Generic[L, R]):
     def __bool__(self) -> bool:
         return bool(self.either)
 
-    def get(self, /, if_left_then: Optional[Callable[[L], LL]] = None) -> Union[LL, R]:
+    def get(self) -> Union[NoReturn, R]:
         if isinstance(self.either, Left):
-            if if_left_then is not None:
-                return if_left_then(self.either.value)
             raise EitherError()
+        else:
+            return self.either.value
+
+    def get_or_else(self, default: Callable[..., LL]) -> Union[LL, R]:
+        if isinstance(self.either, Left):
+            return default()
         else:
             return self.either.value
 
