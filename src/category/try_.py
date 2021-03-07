@@ -2,7 +2,17 @@ from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Generator, Generic, Literal, Optional, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    Generic,
+    Literal,
+    NoReturn,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 T = TypeVar("T")
 TT = TypeVar("TT")
@@ -21,9 +31,11 @@ class Try(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def get(
-        self, /, if_failure_then: Optional[Callable[[Exception], TT]] = None
-    ) -> Union[T, TT]:
+    def get(self) -> Union[NoReturn, T]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_or_else(self, default: Callable[..., TT]) -> Union[T, TT]:
         raise NotImplementedError
 
     @abstractmethod
@@ -38,9 +50,9 @@ class Try(ABC, Generic[T]):
     def fold(
         self,
         /,
-        failure: Callable[[Exception], Exception],
+        failure: Callable[[Exception], TT],
         success: Callable[[T], TT],
-    ) -> TryST[TT]:
+    ) -> TT:
         raise NotImplementedError
 
     @abstractmethod
@@ -85,7 +97,7 @@ class Try(ABC, Generic[T]):
         return impl
 
 
-class FailureError(BaseException):
+class TryError(Exception):
     ...
 
 
@@ -109,13 +121,11 @@ class Failure(Try[T]):
             yield self
             return self.value
 
-    def get(
-        self, /, if_failure_then: Optional[Callable[[Exception], TT]] = None
-    ) -> Union[T, TT]:
-        if if_failure_then is not None:
-            return if_failure_then(self.value)
-        else:
-            raise FailureError from self.value
+    def get(self) -> NoReturn:
+        raise TryError() from self.value
+
+    def get_or_else(self, default: Callable[..., TT]) -> Union[T, TT]:
+        return default()
 
     def map(self, functor: Callable[[T], TT]) -> TryST[TT]:
         return Failure[TT](value=self.value)
@@ -126,10 +136,10 @@ class Failure(Try[T]):
     def fold(
         self,
         /,
-        failure: Callable[[Exception], Exception],
+        failure: Callable[[Exception], TT],
         success: Callable[[T], TT],
-    ) -> TryST[TT]:
-        return Failure[TT](value=failure(self.value))
+    ) -> TT:
+        return failure(self.value)
 
     def is_failure(self) -> Literal[True]:
         return True
@@ -153,9 +163,10 @@ class Success(Try[T]):
         yield self
         return self.value
 
-    def get(
-        self, /, if_failure_then: Optional[Callable[[Exception], TT]] = None
-    ) -> Union[T, TT]:
+    def get(self) -> T:
+        return self.value
+
+    def get_or_else(self, default: Callable[..., Any]) -> T:
         return self.value
 
     def map(self, functor: Callable[[T], TT]) -> TryST[TT]:
@@ -167,10 +178,10 @@ class Success(Try[T]):
     def fold(
         self,
         /,
-        failure: Callable[[Exception], Exception],
+        failure: Callable[[Exception], TT],
         success: Callable[[T], TT],
-    ) -> TryST[TT]:
-        return Success[TT](value=success(self.value))
+    ) -> TT:
+        return success(self.value)
 
     def is_failure(self) -> Literal[False]:
         return False
