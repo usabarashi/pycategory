@@ -109,65 +109,59 @@ class Listeners(PromiseContent[T]):
 
 @dataclasses.dataclass
 class Future(Promise[T]):
-    name: str
     listeners_or_result: Union[Listeners[T], Result[TryST[T]]] = dataclasses.field(
         default_factory=Listeners
     )
 
-    def map(
-        self, functor: Callable[[T], S], ec: ExecutionContext, name: str
-    ) -> Future[S]:
+    def map(self, functor: Callable[[T], S], ec: ExecutionContext) -> Future[S]:
         def fold(try_: TryST[T]) -> TryST[S]:
             if isinstance(try_, Failure):
                 return Failure(value=try_.value)
             else:
                 return Success(value=functor(try_.value))
 
-        return self.transform(functor=fold, ec=ec, name=name)
+        return self.transform(functor=fold, ec=ec)
 
     def flatmap(
-        self, functor: Callable[[T], Future[S]], ec: ExecutionContext, name: str
+        self, functor: Callable[[T], Future[S]], ec: ExecutionContext
     ) -> Future[S]:
         def fold(try_: TryST[T]) -> Future[S]:
             if isinstance(try_, Failure):
-                future = Future[S](name=name)
+                future = Future[S]()
                 failure = try_.value
                 future.listeners_or_result = Result(value=Failure(value=failure))
                 return future
             else:
                 return functor(try_.value)
 
-        return self.transform_with(functor=fold, ec=ec, name=name)
+        return self.transform_with(functor=fold, ec=ec)
 
     @property
     def future(self) -> Future[T]:
         return self
 
     def transform(
-        self, functor: Callable[[TryST[T]], TryST[S]], ec: ExecutionContext, name: str
+        self, functor: Callable[[TryST[T]], TryST[S]], ec: ExecutionContext
     ) -> Future[S]:
-        promise = Future[S](name=name)
+        promise = Future[S]()
         self.on_complete(
-            functor=lambda result: promise.try_complete(result=functor(result)),
-            ec=ec,
-            name=name,
+            functor=lambda result: promise.try_complete(result=functor(result)), ec=ec
         )
         return promise.future
 
     def transform_with(
-        self, functor: Callable[[TryST[T]], Future[S]], ec: ExecutionContext, name: str
+        self, functor: Callable[[TryST[T]], Future[S]], ec: ExecutionContext
     ) -> Future[S]:
-        promise = Future[S](name=name)
+        promise = Future[S]()
 
         def complete(result: TryST[T]) -> None:
             future = functor(result)
             return future.on_complete(
                 lambda current_result: promise.try_complete(current_result),
                 ec=ec,
-                name="from-" + future.name,
             )
 
-        self.on_complete(complete, ec=ec, name="from-" + self.name)
+        self.on_complete(complete, ec=ec)
         return promise.future
 
     def try_complete(self, result: TryST[T]) -> bool:
@@ -195,7 +189,7 @@ class Future(Promise[T]):
             return True
 
     def on_complete(
-        self, functor: Callable[[TryST[T]], U], ec: ExecutionContext, name: str
+        self, functor: Callable[[TryST[T]], U], ec: ExecutionContext
     ) -> None:
         new_runnable = RunnableWithValue[T, Any](functor=functor, ec=ec)
         if isinstance(self.listeners_or_result, Result):
@@ -209,10 +203,10 @@ class Future(Promise[T]):
             if listeners is self.listeners_or_result:
                 listeners = Listeners(listeners.runnables.append(new_runnable))
             else:
-                self.on_complete(functor=functor, ec=ec, name=name)
+                self.on_complete(functor=functor, ec=ec)
 
     @staticmethod
-    def successful(value: T, name: str) -> Future[T]:
-        future = Future[T](name=name)
+    def successful(value: T) -> Future[T]:
+        future = Future[T]()
         future.listeners_or_result = Result(value=Success(value=value))
         return future
