@@ -1,12 +1,13 @@
+"""Future"""
+
 from __future__ import annotations
 
 import asyncio
 import concurrent.futures
 import dataclasses
-from abc import ABC, abstractmethod
-from typing import Any, Callable, Generic, Optional, TypeVar, Union
+from abc import ABC
+from typing import Callable, Type, TypeVar
 
-from category.collection import Vector
 from category.try_ import Failure, Success, TryST
 
 T = TypeVar("T")
@@ -17,196 +18,123 @@ U = TypeVar("U")
 class ExecutionContext(ABC):
     """ExecutionContext"""
 
-    @abstractmethod
-    def execute(self, runnable: Runnable) -> Any:
-        raise NotImplementedError
+    loop: asyncio.AbstractEventLoop
+    executor: Type[concurrent.futures.ThreadPoolExecutor]
 
 
 @dataclasses.dataclass(frozen=True)
 class ThreadPoolExecutionContext(ExecutionContext):
     """ThreadPoolExecutionContext"""
 
-    loop: asyncio.AbstractEventLoop
-
-    def execute(self, runnable: Runnable) -> None:
-        if runnable.try_ is not None:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                awaitable = self.loop.run_in_executor(
-                    executor, runnable.functor, runnable.try_
-                )
-                result = self.loop.run_until_complete(future=awaitable)
-                return result
-        raise EOFError
+    loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
+    executor: Type[
+        concurrent.futures.ThreadPoolExecutor
+    ] = concurrent.futures.ThreadPoolExecutor
 
 
-class Promise(ABC, Generic[T]):
-    """Promise"""
+class Future(concurrent.futures.Future[T]):
+    """Future"""
 
-    @property
-    def future(self) -> Future[T]:
-        raise NotImplementedError
+    def __init__(self) -> None:
+        super().__init__()
 
-    @abstractmethod
-    def try_complete(
-        self,
-        result: TryST[T],
-    ) -> bool:
-        """try_comple
-
-        False: Already set the value.
-        True: I was able to set the value.
-        """
-        raise NotImplementedError
-
-
-class Runnable(ABC):
-    ec: ExecutionContext
-    functor: Callable[[TryST[Any]], Any]
-    try_: Optional[TryST[Any]]
-
-    @abstractmethod
-    def run(self) -> None:
-        raise NotImplementedError
-
-
-@dataclasses.dataclass
-class RunnableWithValue(Runnable, Generic[T, U]):
-    """RunnableWithValue"""
-
-    ec: ExecutionContext
-    functor: Callable[[TryST[T]], U]
-    try_: Optional[TryST[T]] = None
-
-    def run(self) -> None:
-        if self.try_ is None:
-            raise NotImplementedError("value must be set")
-        else:
-            self.functor(self.try_)
-
-    def execute(self) -> None:
-        self.ec.execute(self)
-
-
-class PromiseContent(Generic[T]):
-    pass
-
-
-@dataclasses.dataclass
-class Result(PromiseContent[T]):
-    """Result"""
-
-    value: T
-
-
-@dataclasses.dataclass
-class Listeners(PromiseContent[T]):
-    """Listeners"""
-
-    runnables: Vector[RunnableWithValue[T, Any]] = dataclasses.field(
-        default_factory=Vector
-    )
-
-
-@dataclasses.dataclass
-class Future(Promise[T]):
-    listeners_or_result: Union[Listeners[T], Result[TryST[T]]] = dataclasses.field(
-        default_factory=Listeners
-    )
-
-    def map(self, functor: Callable[[T], S], ec: ExecutionContext) -> Future[S]:
+    def map(self, functor: Callable[[T], S], ec: Type[ExecutionContext]) -> Future[S]:
         def fold(try_: TryST[T]) -> TryST[S]:
             if isinstance(try_, Failure):
-                return Failure(value=try_.value)
+                return Failure[S](value=try_.value)
             else:
-                return Success(value=functor(try_.value))
+                return Success[S](value=functor(try_.value))
 
         return self.transform(functor=fold, ec=ec)
 
     def flatmap(
-        self, functor: Callable[[T], Future[S]], ec: ExecutionContext
+        self, functor: Callable[[T], Future[S]], ec: Type[ExecutionContext]
     ) -> Future[S]:
         def fold(try_: TryST[T]) -> Future[S]:
             if isinstance(try_, Failure):
-                future = Future[S]()
-                failure = try_.value
-                future.listeners_or_result = Result(value=Failure(value=failure))
-                return future
+                return self
             else:
                 return functor(try_.value)
 
         return self.transform_with(functor=fold, ec=ec)
 
-    @property
-    def future(self) -> Future[T]:
-        return self
-
     def transform(
-        self, functor: Callable[[TryST[T]], TryST[S]], ec: ExecutionContext
+        self, functor: Callable[[TryST[T]], TryST[S]], ec: Type[ExecutionContext]
     ) -> Future[S]:
-        promise = Future[S]()
+        future = Future[S]()
         self.on_complete(
-            functor=lambda result: promise.try_complete(result=functor(result)), ec=ec
+            functor=lambda result: future.try_complete(result=functor(result)), ec=ec
         )
-        return promise.future
+        return future
 
     def transform_with(
-        self, functor: Callable[[TryST[T]], Future[S]], ec: ExecutionContext
+        self, functor: Callable[[TryST[T]], Future[S]], ec: Type[ExecutionContext]
     ) -> Future[S]:
-        promise = Future[S]()
+        next_future = Future[S]()
 
-        def complete(result: TryST[T]) -> None:
-            future = functor(result)
-            return future.on_complete(
-                lambda current_result: promise.try_complete(current_result),
+        def complete(current_result: TryST[T]) -> None:
+            current_future = functor(current_result)
+            return current_future.on_complete(
+                lambda next_result: next_future.try_complete(next_result),
                 ec=ec,
             )
 
         self.on_complete(complete, ec=ec)
-        return promise.future
+        return next_future
 
     def try_complete(self, result: TryST[T]) -> bool:
-        """try_comple
-
-        False: Already set the value.
-        True: I was able to set the value.
-        """
-        if isinstance(self.listeners_or_result, Result):
+        if self.done():
             return False
         else:
-            listeners = self.listeners_or_result
-            # When an asynchronous side effect occurs
-            # if self.listeners_or_result is listeners:
-            #    self.listeners_or_result = Result(value=result)
-            # else:
-            #    self.try_complete(result=result)
 
-            def complete(runnable: RunnableWithValue[T, Any]) -> None:
-                if runnable.try_ is not None:
-                    runnable.try_ = result
-                runnable.execute()
+            def callback(self: Future[T]):
+                if isinstance(result, Failure):
+                    self._result = None
+                    self._exception = result.value
+                else:
+                    self._result = result.value
+                    self._exception = None
 
-            listeners.runnables.foreach(lambda runnable: complete(runnable=runnable))
+            self.add_done_callback(fn=callback)
             return True
 
     def on_complete(
-        self, functor: Callable[[TryST[T]], U], ec: ExecutionContext
+        self,
+        functor: Callable[[TryST[T]], U],
+        ec: Type[ExecutionContext],
     ) -> None:
-        new_runnable = RunnableWithValue[T, Any](functor=functor, ec=ec)
-        if isinstance(self.listeners_or_result, Result):
-            if new_runnable.try_ is None:
-                result = self.listeners_or_result
-                new_runnable.try_ = result.value
-            new_runnable.execute()
+        if self.done():
+            try:
+                result = self.result()
+                awaitable = ec.loop.run_in_executor(
+                    ec.executor(), functor, Success(result)
+                )
+                self._result = ec.loop.run_until_complete(awaitable)
+            except Exception as error:
+                awaitable = ec.loop.run_in_executor(
+                    ec.executor(), functor, Failure(value=error)
+                )
+                self._result = ec.loop.run_until_complete(awaitable)
         else:
-            listeners = self.listeners_or_result
-            # Stack new task
-            if listeners is self.listeners_or_result:
-                listeners = Listeners(listeners.runnables.append(new_runnable))
-            else:
-                self.on_complete(functor=functor, ec=ec)
+
+            def callback(self: Future[T]) -> None:
+                try:
+                    result = self.result()
+                    self._result = functor(Success(value=result))
+                except Exception as error:
+                    self._result = functor(Failure(value=error))
+
+            self.add_done_callback(fn=callback)
 
     @staticmethod
     def successful(value: T) -> Future[T]:
         future = Future[T]()
-        future.listeners_or_result = Result(value=Success(value=value))
+        future.set_result(result=value)
         return future
+
+    @property
+    def value(self) -> TryST[T]:
+        try:
+            return Success(value=self.result())
+        except Exception as failure:
+            return Failure(value=failure)
