@@ -6,13 +6,15 @@ import asyncio
 import concurrent.futures
 import dataclasses
 from abc import ABC
-from typing import Callable, Type, TypeVar
+from concurrent.futures._base import PENDING
+from typing import Any, Callable, Generator, Optional, Type, TypeVar, Union
 
 from category.try_ import Failure, Success, TryST
 
 T = TypeVar("T")
 S = TypeVar("S")
 U = TypeVar("U")
+EE = TypeVar("EE")
 
 
 class ExecutionContext(ABC):
@@ -38,53 +40,86 @@ class Future(concurrent.futures.Future[T]):
     def __init__(self) -> None:
         super().__init__()
 
-    def map(self, functor: Callable[[T], S], ec: Type[ExecutionContext]) -> Future[S]:
-        def fold(try_: TryST[T]) -> TryST[S]:
-            if isinstance(try_, Failure):
-                return Failure[S](value=try_.value)
+    def __bool__(self) -> bool:
+        return self.done()
+
+    def __call__(
+        self, /, if_failure_then: Optional[Callable[[Exception], EE]] = None
+    ) -> Generator[Union[EE, TryST[T]], None, T]:
+        try:
+            success = self.result()
+            yield Success(value=success)
+            return success
+        except Exception as error:
+            if if_failure_then is not None:
+                yield if_failure_then(error)
+                return error
             else:
-                return Success[S](value=functor(try_.value))
+                yield Failure(value=error)
+                return error
 
-        return self.transform(functor=fold, ec=ec)
+    def map(self, functor: Callable[[T], S]) -> Callable[..., Future[S]]:
+        def with_context(ec: Type[ExecutionContext]) -> Future[S]:
+            def fold(try_: TryST[T]) -> TryST[S]:
+                if isinstance(try_, Failure):
+                    return Failure[S](value=try_.value)
+                else:
+                    return Success[S](value=functor(try_.value))
 
-    def flatmap(
-        self, functor: Callable[[T], Future[S]], ec: Type[ExecutionContext]
-    ) -> Future[S]:
-        def fold(try_: TryST[T]) -> Future[S]:
-            if isinstance(try_, Failure):
-                return self
-            else:
-                return functor(try_.value)
+            return self.transform(functor=fold)(ec=ec)
 
-        return self.transform_with(functor=fold, ec=ec)
+        return with_context
+
+    def flatmap(self, functor: Callable[[T], Future[S]]) -> Callable[..., Future[S]]:
+        def with_context(ec: Type[ExecutionContext]) -> Future[S]:
+            def fold(try_: TryST[T]) -> Future[S]:
+                if isinstance(try_, Failure):
+                    return self  # type: Future[S]
+                else:
+                    return functor(try_.value)
+
+            return self.transform_with(functor=fold)(ec=ec)
+
+        return with_context
 
     def transform(
-        self, functor: Callable[[TryST[T]], TryST[S]], ec: Type[ExecutionContext]
-    ) -> Future[S]:
-        future = Future[S]()
-        self.on_complete(
-            functor=lambda result: future.try_complete(result=functor(result)), ec=ec
-        )
-        return future
+        self, functor: Callable[[TryST[T]], TryST[S]]
+    ) -> Callable[..., Future[S]]:
+        def with_context(ec: Type[ExecutionContext]) -> Future[S]:
+            future = Future[S]()
+            self.on_complete(
+                functor=lambda result: future.try_complete(result=functor(result))
+            )(ec=ec)
+            return future
+
+        return with_context
 
     def transform_with(
-        self, functor: Callable[[TryST[T]], Future[S]], ec: Type[ExecutionContext]
-    ) -> Future[S]:
-        next_future = Future[S]()
+        self, functor: Callable[[TryST[T]], Future[S]]
+    ) -> Callable[..., Future[S]]:
+        def with_context(ec: Type[ExecutionContext]) -> Future[S]:
+            next_future = Future[S]()
 
-        def complete(current_result: TryST[T]) -> None:
-            current_future = functor(current_result)
-            return current_future.on_complete(
-                lambda next_result: next_future.try_complete(next_result),
-                ec=ec,
-            )
+            def complete(current_result: TryST[T]) -> None:
+                current_future = functor(current_result)
+                return current_future.on_complete(
+                    lambda next_result: next_future.try_complete(next_result),
+                )(ec=ec)
 
-        self.on_complete(complete, ec=ec)
-        return next_future
+            self.on_complete(complete)(ec=ec)
+            return next_future
+
+        return with_context
 
     def try_complete(self, result: TryST[T]) -> bool:
         if self.done():
             return False
+        elif self._state is PENDING:
+            if isinstance(result, Failure):
+                self.set_exception(exception=result.value)
+            else:
+                self.set_result(result=result.value)
+            return True
         else:
 
             def callback(self: Future[T]):
@@ -101,30 +136,23 @@ class Future(concurrent.futures.Future[T]):
     def on_complete(
         self,
         functor: Callable[[TryST[T]], U],
-        ec: Type[ExecutionContext],
-    ) -> None:
-        if self.done():
-            try:
-                result = self.result()
-                awaitable = ec.loop.run_in_executor(
-                    ec.executor(), functor, Success(result)
-                )
-                self._result = ec.loop.run_until_complete(awaitable)
-            except Exception as error:
-                awaitable = ec.loop.run_in_executor(
-                    ec.executor(), functor, Failure(value=error)
-                )
-                self._result = ec.loop.run_until_complete(awaitable)
-        else:
+    ) -> Callable[..., None]:
+        def with_context(ec: Type[ExecutionContext]) -> None:
+            if self.done():
 
-            def callback(self: Future[T]) -> None:
-                try:
-                    result = self.result()
-                    self._result = functor(Success(value=result))
-                except Exception as error:
-                    self._result = functor(Failure(value=error))
+                def callback(self: Future[T]) -> None:
+                    try:
+                        # FIXME: Threaded processing
+                        result = self.result()
+                        self._result = functor(Success(value=result))
+                        self._exception = None
+                    except Exception as error:
+                        self._result = functor(Failure(value=error))
+                        self._exception = None
 
-            self.add_done_callback(fn=callback)
+                self.add_done_callback(fn=callback)
+
+        return with_context
 
     @staticmethod
     def successful(value: T) -> Future[T]:
@@ -138,3 +166,48 @@ class Future(concurrent.futures.Future[T]):
             return Success(value=self.result())
         except Exception as failure:
             return Failure(value=failure)
+
+    @staticmethod
+    def hold(functor: Callable[..., T]):
+        def wrapper(*args: Any, **kwargs: Any):
+            def with_context(*, ec: Type[ExecutionContext]) -> Future[T]:
+                # FIXME: Threaded processing
+                try:
+                    return Future[T].successful(value=functor(*args, **kwargs))
+                except Exception as error:
+                    future = Future[T]()
+                    future.set_exception(exception=error)
+                    return future
+
+            return with_context
+
+        return wrapper
+
+    @staticmethod
+    def do(
+        generator_function: Callable[..., FutureGenerator[T]]
+    ) -> Callable[..., Future[T]]:
+        def impl(*args: Any, **kwargs: Any) -> Future[T]:
+            def recur(
+                generator: FutureGenerator[T],
+                prev: Any,
+            ) -> Future[T]:
+                try:
+                    result: Union[TryST[T], Any] = generator.send(prev)
+                # Success case
+                except StopIteration as last:
+                    return Future[T].successful(value=last.value)
+                # Failure case
+                if isinstance(result, Failure):
+                    future = Future[T]()
+                    future.set_exception(exception=result.value)
+                    return future
+                return recur(generator, result)
+
+            return recur(generator_function(*args, **kwargs), None)
+
+        return impl
+
+
+FutureDo = Generator[Union[TryST[Any], Any], Union[TryST[Any], Any], T]
+FutureGenerator = Generator[Union[TryST[Any], Any], Union[TryST[Any], Any], T]
