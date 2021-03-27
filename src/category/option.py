@@ -80,12 +80,6 @@ class Option(ABC, Generic[T]):
         return wrapper
 
 
-class OptionError(Exception):
-    """OptionError"""
-
-    ...
-
-
 class Void(Option[T]):
     """Void"""
 
@@ -98,18 +92,18 @@ class Void(Option[T]):
         if if_void_then is not None:
             converted_void = if_void_then()
             yield converted_void
-            return None
+            raise GeneratorExit(self)
         else:
             yield self
-            return None
+            raise GeneratorExit(self)
 
     def get(self) -> NoReturn:
-        raise OptionError
+        raise ValueError(self)
 
     def get_or_else(self, default: Optional[Callable[..., TT]] = None) -> Union[T, TT]:
         if default is not None:
             return default()
-        raise OptionError
+        raise ValueError(self)
 
     def map(self, functor: Callable[[T], TT]) -> Option[TT]:
         return Void()

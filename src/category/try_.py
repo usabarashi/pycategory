@@ -27,7 +27,7 @@ class Try(ABC, Generic[T]):
     @abstractmethod
     def __call__(
         self, /, if_failure_then: Optional[Callable[[Exception], EE]] = None
-    ) -> Generator[Union[TryST[T], EE], None, Union[Exception, T]]:
+    ) -> Generator[Union[EE, TryST[T]], None, T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -97,10 +97,6 @@ class Try(ABC, Generic[T]):
         return impl
 
 
-class TryError(Exception):
-    ...
-
-
 @dataclasses.dataclass(frozen=True)
 class Failure(Try[T]):
     """Failure"""
@@ -111,18 +107,18 @@ class Failure(Try[T]):
         return False
 
     def __call__(
-        self, /, failure_then: Optional[Callable[[Exception], EE]] = None
-    ) -> Generator[Union[TryST[T], EE], None, Union[Exception, T]]:
-        if failure_then is not None:
-            converted_failure = failure_then(self.value)
+        self, /, if_failure_then: Optional[Callable[[Exception], EE]] = None
+    ) -> Generator[Union[EE, TryST[T]], None, T]:
+        if if_failure_then is not None:
+            converted_failure = if_failure_then(self.value)
             yield converted_failure
-            return self.value
+            raise GeneratorExit(self)
         else:
             yield self
-            return self.value
+            raise GeneratorExit(self)
 
     def get(self) -> NoReturn:
-        raise TryError() from self.value
+        raise ValueError() from self.value
 
     def get_or_else(self, default: Callable[..., TT]) -> Union[T, TT]:
         return default()
@@ -158,8 +154,8 @@ class Success(Try[T]):
         return True
 
     def __call__(
-        self, /, if_failure_then: Optional[Callable[[Exception], Any]] = None
-    ) -> Generator[Union[TryST[T]], None, Union[Exception, T]]:
+        self, /, if_failure_then: Optional[Callable[[Exception], EE]] = None
+    ) -> Generator[Union[EE, TryST[T]], None, T]:
         yield self
         return self.value
 

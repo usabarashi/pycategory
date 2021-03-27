@@ -155,6 +155,27 @@ def test_eitherttry_do():
     except BaseException as error:
         assert GeneratorExit is type(error)
 
+    @EitherTTry.do
+    def if_failure_then_context() -> EitherTTryDo[Exception, int]:
+        one = yield from EitherTTry[Exception, int](
+            value=Success(value=Right[Exception, int](value=1))
+        )()
+        two = 2
+        three = yield from EitherTTry[Exception, int](value=Failure(value=Exception()))(
+            if_failure_then=lambda exception: Left[Exception, int](value=Exception())
+        )
+        return one + two + three
+
+    assert EitherTTry is type(if_failure_then_context())
+    try:
+        if_failure_then_context().get()
+        assert False
+    except Exception as error:
+        assert ValueError is type(error)
+    assert Success is type(if_failure_then_context().value)
+    assert Left is type(if_failure_then_context().value.value)
+    assert Exception is type(if_failure_then_context().value.value.value)
+
     # Success[Left[L, R]] case
     @EitherTTry.do
     def success_left_context() -> EitherTTryDo[Exception, int]:
@@ -197,7 +218,7 @@ def test_eitherttry_do():
 
 
 def test_eithertfuture_get():
-    from category import EitherST, EitherTError, EitherTFuture, Future, Left, Right
+    from category import EitherST, EitherTFuture, Future, Left, Right
 
     # Failure case
     failure_future = Future[EitherST[Exception, int]]()
@@ -217,7 +238,7 @@ def test_eithertfuture_get():
         ).get()
         assert False
     except Exception as error:
-        assert EitherTError is type(error)
+        assert ValueError is type(error)
 
     # Success[Right[L, R]] case
     assert (
@@ -364,15 +385,7 @@ def test_eithertfuture_flatmap():
 
 
 def test_eithertfuture_do():
-    from category import (
-        EitherST,
-        EitherTError,
-        EitherTFuture,
-        EitherTFutureDo,
-        Future,
-        Left,
-        Right,
-    )
+    from category import EitherST, EitherTFuture, EitherTFutureDo, Future, Left, Right
 
     # Failrue case
     @EitherTFuture.do
@@ -393,6 +406,31 @@ def test_eithertfuture_do():
         assert False
     except BaseException as error:
         assert GeneratorExit is type(error)
+
+    @EitherTFuture.do
+    def if_failure_then_context() -> EitherTFutureDo[Exception, int]:
+        one = yield from EitherTFuture[Exception, int](
+            value=Future[EitherST[Exception, int]].successful(
+                value=Right[Exception, int](value=1)
+            )
+        )()
+        two = 2
+        future = Future[EitherST[Exception, int]]()
+        future.set_exception(exception=Exception())
+        three = yield from EitherTFuture[Exception, int](value=future)(
+            if_failure_then=lambda exception: Left[Exception, int](value=Exception())
+        )
+        return one + two + three
+
+    assert EitherTFuture is type(if_failure_then_context())
+    try:
+        if_failure_then_context().get()
+        assert False
+    except Exception as error:
+        assert ValueError is type(error)
+    assert Future is type(if_failure_then_context().value)
+    assert Left is type(if_failure_then_context().value._result)
+    assert Exception is type(if_failure_then_context().value._result.value)
 
     # Success[Left[L, R]] case
     @EitherTFuture.do
@@ -415,7 +453,7 @@ def test_eithertfuture_do():
         success_left_context().get()
         assert False
     except Exception as error:
-        assert EitherTError is type(error)
+        assert ValueError is type(error)
     assert Future is type(success_left_context().value)
     assert Left is type(success_left_context().value._result)
     assert Exception is type(success_left_context().value._result.value)

@@ -1,5 +1,5 @@
 def test_void():
-    from category import OptionError, Void
+    from category import Void
 
     assert Void is type(Void[int]())
     assert False is bool(Void[int]())
@@ -7,19 +7,19 @@ def test_void():
         Void[int]().get()
         assert False
     except Exception as error:
-        assert OptionError is type(error)
+        assert ValueError is type(error)
     try:
         Void[int]().get_or_else()
         assert False
     except Exception as error:
-        assert OptionError is type(error)
+        assert ValueError is type(error)
     assert None is Void[int]().get_or_else(default=lambda: None)
     assert True is Void[int]().is_empty()
     assert False is Void[int]().not_empty()
 
 
 def test_void_map():
-    from category import OptionError, Void
+    from category import Void
 
     assert Void is type(Void[int]().map(functor=lambda some: None))
     assert False is bool(Void[int]().map(functor=lambda some: None))
@@ -27,12 +27,12 @@ def test_void_map():
         Void[int]().map(functor=lambda some: None).get()
         assert False
     except Exception as error:
-        assert OptionError is type(error)
+        assert ValueError is type(error)
     try:
         Void[int]().map(functor=lambda some: None).get_or_else()
         assert False
     except Exception as error:
-        assert OptionError is type(error)
+        assert ValueError is type(error)
     assert None is Void[int]().map(functor=lambda some: None).get_or_else(
         default=lambda: None
     )
@@ -41,7 +41,7 @@ def test_void_map():
 
 
 def test_void_flatmap():
-    from category import OptionError, Some, Void
+    from category import Some, Void
 
     assert Void is type(Void[int]().flatmap(functor=lambda some: Some[int](value=0)))
     assert False is bool(Void[int]().flatmap(functor=lambda some: Some[int](value=0)))
@@ -49,12 +49,12 @@ def test_void_flatmap():
         Void[int]().flatmap(functor=lambda some: Some[int](value=0)).get()
         assert False
     except Exception as error:
-        assert OptionError is type(error)
+        assert ValueError is type(error)
     try:
         Void[int]().flatmap(functor=lambda some: Some[int](value=0)).get_or_else()
         assert False
     except Exception as error:
-        assert OptionError is type(error)
+        assert ValueError is type(error)
     assert None is Void[int]().flatmap(
         functor=lambda some: Some[int](value=0)
     ).get_or_else(default=lambda: None)
@@ -134,7 +134,7 @@ def test_some_flatmap():
 
 
 def test_option_fold():
-    from category import OptionError, Some, Void
+    from category import Some, Void
 
     try:
         assert (
@@ -145,7 +145,7 @@ def test_option_fold():
         )
         assert False
     except Exception as error:
-        assert OptionError is type(error)
+        assert ValueError is type(error)
     try:
         assert (
             None
@@ -155,7 +155,7 @@ def test_option_fold():
         )
         assert False
     except Exception as error:
-        assert OptionError is type(error)
+        assert ValueError is type(error)
     assert None is Void[int]().fold(
         void=lambda: Void[int](), some=lambda some: Some[int](value=some + 1)
     ).get_or_else(default=lambda: None)
@@ -185,6 +185,21 @@ def test_option_do():
     assert True is void_context().is_empty()
     assert False is void_context().not_empty()
     assert None is void_context().fold(void=lambda: None, some=lambda some: None)
+
+    @Option.do
+    def if_void_then_context() -> OptionDo[int]:
+        one = yield from Some[int](1)()
+        two = 2
+        three = yield from Void()(if_void_then=lambda: Void[int]())
+        return one + two + three
+
+    assert Void is type(if_void_then_context())
+    assert False is bool(if_void_then_context())
+    assert True is if_void_then_context().is_empty()
+    assert False is if_void_then_context().not_empty()
+    assert None is if_void_then_context().fold(
+        void=lambda: None, some=lambda some: None
+    )
 
     @Option.do
     def some_context() -> OptionDo[int]:
