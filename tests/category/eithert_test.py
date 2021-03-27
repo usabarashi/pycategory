@@ -150,14 +150,10 @@ def test_eitherttry_do():
         )()
         return one + two + three
 
-    assert EitherTTry is type(failure_context())
     try:
-        failure_context().get()
-        assert False
-    except Exception as error:
-        assert ValueError is type(error)
-    assert Failure is type(failure_context().value)
-    assert Exception is type(failure_context().value.value)
+        failure_context()
+    except BaseException as error:
+        assert GeneratorExit is type(error)
 
     # Success[Left[L, R]] case
     @EitherTTry.do
@@ -198,3 +194,250 @@ def test_eitherttry_do():
     assert Success is type(success_right_context().value)
     assert Right is type(success_right_context().value.value)
     assert 6 == success_right_context().value.value.value
+
+
+def test_eithertfuture_get():
+    from category import EitherST, EitherTError, EitherTFuture, Future, Left, Right
+
+    # Failure case
+    failure_future = Future[EitherST[Exception, int]]()
+    failure_future.set_exception(exception=Exception())
+    try:
+        EitherTFuture[Exception, int](value=failure_future).get()
+        assert False
+    except Exception as error:
+        assert Exception is type(error)
+
+    # Success[Left[L, R]] case
+    try:
+        EitherTFuture[Exception, int](
+            value=Future[EitherST[Exception, int]].successful(
+                value=Left[Exception, int](value=Exception())
+            )
+        ).get()
+        assert False
+    except Exception as error:
+        assert EitherTError is type(error)
+
+    # Success[Right[L, R]] case
+    assert (
+        1
+        == EitherTFuture[Exception, int](
+            value=Future[EitherST[Exception, int]].successful(
+                value=Right[Exception, int](value=1)
+            )
+        ).get()
+    )
+
+
+def test_eithertfuture_getorelse():
+    from category import EitherST, EitherTFuture, Future, Left, Right
+
+    # Failure case
+    failure_future = Future[EitherST[Exception, int]]()
+    failure_future.set_exception(exception=Exception())
+    assert False is EitherTFuture[Exception, int](value=failure_future).get_or_else(
+        default=lambda: False
+    )
+
+    # Success[Left[L, R]] case
+    assert False is EitherTFuture[Exception, int](
+        value=Future[EitherST[Exception, int]].successful(
+            value=Left[Exception, int](value=Exception())
+        )
+    ).get_or_else(default=lambda: False)
+
+    # Success[Right[L, R]] case
+    assert 1 == EitherTFuture[Exception, int](
+        value=Future[EitherST[Exception, int]].successful(
+            value=Right[Exception, int](value=1)
+        )
+    ).get_or_else(default=lambda: False)
+
+
+def test_eithertfuture_map():
+    from category import EitherST, EitherTFuture
+    from category import ExecutionContext as ec
+    from category import Future, Left, Right
+
+    # Failure case
+    failure_future = Future[EitherST[Exception, int]]()
+    failure_future.set_exception(exception=Exception())
+    failure = EitherTFuture[Exception, int](value=failure_future)
+    mapped_failure = failure.map(functor=lambda right: right + 1)(ec=ec)
+    assert failure is not mapped_failure
+    assert EitherTFuture is type(mapped_failure)
+    assert False is mapped_failure.get_or_else(default=lambda: False)
+    try:
+        mapped_failure.value.result()
+        assert False
+    except Exception as error:
+        assert Exception is type(error)
+
+    # Success[Left[L, R]] case
+    left = EitherTFuture[Exception, int](
+        value=Future[EitherST[Exception, int]].successful(
+            value=Left[Exception, int](value=Exception())
+        )
+    )
+    mapped_left = left.map(functor=lambda right: right + 1)(ec=ec)
+    assert left is not mapped_left
+    assert EitherTFuture is type(mapped_left)
+    assert False is mapped_left.get_or_else(default=lambda: False)
+    assert Left is type(mapped_left.value.result())
+    assert Exception is type(mapped_left.value.result().value)
+
+    # Success[Right[L, R]] case
+    right = EitherTFuture[Exception, int](
+        value=Future[EitherST[Exception, int]].successful(
+            value=Right[Exception, int](value=1)
+        )
+    )
+    mapped_right = right.map(functor=lambda right: right + 1)(ec=ec)
+    assert right is not mapped_right
+    assert EitherTFuture is type(mapped_right)
+    assert 2 == mapped_right.get()
+    assert Right is type(mapped_right.value.result())
+    assert 2 == mapped_right.value.result().value
+
+
+def test_eithertfuture_flatmap():
+    from category import EitherST, EitherTFuture
+    from category import ExecutionContext as ec
+    from category import Future, Left, Right
+
+    # Failure case
+    failure_future = Future[EitherST[Exception, int]]()
+    failure_future.set_exception(exception=Exception())
+    failure = EitherTFuture[Exception, int](value=failure_future)
+    mapped_failure = failure.flatmap(
+        functor=lambda right: EitherTFuture[Exception, int](
+            Future[EitherST[Exception, int]].successful(Right[Exception, int](1))
+        )
+    )(ec=ec)
+    assert failure is not mapped_failure
+    assert EitherTFuture is type(mapped_failure)
+    assert False is mapped_failure.get_or_else(default=lambda: False)
+    try:
+        mapped_failure.value.result()
+        assert False
+    except Exception as error:
+        assert Exception is type(error)
+
+    # Success[Left[L, R]] case
+    left = EitherTFuture[Exception, int](
+        value=Future[EitherST[Exception, int]].successful(
+            value=Left[Exception, int](value=Exception())
+        )
+    )
+    mapped_left = left.flatmap(
+        functor=lambda right: EitherTFuture[Exception, int](
+            value=Future[EitherST[Exception, int]].successful(
+                value=Right[Exception, int](value=right + 1)
+            )
+        )
+    )(ec=ec)
+    assert left is not mapped_left
+    assert EitherTFuture is type(mapped_left)
+    assert False is mapped_left.get_or_else(default=lambda: False)
+    assert Left is type(mapped_left.value.result())
+    assert Exception is type(mapped_left.value.result().value)
+
+    # Success[Right[L, R]] case
+    right = EitherTFuture[Exception, int](
+        value=Future[EitherST[Exception, int]].successful(
+            value=Right[Exception, int](value=1)
+        )
+    )
+    flatmapped_right = right.flatmap(
+        functor=lambda right: EitherTFuture[Exception, int](
+            value=Future[EitherST[Exception, int]].successful(
+                value=Right[Exception, int](value=right + 1)
+            )
+        )
+    )(ec=ec)
+    assert right is not flatmapped_right
+    assert EitherTFuture is type(flatmapped_right)
+    assert 2 == flatmapped_right.get()
+    assert Right is type(flatmapped_right.value.result())
+    assert 2 == flatmapped_right.value.result().value
+
+
+def test_eithertfuture_do():
+    from category import (
+        EitherST,
+        EitherTError,
+        EitherTFuture,
+        EitherTFutureDo,
+        Future,
+        Left,
+        Right,
+    )
+
+    # Failrue case
+    @EitherTFuture.do
+    def failure_context() -> EitherTFutureDo[Exception, int]:
+        one = yield from EitherTFuture[Exception, int](
+            value=Future[EitherST[Exception, int]].successful(
+                value=Right[Exception, int](value=1)
+            )
+        )()
+        two = 2
+        future = Future[EitherST[Exception, int]]()
+        future.set_exception(exception=Exception())
+        three = yield from EitherTFuture[Exception, int](value=future)()
+        return one + two + three
+
+    try:
+        EitherTFuture is type(failure_context())
+        assert False
+    except BaseException as error:
+        assert GeneratorExit is type(error)
+
+    # Success[Left[L, R]] case
+    @EitherTFuture.do
+    def success_left_context() -> EitherTFutureDo[Exception, int]:
+        one = yield from EitherTFuture[Exception, int](
+            value=Future[EitherST[Exception, int]].successful(
+                value=Right[Exception, int](value=1)
+            )
+        )()
+        two = 2
+        three = yield from EitherTFuture[Exception, int](
+            value=Future[EitherST[Exception, int]].successful(
+                value=Left[Exception, int](value=Exception())
+            )
+        )()
+        return one + two + three
+
+    assert EitherTFuture is type(success_left_context())
+    try:
+        success_left_context().get()
+        assert False
+    except Exception as error:
+        assert EitherTError is type(error)
+    assert Future is type(success_left_context().value)
+    assert Left is type(success_left_context().value._result)
+    assert Exception is type(success_left_context().value._result.value)
+
+    # Success[Right[L, R]] case
+    @EitherTFuture.do
+    def success_right_context() -> EitherTFutureDo[Exception, int]:
+        one = yield from EitherTFuture[Exception, int](
+            value=Future[EitherST[Exception, int]].successful(
+                value=Right[Exception, int](value=1)
+            )
+        )()
+        two = 2
+        three = yield from EitherTFuture[Exception, int](
+            value=Future[EitherST[Exception, int]].successful(
+                value=Right[Exception, int](value=3)
+            )
+        )()
+        return one + two + three
+
+    assert EitherTFuture is type(success_right_context())
+    assert 6 == success_right_context().get()
+    assert Future is type(success_right_context().value)
+    assert Right is type(success_right_context().value._result)
+    assert 6 == success_right_context().value._result.value
