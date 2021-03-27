@@ -20,7 +20,7 @@ def test_map():
     assert Exception is type(failure_mapped_future.value.value)
 
     # Success case
-    success_future = Future.successful(1)
+    success_future = Future.successful(value=1)
     success_mapped_future = success_future.map(functor=lambda success: success + 1)(
         ec=ec
     )
@@ -52,7 +52,7 @@ def test_flatmap():
     assert Exception is type(failure_flatmapped_future.value.value)
 
     # Success case
-    success_future = Future[int].successful(1)
+    success_future = Future[int].successful(value=1)
     success_flatmapped_future = success_future.flatmap(
         functor=lambda success: Future[int].successful(value=success + 1)
     )(ec=ec)
@@ -99,7 +99,7 @@ def test_on_complete():
         else:
             return try_.get_or_else(lambda: 0) + 1
 
-    true_future = Future.successful(1)
+    true_future = Future.successful(value=1)
     true_future.on_complete(functor=functor)(ec=ec)
     assert 2 == true_future.result()
 

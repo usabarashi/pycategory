@@ -244,6 +244,26 @@ def test_either_do():
     assert None is left_context().fold(left=lambda left: None, right=lambda right: None)
 
     @Either.do
+    def if_left_then_context() -> EitherDo[Exception, int]:
+        one = yield from Right[Exception, int](value=1)()
+        two = 2
+        three = yield from Left[Exception, int](value=Exception())(
+            if_left_then=lambda left: Left[Exception, int](value=ValueError())
+        )
+        return one + two + three
+
+    assert ValueError is type(if_left_then_context().left().get())
+    assert False is bool(if_left_then_context())
+    assert True is if_left_then_context().is_left()
+    assert False is if_left_then_context().is_right()
+    assert type(Left[Exception, int](value=ValueError()).left().get()) is type(
+        if_left_then_context().left().get()
+    )
+    assert None is if_left_then_context().fold(
+        left=lambda left: None, right=lambda right: None
+    )
+
+    @Either.do
     def right_context() -> EitherDo[None, int]:
         one = yield from Right[None, int](1)()
         two = 2

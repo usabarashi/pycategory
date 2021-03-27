@@ -53,10 +53,10 @@ class Future(concurrent.futures.Future[T]):
         except Exception as error:
             if if_failure_then is not None:
                 yield if_failure_then(error)
-                return error
+                raise GeneratorExit(self)
             else:
                 yield Failure(value=error)
-                return error
+                raise GeneratorExit(self)
 
     def map(self, functor: Callable[[T], S]) -> Callable[..., Future[S]]:
         def with_context(ec: Type[ExecutionContext]) -> Future[S]:
@@ -74,7 +74,9 @@ class Future(concurrent.futures.Future[T]):
         def with_context(ec: Type[ExecutionContext]) -> Future[S]:
             def fold(try_: TryST[T]) -> Future[S]:
                 if isinstance(try_, Failure):
-                    return self  # type: Future[S]
+                    future = Future[S]()
+                    future.set_exception(exception=try_.value)
+                    return future
                 else:
                     return functor(try_.value)
 

@@ -30,7 +30,7 @@ class Either(ABC, Generic[L, R]):
     @abstractmethod
     def __call__(
         self, /, if_left_then: Optional[Callable[[L], EE]] = None
-    ) -> Generator[Union[EitherST[L, R], EE], None, Union[L, R]]:
+    ) -> Generator[Union[EitherST[L, R], EE], None, R]:
         raise NotImplementedError
 
     @abstractmethod
@@ -100,15 +100,15 @@ class Left(Either[L, R]):
 
     def __call__(
         self, /, if_left_then: Optional[Callable[[L], EE]] = None
-    ) -> Generator[Union[Left[L, R], EE], None, L]:
+    ) -> Generator[Union[EE, Left[L, R]], None, R]:
         # Type conversion
         if if_left_then is not None:
             converted_left = if_left_then(self.value)
             yield converted_left
-            return self.value
+            raise GeneratorExit(self)
         else:
             yield self
-            return self.value
+            raise GeneratorExit(self)
 
     def map(self, functor: Callable[[R], RR]) -> EitherST[L, RR]:
         return Left[L, RR](self.value)
