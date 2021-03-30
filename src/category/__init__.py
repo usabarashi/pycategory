@@ -2,7 +2,6 @@ from .collection import Vector
 from .either import (
     Either,
     EitherDo,
-    EitherError,
     EitherST,
     Left,
     LeftProjection,

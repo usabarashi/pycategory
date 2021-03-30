@@ -24,8 +24,8 @@ class Option(ABC, Generic[T]):
 
     @abstractmethod
     def __call__(
-        self, /, if_void_then: Optional[Callable[..., EE]] = None
-    ) -> Generator[Union[OptionST[T], EE], None, Optional[T]]:
+        self, /, convert: Optional[Callable[[OptionST[T]], EE]] = None
+    ) -> Generator[Union[EE, OptionST[T]], None, T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -87,11 +87,10 @@ class Void(Option[T]):
         return False
 
     def __call__(
-        self, /, if_void_then: Optional[Callable[..., EE]] = None
-    ) -> Generator[Union[OptionST[T], EE], None, Optional[T]]:
-        if if_void_then is not None:
-            converted_void = if_void_then()
-            yield converted_void
+        self, /, convert: Optional[Callable[[OptionST[T]], EE]] = None
+    ) -> Generator[Union[EE, OptionST[T]], None, T]:
+        if convert is not None:
+            yield convert(self)
             raise GeneratorExit(self)
         else:
             yield self
@@ -131,10 +130,14 @@ class Some(Option[T]):
         return True
 
     def __call__(
-        self, /, if_void_then: Optional[Callable[..., EE]] = None
-    ) -> Generator[Union[OptionST[T], EE], None, Optional[T]]:
-        yield self
-        return self.value
+        self, /, convert: Optional[Callable[[OptionST[T]], EE]] = None
+    ) -> Generator[Union[EE, OptionST[T]], None, T]:
+        if convert is not None:
+            yield convert(self)
+            raise GeneratorExit(self)
+        else:
+            yield self
+            return self.value
 
     def get(self) -> T:
         return self.value

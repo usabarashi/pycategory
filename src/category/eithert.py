@@ -24,27 +24,26 @@ class EitherTTry(Generic[L, R]):
         return bool(self.value) and bool(self.value.value)
 
     def __call__(
-        self, /, if_failure_then: Optional[Callable[[Exception], EE]] = None
-    ) -> Generator[Union[EE, Left[L, R], Right[L, R]], None, R]:
+        self, /, convert: Optional[Callable[[TryST[EitherST[L, R]]], EE]] = None
+    ) -> Generator[Union[EE, TryST[EitherST[L, R]]], None, R]:
         try_ = self.value
+        if convert is not None:
+            yield convert(try_)
+            raise GeneratorExit(self)
         # Failure[Either[L, R]] case
         if isinstance(try_, Failure):
-            if if_failure_then is not None:
-                converted_failure = if_failure_then(try_.value)
-                yield converted_failure
-                raise GeneratorExit(self) from try_.value
-            else:
-                raise GeneratorExit(self) from try_.value
+            yield try_
+            raise GeneratorExit(self) from try_.value
         # Success[Eihter[L, R]] case
         else:
             either: EitherST[L, R] = try_.value
             # Success[Left[L , R]] case
             if isinstance(either, Left):
-                yield either
+                yield try_
                 raise GeneratorExit(self)
             # Success[Right[L, R]] case
             else:
-                yield either
+                yield try_
                 return either.value
 
     def get(self) -> R:
@@ -122,17 +121,17 @@ class EitherTTry(Generic[L, R]):
                 prev: Any,
             ) -> EitherTTry[L, R]:
                 try:
-                    result: Union[Left[L, R], Right[L, R], Any] = generator.send(prev)
-                # Success[Right[L, R]] case
+                    result: Union[Any, TryST[EitherST[L, R]]] = generator.send(prev)
                 except StopIteration as last:
                     right = Right[L, R](value=last.value)
                     success = Success[EitherST[L, R]](value=right)
                     return EitherTTry[L, R](value=success)
+                # Failure[EitherL, R] case
+                if isinstance(result, Failure):
+                    return EitherTTry[L, R](value=result)
                 # Success[Left[L, R]] case
-                if isinstance(result, Left):
-                    left: Left[L, R] = result
-                    success = Success[EitherST[L, R]](value=left)
-                    return EitherTTry[L, R](value=success)
+                elif isinstance(result, Success) and isinstance(result.value, Left):
+                    return EitherTTry[L, R](value=result)
                 return recur(generator, result)
 
             return recur(generator_fuction(*args, **kwargs), None)
@@ -157,26 +156,27 @@ class EitherTFuture(Generic[L, R]):
         return bool(self.value) and bool(self.value.value)
 
     def __call__(
-        self, /, if_failure_then: Optional[Callable[[Exception], EE]] = None
-    ) -> Generator[Union[EE, Left[L, R], Right[L, R]], None, R]:
-        # Success[Eihter[L, R]] case
+        self, /, convert: Optional[Callable[[TryST[EitherST[L, R]]], EE]] = None
+    ) -> Generator[Union[EE, TryST[EitherST[L, R]]], None, R]:
         try:
             either = self.value.result()
+            if convert is not None:
+                yield convert(Success[EitherST[L, R]](value=either))
+                raise GeneratorExit(self)
             # Success[Left[L , R]] case
             if isinstance(either, Left):
-                yield either
+                yield Success[EitherST[L, R]](value=either)
                 raise GeneratorExit(self)
             # Success[Right[L, R]] case
             else:
-                yield either
+                yield Success[EitherST[L, R]](value=either)
                 return either.value
 
         # Failure[Either[L, R]] case
         except Exception as error:
-            if if_failure_then is not None:
-                converted_failure = if_failure_then(error)
-                yield converted_failure
-                raise GeneratorExit(error)
+            if convert is not None:
+                yield convert(Failure(value=error))
+                raise GeneratorExit(error) from error
             else:
                 raise GeneratorExit from error
 
@@ -246,14 +246,18 @@ class EitherTFuture(Generic[L, R]):
             ) -> EitherTFuture[L, R]:
                 try:
                     result: Union[TryST[EitherST[L, R]], Any] = generator.send(prev)
-                # Success[Right[L, R]] case
                 except StopIteration as last:
                     right = Right[L, R](value=last.value)
                     future = Future[Right[L, R]].successful(value=right)
                     return EitherTFuture[L, R](value=future)
                 # Failure case
-                if isinstance(result, Left):
-                    left: Left[L, R] = result
+                if isinstance(result, Failure):
+                    future = Future[EitherST[L, R]]()
+                    future.set_exception(exception=result.value)
+                    return EitherTFuture[L, R](value=future)
+                # Success[Left[L, R]] case
+                elif isinstance(result, Success) and isinstance(result.value, Left):
+                    left: Left[L, R] = result.value
                     future = Future[Left[L, R]].successful(value=left)
                     return EitherTFuture[L, R](value=future)
                 return recur(generator, result)
@@ -263,7 +267,7 @@ class EitherTFuture(Generic[L, R]):
         return impl
 
 
-EitherTFutureDo = Generator[Union[Left[L, R], Right[L, R], Any], Any, R]
+EitherTFutureDo = Generator[Union[Any, TryST[EitherST[L, R]]], Any, R]
 EitherTFutureGenerator = Generator[
-    Union[Left[L, Any], Right[L, Any], Any], Union[Left[L, Any], Right[L, Any], Any], R
+    Union[Any, TryST[EitherST[L, R]]], Union[Any, TryST[EitherST[L, R]]], R
 ]
