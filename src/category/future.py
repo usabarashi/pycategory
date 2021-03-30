@@ -44,15 +44,19 @@ class Future(concurrent.futures.Future[T]):
         return self.done()
 
     def __call__(
-        self, /, if_failure_then: Optional[Callable[[Exception], EE]] = None
+        self, /, convert: Optional[Callable[[TryST[T]], EE]] = None
     ) -> Generator[Union[EE, TryST[T]], None, T]:
         try:
             success = self.result()
-            yield Success(value=success)
-            return success
+            if convert is not None:
+                yield convert(Success(value=success))
+                raise GeneratorExit(self)
+            else:
+                yield Success(value=success)
+                return success
         except Exception as error:
-            if if_failure_then is not None:
-                yield if_failure_then(error)
+            if convert is not None:
+                yield convert(Failure(value=error))
                 raise GeneratorExit(self)
             else:
                 yield Failure(value=error)

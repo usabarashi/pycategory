@@ -15,7 +15,7 @@ def test_left_leftprojecton():
 
 
 def test_left_leftprojection_get():
-    from category import EitherError, Left, Right
+    from category import Left, Right
 
     assert 0 == Left[int, None](value=0).left().get()
     assert 0 == Left[int, None](value=0).left().get_or_else(default=lambda: 0)
@@ -23,7 +23,7 @@ def test_left_leftprojection_get():
         Right[int, None](value=None).left().get()
         assert False
     except Exception as error:
-        EitherError is type(error)
+        ValueError is type(error)
     assert 0 == Right[int, None](value=None).left().get_or_else(default=lambda: 0)
 
 
@@ -35,18 +35,18 @@ def test_left_rightprojecton():
 
 
 def test_left_rightprojecton_get():
-    from category import EitherError, Left
+    from category import Left
 
     try:
         Left[int, None](value=0).right().get()
         assert False
     except Exception as error:
-        assert EitherError is type(error)
+        assert ValueError is type(error)
     assert None is Left[int, None](value=0).right().get_or_else(default=lambda: None)
 
 
 def test_left_map():
-    from category import EitherError, Left, LeftProjection, RightProjection
+    from category import Left, LeftProjection, RightProjection
 
     assert Left is type(Left[int, None](0).map(functor=lambda right: right))
     assert LeftProjection is type(
@@ -63,14 +63,14 @@ def test_left_map():
         Left[int, None](value=0).map(functor=lambda right: right).right().get()
         assert False
     except Exception as error:
-        assert EitherError is type(error)
+        assert ValueError is type(error)
     None is Left[int, None](value=0).map(
         functor=lambda right: right
     ).right().get_or_else(default=lambda: None)
 
 
 def test_left_faltmap():
-    from category import EitherError, Left, LeftProjection, RightProjection
+    from category import Left, LeftProjection, RightProjection
 
     assert Left is type(
         Left[int, None](value=0).flatmap(functor=lambda right: Left[int, None](value=0))
@@ -101,7 +101,7 @@ def test_left_faltmap():
         ).right().get()
         assert False
     except Exception as error:
-        assert EitherError is type(error)
+        assert ValueError is type(error)
     assert None is Left[int, None](value=0).flatmap(
         functor=lambda none: Left[int, None](value=1)
     ).right().get_or_else(default=lambda: None)
@@ -138,11 +138,11 @@ def test_right_leftprojecton():
 
 
 def test_right_leftprojecton_get():
-    from category import EitherError, Right
+    from category import Right
 
     try:
         Right[None, int](value=0).left().get()
-    except EitherError:
+    except ValueError:
         assert True
     except Exception:
         assert False
@@ -150,7 +150,7 @@ def test_right_leftprojecton_get():
 
 
 def test_right_map():
-    from category import EitherError, LeftProjection, Right, RightProjection
+    from category import LeftProjection, Right, RightProjection
 
     assert Right is type(Right[None, int](value=0).map(functor=lambda right: right))
     assert RightProjection is type(
@@ -167,14 +167,14 @@ def test_right_map():
         Right[None, int](value=0).map(functor=lambda right: right).left().get()
         assert False
     except Exception as error:
-        assert EitherError is type(error)
+        assert ValueError is type(error)
     assert None is Right[None, int](value=0).map(
         functor=lambda right: right
     ).left().get_or_else(default=lambda: None)
 
 
 def test_right_flatmap():
-    from category import EitherError, LeftProjection, Right, RightProjection
+    from category import LeftProjection, Right, RightProjection
 
     assert Right is type(
         Right[None, int](value=0).flatmap(
@@ -207,7 +207,7 @@ def test_right_flatmap():
         ).left().get()
         assert False
     except Exception as error:
-        assert EitherError is type(error)
+        assert ValueError is type(error)
     assert None is Right[None, int](value=0).map(
         functor=lambda right: Right[None, int](value=right + 1)
     ).left().get_or_else(default=lambda: None)
@@ -244,22 +244,22 @@ def test_either_do():
     assert None is left_context().fold(left=lambda left: None, right=lambda right: None)
 
     @Either.do
-    def if_left_then_context() -> EitherDo[Exception, int]:
+    def left_convert_context() -> EitherDo[Exception, int]:
         one = yield from Right[Exception, int](value=1)()
         two = 2
         three = yield from Left[Exception, int](value=Exception())(
-            if_left_then=lambda left: Left[Exception, int](value=ValueError())
+            convert=lambda left: Left[Exception, int](value=ValueError())
         )
         return one + two + three
 
-    assert ValueError is type(if_left_then_context().left().get())
-    assert False is bool(if_left_then_context())
-    assert True is if_left_then_context().is_left()
-    assert False is if_left_then_context().is_right()
+    assert ValueError is type(left_convert_context().left().get())
+    assert False is bool(left_convert_context())
+    assert True is left_convert_context().is_left()
+    assert False is left_convert_context().is_right()
     assert type(Left[Exception, int](value=ValueError()).left().get()) is type(
-        if_left_then_context().left().get()
+        left_convert_context().left().get()
     )
-    assert None is if_left_then_context().fold(
+    assert None is left_convert_context().fold(
         left=lambda left: None, right=lambda right: None
     )
 
@@ -278,3 +278,18 @@ def test_either_do():
     assert None is right_context().fold(
         left=lambda left: None, right=lambda right: None
     )
+
+    @Either.do
+    def right_convert_context() -> EitherDo[None, int]:
+        one = yield from Right[None, int](value=1)()
+        two = 2
+        three = yield from Right[None, int](value=3)(
+            convert=lambda right: Right[None, int](value=3)
+        )
+        return one + two + three
+
+    try:
+        right_convert_context().right().get()
+        assert False
+    except BaseException as error:
+        GeneratorExit is type(error)

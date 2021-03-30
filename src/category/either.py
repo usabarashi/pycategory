@@ -29,8 +29,8 @@ class Either(ABC, Generic[L, R]):
 
     @abstractmethod
     def __call__(
-        self, /, if_left_then: Optional[Callable[[L], EE]] = None
-    ) -> Generator[Union[EitherST[L, R], EE], None, R]:
+        self, /, convert: Optional[Callable[[EitherST[L, R]], EE]] = None
+    ) -> Generator[Union[EE, EitherST[L, R]], None, R]:
         raise NotImplementedError
 
     @abstractmethod
@@ -73,9 +73,7 @@ class Either(ABC, Generic[L, R]):
                 try:
                     result = generator.send(prev)
                 except StopIteration as last:
-                    # Right case
                     return Right(value=last.value)
-                # Left case
                 if isinstance(result, Left):
                     return result
                 return recur(generator, result)
@@ -83,10 +81,6 @@ class Either(ABC, Generic[L, R]):
             return recur(generator_fuction(*args, **kwargs), None)
 
         return wrapper
-
-
-class EitherError(Exception):
-    ...
 
 
 @dataclasses.dataclass(frozen=True)
@@ -99,12 +93,10 @@ class Left(Either[L, R]):
         return False
 
     def __call__(
-        self, /, if_left_then: Optional[Callable[[L], EE]] = None
+        self, /, convert: Optional[Callable[[EitherST[L, R]], EE]] = None
     ) -> Generator[Union[EE, Left[L, R]], None, R]:
-        # Type conversion
-        if if_left_then is not None:
-            converted_left = if_left_then(self.value)
-            yield converted_left
+        if convert is not None:
+            yield convert(self)
             raise GeneratorExit(self)
         else:
             yield self
@@ -142,10 +134,14 @@ class Right(Either[L, R]):
         return True
 
     def __call__(
-        self, if_left_then: Optional[Callable[[L], Any]] = None
-    ) -> Generator[Right[L, R], None, R]:
-        yield self
-        return self.value
+        self, convert: Optional[Callable[[EitherST[L, R]], EE]] = None
+    ) -> Generator[Union[EE, Right[L, R]], None, R]:
+        if convert is not None:
+            yield convert(self)
+            raise GeneratorExit(self)
+        else:
+            yield self
+            return self.value
 
     def map(self, functor: Callable[[R], RR]) -> EitherST[L, RR]:
         return Right[L, RR](functor(self.value))
@@ -182,7 +178,7 @@ class LeftProjection(Generic[L, R]):
         if isinstance(self.either, Left):
             return self.either.value
         else:
-            raise EitherError()
+            raise ValueError(self)
 
     def get_or_else(self, default: Callable[..., RR]) -> Union[L, RR]:
         if isinstance(self.either, Left):
@@ -214,7 +210,7 @@ class RightProjection(Generic[L, R]):
 
     def get(self) -> Union[NoReturn, R]:
         if isinstance(self.either, Left):
-            raise EitherError()
+            raise ValueError(self)
         else:
             return self.either.value
 
