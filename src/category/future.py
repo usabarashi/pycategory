@@ -65,11 +65,10 @@ class Future(concurrent.futures.Future[T]):
     def map(self, functor: Callable[[T], S]) -> Callable[..., Future[S]]:
         def with_context(ec: Type[ExecutionContext]) -> Future[S]:
             def fold(try_: Try[T]) -> Try[S]:
-                try_pattern = try_.pattern()
-                if isinstance(try_pattern, Failure):
-                    return Failure[S](value=try_pattern.value)
+                if isinstance(try_.pattern, Failure):
+                    return Failure[S](value=try_.pattern.value)
                 else:
-                    return Success[S](value=functor(try_pattern.value))
+                    return Success[S](value=functor(try_.pattern.value))
 
             return self.transform(functor=fold)(ec=ec)
 
@@ -78,13 +77,12 @@ class Future(concurrent.futures.Future[T]):
     def flatmap(self, functor: Callable[[T], Future[S]]) -> Callable[..., Future[S]]:
         def with_context(ec: Type[ExecutionContext]) -> Future[S]:
             def fold(try_: Try[T]) -> Future[S]:
-                try_pattern = try_.pattern()
-                if isinstance(try_pattern, Failure):
+                if isinstance(try_.pattern, Failure):
                     future = Future[S]()
-                    future.set_exception(exception=try_pattern.value)
+                    future.set_exception(exception=try_.pattern.value)
                     return future
                 else:
-                    return functor(try_pattern.value)
+                    return functor(try_.pattern.value)
 
             return self.transform_with(functor=fold)(ec=ec)
 
@@ -123,9 +121,9 @@ class Future(concurrent.futures.Future[T]):
         if self.done():
             return False
         elif self._state is PENDING:
-            try_pattern = result.pattern()
-            if isinstance(try_pattern, Failure):
-                self.set_exception(exception=try_pattern.value)
+            try_ = result
+            if isinstance(try_.pattern, Failure):
+                self.set_exception(exception=try_.pattern.value)
             else:
                 self.set_result(result=result.value)
             return True
