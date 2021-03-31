@@ -91,9 +91,9 @@ def test_on_complete():
 
     from category import Failure, Future
     from category import ThreadPoolExecutionContext as ec
-    from category import TryST
+    from category import Try
 
-    def functor(try_: TryST[int]) -> Union[Exception, int]:
+    def functor(try_: Try[int]) -> Union[Exception, int]:
         if isinstance(try_, Failure):
             return try_.value
         else:

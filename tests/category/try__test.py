@@ -163,7 +163,7 @@ def test_try_do():
 
     @Try.do
     def mix_failure_context() -> TryDo[int]:
-        success: int = yield from multi_context(value=1)()
+        success = yield from multi_context(value=1)()
         _ = yield from multi_context(valeu=0)()
         return success
 
@@ -177,9 +177,9 @@ def test_try_do():
 
     @Try.do
     def mix_success_context() -> TryDo[int]:
-        one: int = yield from multi_context(value=1)()
+        one = yield from multi_context(value=1)()
         two = 2
-        three: int = yield from multi_context(value=3)()
+        three = yield from multi_context(value=3)()
         return one + two + three
 
     assert Success(value=6) == mix_success_context()

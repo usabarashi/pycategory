@@ -1,9 +1,9 @@
 def test_eitherttry_map():
-    from category import EitherST, EitherTTry, Failure, Left, Right, Success
+    from category import Either, EitherTTry, Failure, Left, Right, Success
 
     # Failure case
     failure = EitherTTry[Exception, int](
-        value=Failure[EitherST[Exception, int]](value=Exception())
+        value=Failure[Either[Exception, int]](value=Exception())
     )
     mapped_failure = failure.map(functor=lambda right: right + 1)
     assert failure is not mapped_failure
@@ -34,11 +34,11 @@ def test_eitherttry_map():
 
 
 def test_eitherttry_flatmap():
-    from category import EitherST, EitherTTry, Failure, Left, Right, Success
+    from category import Either, EitherTTry, Failure, Left, Right, Success
 
     # Failure case
     failure = EitherTTry[Exception, int](
-        value=Failure[EitherST[Exception, int]](value=Exception())
+        value=Failure[Either[Exception, int]](value=Exception())
     )
     flatmapped_failure = failure.flatmap(
         functor=lambda right: EitherTTry[Exception, int](
@@ -81,12 +81,12 @@ def test_eitherttry_flatmap():
 
 
 def test_eitherttry_get():
-    from category import EitherST, EitherTTry, Failure, Left, Right, Success
+    from category import Either, EitherTTry, Failure, Left, Right, Success
 
     # Failure case
     try:
         EitherTTry[Exception, int](
-            value=Failure[EitherST[Exception, int]](value=Exception())
+            value=Failure[Either[Exception, int]](value=Exception())
         ).get()
         assert False
     except Exception as error:
@@ -95,7 +95,7 @@ def test_eitherttry_get():
     # Success[Left[L, R]] case
     try:
         EitherTTry[Exception, int](
-            value=Success[EitherST[Exception, int]](
+            value=Success[Either[Exception, int]](
                 value=Left[Exception, int](value=Exception())
             )
         ).get()
@@ -107,31 +107,29 @@ def test_eitherttry_get():
     assert (
         1
         == EitherTTry[Exception, int](
-            value=Success[EitherST[Exception, int]](
-                value=Right[Exception, int](value=1)
-            )
+            value=Success[Either[Exception, int]](value=Right[Exception, int](value=1))
         ).get()
     )
 
 
 def test_eitherttry_getorelse():
-    from category import EitherST, EitherTTry, Failure, Left, Right, Success
+    from category import Either, EitherTTry, Failure, Left, Right, Success
 
     # Failure case
     assert False is EitherTTry[Exception, int](
-        value=Failure[EitherST[Exception, int]](value=Exception())
+        value=Failure[Either[Exception, int]](value=Exception())
     ).get_or_else(lambda: False)
 
     # Success[Left[L, R]] case
     assert False is EitherTTry[Exception, int](
-        value=Success[EitherST[Exception, int]](
+        value=Success[Either[Exception, int]](
             value=Left[Exception, int](value=Exception())
         )
     ).get_or_else(lambda: False)
 
     # Success[Right[L, R]] case
     assert 1 == EitherTTry[Exception, int](
-        value=Success[EitherST[Exception, int]](value=Right[Exception, int](value=1))
+        value=Success[Either[Exception, int]](value=Right[Exception, int](value=1))
     ).get_or_else(lambda: False)
 
 
@@ -263,10 +261,10 @@ def test_eitherttry_do():
 
 
 def test_eithertfuture_get():
-    from category import EitherST, EitherTFuture, Future, Left, Right
+    from category import Either, EitherTFuture, Future, Left, Right
 
     # Failure case
-    failure_future = Future[EitherST[Exception, int]]()
+    failure_future = Future[Either[Exception, int]]()
     failure_future.set_exception(exception=Exception())
     try:
         EitherTFuture[Exception, int](value=failure_future).get()
@@ -277,7 +275,7 @@ def test_eithertfuture_get():
     # Success[Left[L, R]] case
     try:
         EitherTFuture[Exception, int](
-            value=Future[EitherST[Exception, int]].successful(
+            value=Future[Either[Exception, int]].successful(
                 value=Left[Exception, int](value=Exception())
             )
         ).get()
@@ -289,7 +287,7 @@ def test_eithertfuture_get():
     assert (
         1
         == EitherTFuture[Exception, int](
-            value=Future[EitherST[Exception, int]].successful(
+            value=Future[Either[Exception, int]].successful(
                 value=Right[Exception, int](value=1)
             )
         ).get()
@@ -297,10 +295,10 @@ def test_eithertfuture_get():
 
 
 def test_eithertfuture_getorelse():
-    from category import EitherST, EitherTFuture, Future, Left, Right
+    from category import Either, EitherTFuture, Future, Left, Right
 
     # Failure case
-    failure_future = Future[EitherST[Exception, int]]()
+    failure_future = Future[Either[Exception, int]]()
     failure_future.set_exception(exception=Exception())
     assert False is EitherTFuture[Exception, int](value=failure_future).get_or_else(
         default=lambda: False
@@ -308,26 +306,26 @@ def test_eithertfuture_getorelse():
 
     # Success[Left[L, R]] case
     assert False is EitherTFuture[Exception, int](
-        value=Future[EitherST[Exception, int]].successful(
+        value=Future[Either[Exception, int]].successful(
             value=Left[Exception, int](value=Exception())
         )
     ).get_or_else(default=lambda: False)
 
     # Success[Right[L, R]] case
     assert 1 == EitherTFuture[Exception, int](
-        value=Future[EitherST[Exception, int]].successful(
+        value=Future[Either[Exception, int]].successful(
             value=Right[Exception, int](value=1)
         )
     ).get_or_else(default=lambda: False)
 
 
 def test_eithertfuture_map():
-    from category import EitherST, EitherTFuture
+    from category import Either, EitherTFuture
     from category import ExecutionContext as ec
     from category import Future, Left, Right
 
     # Failure case
-    failure_future = Future[EitherST[Exception, int]]()
+    failure_future = Future[Either[Exception, int]]()
     failure_future.set_exception(exception=Exception())
     failure = EitherTFuture[Exception, int](value=failure_future)
     mapped_failure = failure.map(functor=lambda right: right + 1)(ec=ec)
@@ -342,7 +340,7 @@ def test_eithertfuture_map():
 
     # Success[Left[L, R]] case
     left = EitherTFuture[Exception, int](
-        value=Future[EitherST[Exception, int]].successful(
+        value=Future[Either[Exception, int]].successful(
             value=Left[Exception, int](value=Exception())
         )
     )
@@ -355,7 +353,7 @@ def test_eithertfuture_map():
 
     # Success[Right[L, R]] case
     right = EitherTFuture[Exception, int](
-        value=Future[EitherST[Exception, int]].successful(
+        value=Future[Either[Exception, int]].successful(
             value=Right[Exception, int](value=1)
         )
     )
@@ -368,17 +366,17 @@ def test_eithertfuture_map():
 
 
 def test_eithertfuture_flatmap():
-    from category import EitherST, EitherTFuture
+    from category import Either, EitherTFuture
     from category import ExecutionContext as ec
     from category import Future, Left, Right
 
     # Failure case
-    failure_future = Future[EitherST[Exception, int]]()
+    failure_future = Future[Either[Exception, int]]()
     failure_future.set_exception(exception=Exception())
     failure = EitherTFuture[Exception, int](value=failure_future)
     mapped_failure = failure.flatmap(
         functor=lambda right: EitherTFuture[Exception, int](
-            Future[EitherST[Exception, int]].successful(Right[Exception, int](1))
+            Future[Either[Exception, int]].successful(Right[Exception, int](1))
         )
     )(ec=ec)
     assert failure is not mapped_failure
@@ -392,13 +390,13 @@ def test_eithertfuture_flatmap():
 
     # Success[Left[L, R]] case
     left = EitherTFuture[Exception, int](
-        value=Future[EitherST[Exception, int]].successful(
+        value=Future[Either[Exception, int]].successful(
             value=Left[Exception, int](value=Exception())
         )
     )
     mapped_left = left.flatmap(
         functor=lambda right: EitherTFuture[Exception, int](
-            value=Future[EitherST[Exception, int]].successful(
+            value=Future[Either[Exception, int]].successful(
                 value=Right[Exception, int](value=right + 1)
             )
         )
@@ -411,13 +409,13 @@ def test_eithertfuture_flatmap():
 
     # Success[Right[L, R]] case
     right = EitherTFuture[Exception, int](
-        value=Future[EitherST[Exception, int]].successful(
+        value=Future[Either[Exception, int]].successful(
             value=Right[Exception, int](value=1)
         )
     )
     flatmapped_right = right.flatmap(
         functor=lambda right: EitherTFuture[Exception, int](
-            value=Future[EitherST[Exception, int]].successful(
+            value=Future[Either[Exception, int]].successful(
                 value=Right[Exception, int](value=right + 1)
             )
         )
@@ -431,7 +429,7 @@ def test_eithertfuture_flatmap():
 
 def test_eithertfuture_do():
     from category import (
-        EitherST,
+        Either,
         EitherTFuture,
         EitherTFutureDo,
         Future,
@@ -444,12 +442,12 @@ def test_eithertfuture_do():
     @EitherTFuture.do
     def failure_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
-            value=Future[EitherST[Exception, int]].successful(
+            value=Future[Either[Exception, int]].successful(
                 value=Right[Exception, int](value=1)
             )
         )()
         two = 2
-        future = Future[EitherST[Exception, int]]()
+        future = Future[Either[Exception, int]]()
         future.set_exception(exception=Exception())
         three = yield from EitherTFuture[Exception, int](value=future)()
         return one + two + three
@@ -463,12 +461,12 @@ def test_eithertfuture_do():
     @EitherTFuture.do
     def if_failure_then_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
-            value=Future[EitherST[Exception, int]].successful(
+            value=Future[Either[Exception, int]].successful(
                 value=Right[Exception, int](value=1)
             )
         )()
         two = 2
-        future = Future[EitherST[Exception, int]]()
+        future = Future[Either[Exception, int]]()
         future.set_exception(exception=Exception())
         three = yield from EitherTFuture[Exception, int](value=future)(
             convert=lambda exception: Success(Left[Exception, int](value=Exception()))
@@ -489,13 +487,13 @@ def test_eithertfuture_do():
     @EitherTFuture.do
     def success_left_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
-            value=Future[EitherST[Exception, int]].successful(
+            value=Future[Either[Exception, int]].successful(
                 value=Right[Exception, int](value=1)
             )
         )()
         two = 2
         three = yield from EitherTFuture[Exception, int](
-            value=Future[EitherST[Exception, int]].successful(
+            value=Future[Either[Exception, int]].successful(
                 value=Left[Exception, int](value=Exception())
             )
         )()
@@ -515,13 +513,13 @@ def test_eithertfuture_do():
     @EitherTFuture.do
     def success_right_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
-            value=Future[EitherST[Exception, int]].successful(
+            value=Future[Either[Exception, int]].successful(
                 value=Right[Exception, int](value=1)
             )
         )()
         two = 2
         three = yield from EitherTFuture[Exception, int](
-            value=Future[EitherST[Exception, int]].successful(
+            value=Future[Either[Exception, int]].successful(
                 value=Right[Exception, int](value=3)
             )
         )()

@@ -2,17 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Generic,
-    Literal,
-    NoReturn,
-    Optional,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Generator, Generic, Literal, Optional, TypeVar, Union
 
 L = TypeVar("L")
 R = TypeVar("R")
@@ -29,16 +19,16 @@ class Either(ABC, Generic[L, R]):
 
     @abstractmethod
     def __call__(
-        self, /, convert: Optional[Callable[[EitherST[L, R]], EE]] = None
-    ) -> Generator[Union[EE, EitherST[L, R]], None, R]:
+        self, /, convert: Optional[Callable[[Either[L, R]], EE]] = None
+    ) -> Generator[Union[EE, Either[L, R]], None, R]:
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, functor: Callable[[R], RR]) -> EitherST[L, RR]:
+    def map(self, functor: Callable[[R], RR]) -> Either[L, RR]:
         raise NotImplementedError
 
     @abstractmethod
-    def flatmap(self, functor: Callable[[R], EitherST[L, RR]]) -> EitherST[L, RR]:
+    def flatmap(self, functor: Callable[[R], Either[L, RR]]) -> Either[L, RR]:
         raise NotImplementedError
 
     @abstractmethod
@@ -61,15 +51,19 @@ class Either(ABC, Generic[L, R]):
     def is_right(self) -> bool:
         raise NotImplementedError
 
+    @abstractmethod
+    def pattern(self) -> SubType[L, R]:
+        raise NotImplementedError
+
     @staticmethod
     def do(
         generator_fuction: Callable[..., EitherGenerator[L, R]]
-    ) -> Callable[..., EitherST[L, R]]:
-        def wrapper(*args: Any, **kwargs: Any) -> EitherST[L, R]:
+    ) -> Callable[..., Either[L, R]]:
+        def wrapper(*args: Any, **kwargs: Any) -> Either[L, R]:
             def recur(
                 generator: EitherGenerator[L, R],
                 prev: Any,
-            ) -> EitherST[L, R]:
+            ) -> Either[L, R]:
                 try:
                     result = generator.send(prev)
                 except StopIteration as last:
@@ -93,7 +87,7 @@ class Left(Either[L, R]):
         return False
 
     def __call__(
-        self, /, convert: Optional[Callable[[EitherST[L, R]], EE]] = None
+        self, /, convert: Optional[Callable[[Either[L, R]], EE]] = None
     ) -> Generator[Union[EE, Left[L, R]], None, R]:
         if convert is not None:
             yield convert(self)
@@ -102,10 +96,10 @@ class Left(Either[L, R]):
             yield self
             raise GeneratorExit(self)
 
-    def map(self, functor: Callable[[R], RR]) -> EitherST[L, RR]:
+    def map(self, functor: Callable[[R], RR]) -> Either[L, RR]:
         return Left[L, RR](self.value)
 
-    def flatmap(self, functor: Callable[[R], EitherST[L, RR]]) -> EitherST[L, RR]:
+    def flatmap(self, functor: Callable[[R], Either[L, RR]]) -> Either[L, RR]:
         return Left[L, RR](value=self.value)
 
     def fold(self, /, left: Callable[[L], TT], right: Callable[[R], TT]) -> TT:
@@ -123,6 +117,9 @@ class Left(Either[L, R]):
     def is_right(self) -> Literal[False]:
         return False
 
+    def pattern(self) -> SubType[L, R]:
+        return self
+
 
 @dataclasses.dataclass(frozen=True)
 class Right(Either[L, R]):
@@ -134,7 +131,7 @@ class Right(Either[L, R]):
         return True
 
     def __call__(
-        self, convert: Optional[Callable[[EitherST[L, R]], EE]] = None
+        self, convert: Optional[Callable[[Either[L, R]], EE]] = None
     ) -> Generator[Union[EE, Right[L, R]], None, R]:
         if convert is not None:
             yield convert(self)
@@ -143,10 +140,10 @@ class Right(Either[L, R]):
             yield self
             return self.value
 
-    def map(self, functor: Callable[[R], RR]) -> EitherST[L, RR]:
+    def map(self, functor: Callable[[R], RR]) -> Either[L, RR]:
         return Right[L, RR](functor(self.value))
 
-    def flatmap(self, functor: Callable[[R], EitherST[L, RR]]) -> EitherST[L, RR]:
+    def flatmap(self, functor: Callable[[R], Either[L, RR]]) -> Either[L, RR]:
         return functor(self.value)
 
     def fold(self, /, left: Callable[[L], TT], right: Callable[[R], TT]) -> TT:
@@ -164,17 +161,20 @@ class Right(Either[L, R]):
     def is_right(self) -> Literal[True]:
         return True
 
+    def pattern(self) -> SubType[L, R]:
+        return self
+
 
 @dataclasses.dataclass(frozen=True)
 class LeftProjection(Generic[L, R]):
     """LeftProjection"""
 
-    either: EitherST[L, R]
+    either: SubType[L, R]
 
     def __bool__(self) -> bool:
         return bool(self.either)
 
-    def get(self) -> Union[NoReturn, L]:
+    def get(self) -> L:
         if isinstance(self.either, Left):
             return self.either.value
         else:
@@ -186,13 +186,13 @@ class LeftProjection(Generic[L, R]):
         else:
             return default()
 
-    def map(self, functor: Callable[[L], LL]) -> EitherST[LL, R]:
+    def map(self, functor: Callable[[L], LL]) -> Either[LL, R]:
         if isinstance(self.either, Left):
             return Left[LL, R](value=functor(self.either.value))
         else:
             return Right[LL, R](value=self.either.value)
 
-    def flatmap(self, functor: Callable[[L], EitherST[LL, R]]) -> EitherST[LL, R]:
+    def flatmap(self, functor: Callable[[L], Either[LL, R]]) -> Either[LL, R]:
         if isinstance(self.either, Left):
             return functor(self.either.value)
         else:
@@ -203,12 +203,12 @@ class LeftProjection(Generic[L, R]):
 class RightProjection(Generic[L, R]):
     """RightProjection"""
 
-    either: EitherST[L, R]
+    either: SubType[L, R]
 
     def __bool__(self) -> bool:
         return bool(self.either)
 
-    def get(self) -> Union[NoReturn, R]:
+    def get(self) -> R:
         if isinstance(self.either, Left):
             raise ValueError(self)
         else:
@@ -220,23 +220,23 @@ class RightProjection(Generic[L, R]):
         else:
             return self.either.value
 
-    def map(self, functor: Callable[[R], RR]) -> EitherST[L, RR]:
+    def map(self, functor: Callable[[R], RR]) -> Either[L, RR]:
         if isinstance(self.either, Left):
             return Left[L, RR](value=self.either.value)
         else:
             return Right[L, RR](value=functor(self.either.value))
 
-    def flatmap(self, functor: Callable[[R], EitherST[L, RR]]) -> EitherST[L, RR]:
+    def flatmap(self, functor: Callable[[R], Either[L, RR]]) -> Either[L, RR]:
         if isinstance(self.either, Left):
             return Left[L, RR](value=self.either.value)
         else:
             return functor(self.either.value)
 
 
-EitherST = Union[Left[L, R], Right[L, R]]
-EitherDo = Generator[Union[EitherST[L, Any], Any], Any, R]
+SubType = Union[Left[L, R], Right[L, R]]
+EitherDo = Generator[Union[Either[L, Any], Any], Any, R]
 EitherGenerator = Generator[
-    Union[EitherST[L, Any], Any],
-    Union[EitherST[L, Any], Any],
+    Union[Either[L, Any], Any],
+    Union[Either[L, Any], Any],
     R,
 ]
