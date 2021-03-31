@@ -2,17 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Generic,
-    Literal,
-    NoReturn,
-    Optional,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Generator, Generic, Literal, Optional, TypeVar, Union
 
 T = TypeVar("T")
 TT = TypeVar("TT")
@@ -26,12 +16,12 @@ class Try(ABC, Generic[T]):
 
     @abstractmethod
     def __call__(
-        self, /, convert: Optional[Callable[[TryST[T]], EE]] = None
-    ) -> Generator[Union[EE, TryST[T]], None, T]:
+        self, /, convert: Optional[Callable[[Try[T]], EE]] = None
+    ) -> Generator[Union[EE, Try[T]], None, T]:
         raise NotImplementedError
 
     @abstractmethod
-    def get(self) -> Union[NoReturn, T]:
+    def get(self) -> T:
         raise NotImplementedError
 
     @abstractmethod
@@ -39,11 +29,11 @@ class Try(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, functor: Callable[[T], TT]) -> TryST[TT]:
+    def map(self, functor: Callable[[T], TT]) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
-    def flatmap(self, functor: Callable[[T], TryST[TT]]) -> TryST[TT]:
+    def flatmap(self, functor: Callable[[T], Try[TT]]) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
@@ -63,9 +53,13 @@ class Try(ABC, Generic[T]):
     def is_success(self) -> bool:
         raise NotImplementedError
 
+    @abstractmethod
+    def pattern(self) -> SubType[T]:
+        raise NotImplementedError
+
     @staticmethod
-    def hold(fuction: Callable[..., T]) -> Callable[..., TryST[T]]:
-        def wrapper(*args: Any, **kwargs: Any) -> TryST[T]:
+    def hold(fuction: Callable[..., T]) -> Callable[..., Try[T]]:
+        def wrapper(*args: Any, **kwargs: Any) -> Try[T]:
             try:
                 return Success(value=fuction(*args, **kwargs))
             except Exception as error:
@@ -74,22 +68,21 @@ class Try(ABC, Generic[T]):
         return wrapper
 
     @staticmethod
-    def do(
-        generator_fuction: Callable[..., TryGenerator[T]]
-    ) -> Callable[..., TryST[T]]:
-        def impl(*args: Any, **kwargs: Any) -> TryST[T]:
+    def do(generator_fuction: Callable[..., TryGenerator[T]]) -> Callable[..., Try[T]]:
+        def impl(*args: Any, **kwargs: Any) -> Try[T]:
             def recur(
                 generator: TryGenerator[T],
                 prev: Any,
-            ) -> TryST[T]:
+            ) -> Try[T]:
                 try:
-                    result: Union[TryST[T], Any] = generator.send(prev)
+                    result: Union[Try[T], Any] = generator.send(prev)
                 except StopIteration as last:
                     # Success case
                     return Success(value=last.value)
                 # Failure case
                 if isinstance(result, Failure):
-                    return result
+                    failure = Failure[T](value=result.value)
+                    return failure
                 return recur(generator, result)
 
             return recur(generator_fuction(*args, **kwargs), None)
@@ -107,8 +100,8 @@ class Failure(Try[T]):
         return False
 
     def __call__(
-        self, /, convert: Optional[Callable[[TryST[T]], EE]] = None
-    ) -> Generator[Union[EE, TryST[T]], None, T]:
+        self, /, convert: Optional[Callable[[Try[T]], EE]] = None
+    ) -> Generator[Union[EE, Try[T]], None, T]:
         if convert is not None:
             yield convert(self)
             raise GeneratorExit(self) from self.value
@@ -116,16 +109,16 @@ class Failure(Try[T]):
             yield self
             raise GeneratorExit(self) from self.value
 
-    def get(self) -> NoReturn:
+    def get(self) -> T:
         raise ValueError() from self.value
 
     def get_or_else(self, default: Callable[..., TT]) -> Union[T, TT]:
         return default()
 
-    def map(self, functor: Callable[[T], TT]) -> TryST[TT]:
+    def map(self, functor: Callable[[T], TT]) -> Try[TT]:
         return Failure[TT](value=self.value)
 
-    def flatmap(self, functor: Callable[[T], TryST[TT]]) -> TryST[TT]:
+    def flatmap(self, functor: Callable[[T], Try[TT]]) -> Try[TT]:
         return Failure[TT](value=self.value)
 
     def fold(
@@ -142,6 +135,9 @@ class Failure(Try[T]):
     def is_success(self) -> Literal[False]:
         return False
 
+    def pattern(self) -> SubType[T]:
+        return self
+
 
 @dataclasses.dataclass(frozen=True)
 class Success(Try[T]):
@@ -153,8 +149,8 @@ class Success(Try[T]):
         return True
 
     def __call__(
-        self, /, convert: Optional[Callable[[TryST[T]], EE]] = None
-    ) -> Generator[Union[EE, TryST[T]], None, T]:
+        self, /, convert: Optional[Callable[[Try[T]], EE]] = None
+    ) -> Generator[Union[EE, Try[T]], None, T]:
         if convert is not None:
             yield convert(self)
             raise GeneratorExit(self)
@@ -168,10 +164,10 @@ class Success(Try[T]):
     def get_or_else(self, default: Callable[..., Any]) -> T:
         return self.value
 
-    def map(self, functor: Callable[[T], TT]) -> TryST[TT]:
+    def map(self, functor: Callable[[T], TT]) -> Try[TT]:
         return Success[TT](value=functor(self.value))
 
-    def flatmap(self, functor: Callable[[T], TryST[TT]]) -> TryST[TT]:
+    def flatmap(self, functor: Callable[[T], Try[TT]]) -> Try[TT]:
         return functor(self.value)
 
     def fold(
@@ -188,11 +184,14 @@ class Success(Try[T]):
     def is_success(self) -> Literal[True]:
         return True
 
+    def pattern(self) -> SubType[T]:
+        return self
 
-TryST = Union[Failure[T], Success[T]]
-TryDo = Generator[Union[TryST[T], Any], Any, T]
+
+SubType = Union[Failure[T], Success[T]]
+TryDo = Generator[Union[Try[T], Any], Any, T]
 TryGenerator = Generator[
-    Union[TryST[Any], Any],
-    Union[TryST[Any], Any],
+    Union[Try[Any], Any],
+    Union[Try[Any], Any],
     T,
 ]

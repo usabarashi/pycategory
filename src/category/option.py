@@ -2,17 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Generic,
-    Literal,
-    NoReturn,
-    Optional,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Generator, Generic, Literal, Optional, TypeVar, Union
 
 T = TypeVar("T")
 TT = TypeVar("TT")
@@ -24,12 +14,12 @@ class Option(ABC, Generic[T]):
 
     @abstractmethod
     def __call__(
-        self, /, convert: Optional[Callable[[OptionST[T]], EE]] = None
-    ) -> Generator[Union[EE, OptionST[T]], None, T]:
+        self, /, convert: Optional[Callable[[Option[T]], EE]] = None
+    ) -> Generator[Union[EE, Option[T]], None, T]:
         raise NotImplementedError
 
     @abstractmethod
-    def get(self) -> Union[NoReturn, T]:
+    def get(self) -> T:
         raise NotImplementedError
 
     @abstractmethod
@@ -56,15 +46,19 @@ class Option(ABC, Generic[T]):
     def not_empty(self) -> bool:
         raise NotImplementedError
 
+    @abstractmethod
+    def pattern(self) -> SubType[T]:
+        raise NotImplementedError
+
     @staticmethod
     def do(
         generator_fuction: Callable[..., OptionGenerator[T]]
-    ) -> Callable[..., OptionST[T]]:
-        def wrapper(*args: Any, **kwargs: Any) -> OptionST[T]:
+    ) -> Callable[..., Option[T]]:
+        def wrapper(*args: Any, **kwargs: Any) -> Option[T]:
             def recur(
                 generator: OptionGenerator[T],
                 prev: Any,
-            ) -> OptionST[T]:
+            ) -> Option[T]:
                 try:
                     result = generator.send(prev)
                 except StopIteration as last:
@@ -87,8 +81,8 @@ class Void(Option[T]):
         return False
 
     def __call__(
-        self, /, convert: Optional[Callable[[OptionST[T]], EE]] = None
-    ) -> Generator[Union[EE, OptionST[T]], None, T]:
+        self, /, convert: Optional[Callable[[Option[T]], EE]] = None
+    ) -> Generator[Union[EE, Option[T]], None, T]:
         if convert is not None:
             yield convert(self)
             raise GeneratorExit(self)
@@ -96,7 +90,7 @@ class Void(Option[T]):
             yield self
             raise GeneratorExit(self)
 
-    def get(self) -> NoReturn:
+    def get(self) -> T:
         raise ValueError(self)
 
     def get_or_else(self, default: Optional[Callable[..., TT]] = None) -> Union[T, TT]:
@@ -119,6 +113,9 @@ class Void(Option[T]):
     def not_empty(self) -> Literal[False]:
         return False
 
+    def pattern(self) -> SubType[T]:
+        return self
+
 
 @dataclasses.dataclass
 class Some(Option[T]):
@@ -130,8 +127,8 @@ class Some(Option[T]):
         return True
 
     def __call__(
-        self, /, convert: Optional[Callable[[OptionST[T]], EE]] = None
-    ) -> Generator[Union[EE, OptionST[T]], None, T]:
+        self, /, convert: Optional[Callable[[Option[T]], EE]] = None
+    ) -> Generator[Union[EE, Option[T]], None, T]:
         if convert is not None:
             yield convert(self)
             raise GeneratorExit(self)
@@ -160,11 +157,14 @@ class Some(Option[T]):
     def not_empty(self) -> Literal[True]:
         return True
 
+    def pattern(self) -> SubType[T]:
+        return self
 
-OptionST = Union[Void[T], Some[T]]
-OptionDo = Generator[Union[OptionST[T], Any], Any, T]
+
+SubType = Union[Void[T], Some[T]]
+OptionDo = Generator[Union[Option[T], Any], Any, T]
 OptionGenerator = Generator[
-    Union[OptionST[T], Any],
-    Union[OptionST[T], Any],
+    Union[Option[T], Any],
+    Union[Option[T], Any],
     T,
 ]
