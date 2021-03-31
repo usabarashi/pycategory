@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from typing import Any, Callable, Generator, Generic, Literal, Optional, TypeVar, Union
 
 L = TypeVar("L")
@@ -51,7 +51,7 @@ class Either(ABC, Generic[L, R]):
     def is_right(self) -> bool:
         raise NotImplementedError
 
-    @abstractmethod
+    @abstractproperty
     def pattern(self) -> SubType[L, R]:
         raise NotImplementedError
 
@@ -117,6 +117,7 @@ class Left(Either[L, R]):
     def is_right(self) -> Literal[False]:
         return False
 
+    @property
     def pattern(self) -> SubType[L, R]:
         return self
 
@@ -161,6 +162,7 @@ class Right(Either[L, R]):
     def is_right(self) -> Literal[True]:
         return True
 
+    @property
     def pattern(self) -> SubType[L, R]:
         return self
 

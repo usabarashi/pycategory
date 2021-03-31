@@ -1,5 +1,4 @@
 def test_map():
-
     from category import Failure, Future, Success
     from category import ThreadPoolExecutionContext as ec
 
@@ -173,7 +172,7 @@ def test_do():
         one = yield from multi_context(value=1)(ec=ec)()
         two = 2
         three = yield from multi_context(value=0)(ec=ec)(
-            convert=lambda failure: Failure(value=Exception())
+            convert=lambda failure: Failure[int](value=Exception())
         )
         return one + two + three
 

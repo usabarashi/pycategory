@@ -26,88 +26,88 @@ class EitherTTry(Generic[L, R]):
     def __call__(
         self, /, convert: Optional[Callable[[Try[Either[L, R]]], EE]] = None
     ) -> Generator[Union[EE, Try[Either[L, R]]], None, R]:
-        try_pattern = self.value.pattern()
+        try_ = self.value
         if convert is not None:
-            yield convert(try_pattern)
+            yield convert(try_)
             raise GeneratorExit(self)
         # Failure[Either[L, R]] case
-        if isinstance(try_pattern, Failure):
-            yield try_pattern
-            raise GeneratorExit(self) from try_pattern.value
+        if isinstance(try_.pattern, Failure):
+            yield try_.pattern
+            raise GeneratorExit(self) from try_.pattern.value
         # Success[Eihter[L, R]] case
         else:
-            either_pattern = try_pattern.value.pattern()
+            either = try_.pattern.value
             # Success[Left[L , R]] case
-            if isinstance(either_pattern, Left):
-                yield try_pattern
+            if isinstance(either.pattern, Left):
+                yield try_.pattern
                 raise GeneratorExit(self)
             # Success[Right[L, R]] case
             else:
-                yield try_pattern
-                return either_pattern.value
+                yield try_.pattern
+                return either.pattern.value
 
     def get(self) -> R:
-        try_pattern = self.value.pattern()
-        if isinstance(try_pattern, Failure):
+        try_ = self.value
+        if isinstance(try_.pattern, Failure):
             raise ValueError(self)
         else:
-            either_pattern = try_pattern.value.pattern()
-            if isinstance(either_pattern, Left):
+            either = try_.pattern.value
+            if isinstance(either.pattern, Left):
                 raise ValueError(self)
             else:
-                return either_pattern.value
+                return either.pattern.value
 
     def get_or_else(self, default: Callable[..., EE]) -> Union[EE, R]:
-        try_pattern = self.value.pattern()
-        if isinstance(try_pattern, Failure):
+        try_ = self.value
+        if isinstance(try_.pattern, Failure):
             return default()
         else:
-            either_pattern = try_pattern.value.pattern()
-            if isinstance(either_pattern, Left):
+            either = try_.pattern.value
+            if isinstance(either.pattern, Left):
                 return default()
             else:
-                return either_pattern.value
+                return either.pattern.value
 
     def map(self, functor: Callable[[R], RR]) -> EitherTTry[L, RR]:
-        try_pattern = self.value.pattern()
+        try_ = self.value
         # Failure case
-        if isinstance(try_pattern, Failure):
-            exception: Exception = try_pattern.value
+        if isinstance(try_.pattern, Failure):
+            exception: Exception = try_.pattern.value
             failure = Failure[Either[L, RR]](value=exception)
             return EitherTTry[L, RR](value=failure)
         # Success[Either[L, R]] case
         else:
-            either_pattern = try_pattern.value.pattern()
+            either = try_.pattern.value
             # Success[Left[L, R]] case
-            if isinstance(either_pattern, Left):
-                left = Left[L, RR](value=either_pattern.value)
+            if isinstance(either.pattern, Left):
+                left = Left[L, RR](value=either.pattern.value)
                 success = Success[Left[L, RR]](value=left)
                 return EitherTTry[L, RR](value=success)
             # Success[Right[L, R]] case
             else:
-                mapped_value = functor(either_pattern.value)
+                mapped_value = functor(either.pattern.value)
                 right = Right[L, RR](value=mapped_value)
                 success = Success[Right[L, RR]](value=right)
                 return EitherTTry[L, RR](value=success)
 
     def flatmap(self, functor: Callable[[R], EitherTTry[L, RR]]) -> EitherTTry[L, RR]:
-        try_pattern = self.value.pattern()
+        try_ = self.value
         # Failure case
-        if isinstance(try_pattern, Failure):
-            exception: Exception = try_pattern.value
+        if isinstance(try_.pattern, Failure):
+            exception: Exception = try_.pattern.value
             failure = Failure[Either[L, RR]](value=exception)
             return EitherTTry[L, RR](value=failure)
         # Success[Either[L, R]] case
         else:
-            either_pattern = try_pattern.value.pattern()
+            either = try_.pattern.value
             # Success[Left[L, R]] case
-            if isinstance(either_pattern, Left):
-                left = Left[L, RR](value=either_pattern.value)
+            if isinstance(either.pattern, Left):
+                left = Left[L, RR](value=either.pattern.value)
                 success = Success[Left[L, RR]](value=left)
                 return EitherTTry[L, RR](value=success)
             # Success[Right[L, R]] case
             else:
-                return functor(either_pattern.value)
+                return functor(either.pattern.value)
 
     @staticmethod
     def do(
@@ -127,13 +127,15 @@ class EitherTTry(Generic[L, R]):
                     success = Success[Either[L, R]](value=right)
                     return EitherTTry[L, R](value=success)
                 if isinstance(result, Try):
-                    try_pattern = result.pattern()
+                    try_ = result
                     # Failure[EitherL, R] case
-                    if isinstance(try_pattern, Failure):
-                        return EitherTTry[L, R](value=try_pattern)
+                    if isinstance(try_.pattern, Failure):
+                        return EitherTTry[L, R](value=try_.pattern)
                     # Success[Left[L, R]] case
-                    elif isinstance(try_pattern.value, Left):
-                        return EitherTTry[L, R](value=result)
+                    else:
+                        either = try_.pattern.value
+                        if isinstance(either.pattern, Left):
+                            return EitherTTry[L, R](value=try_)
                 return recur(generator, result)
 
             return recur(generator_fuction(*args, **kwargs), None)
@@ -161,18 +163,18 @@ class EitherTFuture(Generic[L, R]):
         self, /, convert: Optional[Callable[[Try[Either[L, R]]], EE]] = None
     ) -> Generator[Union[EE, Try[Either[L, R]]], None, R]:
         try:
-            either_pattern = self.value.result().pattern()
+            either = self.value.result()
             if convert is not None:
-                yield convert(Success[Either[L, R]](value=either_pattern))
+                yield convert(Success[Either[L, R]](value=either))
                 raise GeneratorExit(self)
             # Success[Left[L , R]] case
-            if isinstance(either_pattern, Left):
-                yield Success[Either[L, R]](value=either_pattern)
+            if isinstance(either.pattern, Left):
+                yield Success[Either[L, R]](value=either.pattern)
                 raise GeneratorExit(self)
             # Success[Right[L, R]] case
             else:
-                yield Success[Either[L, R]](value=either_pattern)
-                return either_pattern.value
+                yield Success[Either[L, R]](value=either.pattern)
+                return either.pattern.value
 
         # Failure[Either[L, R]] case
         except Exception as error:
@@ -184,32 +186,31 @@ class EitherTFuture(Generic[L, R]):
 
     def get(self) -> R:
         try:
-            either_pattern = self.value.result().pattern()
-            if isinstance(either_pattern, Left):
+            either = self.value.result()
+            if isinstance(either.pattern, Left):
                 raise ValueError(self)
             else:
-                return either_pattern.value
+                return either.pattern.value
         except Exception as error:
             raise error
 
     def get_or_else(self, default: Callable[..., EE]) -> Union[EE, R]:
         try:
-            either_pattern = self.value.result().pattern()
-            if isinstance(either_pattern, Left):
+            either = self.value.result()
+            if isinstance(either.pattern, Left):
                 return default()
             else:
-                return either_pattern.value
+                return either.pattern.value
         except Exception:
             return default()
 
     def map(self, functor: Callable[[R], RR]) -> Callable[..., EitherTFuture[L, RR]]:
         def with_context(ec: Type[ExecutionContext]) -> EitherTFuture[L, RR]:
             def transformer(either: Either[L, R]) -> Either[L, RR]:
-                either_pattern = either.pattern()
-                if isinstance(either_pattern, Left):
-                    return Left[L, RR](value=either_pattern.value)
+                if isinstance(either.pattern, Left):
+                    return Left[L, RR](value=either.pattern.value)
                 else:
-                    mapped_value = functor(either_pattern.value)
+                    mapped_value = functor(either.pattern.value)
                     return Right[L, RR](value=mapped_value)
 
             future = self.value
@@ -224,13 +225,13 @@ class EitherTFuture(Generic[L, R]):
         def with_context(ec: Type[ExecutionContext]) -> EitherTFuture[L, RR]:
             # FIXME: Threaded processing
             try:
-                either_pattern = self.value.result().pattern()
-                if isinstance(either_pattern, Left):
-                    left = Left[L, RR](value=either_pattern.value)
+                either = self.value.result()
+                if isinstance(either.pattern, Left):
+                    left = Left[L, RR](value=either.pattern.value)
                     future = Future[Left[L, RR]].successful(value=left)
                     return EitherTFuture[L, RR](value=future)
                 else:
-                    return functor(either_pattern.value)
+                    return functor(either.pattern.value)
             except Exception as error:
                 future = Future[Either[L, RR]]()
                 future.set_exception(exception=error)
@@ -254,15 +255,15 @@ class EitherTFuture(Generic[L, R]):
                     future = Future[Right[L, R]].successful(value=right)
                     return EitherTFuture[L, R](value=future)
                 if isinstance(result, Try):
-                    try_pattern = result.pattern()
+                    try_ = result
                     # Failure case
-                    if isinstance(try_pattern, Failure):
+                    if isinstance(try_.pattern, Failure):
                         future = Future[Either[L, R]]()
-                        future.set_exception(exception=try_pattern.value)
+                        future.set_exception(exception=try_.pattern.value)
                         return EitherTFuture[L, R](value=future)
                     # Success[Left[L, R]] case
-                    elif isinstance(try_pattern.value, Left):
-                        left: Left[L, R] = try_pattern.value
+                    elif isinstance(try_.pattern.value, Left):
+                        left: Left[L, R] = try_.pattern.value
                         future = Future[Left[L, R]].successful(value=left)
                         return EitherTFuture[L, R](value=future)
                 return recur(generator, result)

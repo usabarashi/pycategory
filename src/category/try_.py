@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from typing import Any, Callable, Generator, Generic, Literal, Optional, TypeVar, Union
 
 T = TypeVar("T")
@@ -53,7 +53,7 @@ class Try(ABC, Generic[T]):
     def is_success(self) -> bool:
         raise NotImplementedError
 
-    @abstractmethod
+    @abstractproperty
     def pattern(self) -> SubType[T]:
         raise NotImplementedError
 
@@ -135,6 +135,7 @@ class Failure(Try[T]):
     def is_success(self) -> Literal[False]:
         return False
 
+    @property
     def pattern(self) -> SubType[T]:
         return self
 
@@ -184,6 +185,7 @@ class Success(Try[T]):
     def is_success(self) -> Literal[True]:
         return True
 
+    @property
     def pattern(self) -> SubType[T]:
         return self
 
