@@ -125,13 +125,13 @@ def test_hold():
             raise Exception(value)
 
     # Failure case
-    failure_future = multi_context(value=0)(ec=ec)
+    failure_future = multi_context(value=0)(ec)
     assert Future is type(failure_future)
     assert Failure is type(failure_future.value)
     assert Exception is type(failure_future.value.value)
 
     # Success case
-    success_future = multi_context(value=1)(ec=ec)
+    success_future = multi_context(value=1)(ec)
     assert Future is type(success_future)
     assert 1 == success_future.result()
     assert Success is type(success_future.value)
@@ -152,9 +152,9 @@ def test_do():
     # Failure case
     @Future.do
     def failure_context() -> FutureDo[int]:
-        one = yield from multi_context(value=1)(ec=ec)()
+        one = yield from multi_context(value=1)(ec)()
         two = 2
-        three = yield from multi_context(value=0)(ec=ec)()
+        three = yield from multi_context(value=0)(ec)()
         return one + two + three
 
     assert Future is type(failure_context())
@@ -169,9 +169,9 @@ def test_do():
     # Failure case
     @Future.do
     def failure_convert_context() -> FutureDo[int]:
-        one = yield from multi_context(value=1)(ec=ec)()
+        one = yield from multi_context(value=1)(ec)()
         two = 2
-        three = yield from multi_context(value=0)(ec=ec)(
+        three = yield from multi_context(value=0)(ec)(
             convert=lambda failure: Failure[int](value=Exception())
         )
         return one + two + three
@@ -188,9 +188,9 @@ def test_do():
     # Success case
     @Future.do
     def success_context() -> FutureDo[int]:
-        one = yield from multi_context(value=1)(ec=ec)()
+        one = yield from multi_context(value=1)(ec)()
         two = 2
-        three = yield from multi_context(value=3)(ec=ec)()
+        three = yield from multi_context(value=3)(ec)()
         return one + two + three
 
     assert Future is type(success_context())
@@ -200,9 +200,9 @@ def test_do():
 
     @Future.do
     def success_convert_context() -> FutureDo[int]:
-        one = yield from multi_context(value=1)(ec=ec)()
+        one = yield from multi_context(value=1)(ec)()
         two = 2
-        three = yield from multi_context(value=3)(ec=ec)(
+        three = yield from multi_context(value=3)(ec)(
             convert=lambda success: Success(value=3)
         )
         return one + two + three

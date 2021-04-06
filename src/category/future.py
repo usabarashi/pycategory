@@ -175,9 +175,13 @@ class Future(concurrent.futures.Future[T]):
             return Failure(value=failure)
 
     @staticmethod
-    def hold(functor: Callable[..., T]):
-        def wrapper(*args: Any, **kwargs: Any):
-            def with_context(*, ec: Type[ExecutionContext]) -> Future[T]:
+    def hold(
+        functor: Callable[..., T]
+    ) -> Callable[..., Callable[[Type[ExecutionContext]], Future[T]]]:
+        def wrapper(
+            *args: Any, **kwargs: Any
+        ) -> Callable[[Type[ExecutionContext]], Future[T]]:
+            def with_context(ec: Type[ExecutionContext]) -> Future[T]:
                 # FIXME: Threaded processing
                 try:
                     return Future[T].successful(value=functor(*args, **kwargs))
