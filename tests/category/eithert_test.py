@@ -530,3 +530,115 @@ def test_eithertfuture_do():
     assert Future is type(success_right_context().value)
     assert Right is type(success_right_context().value._result)
     assert 6 == success_right_context().value._result.value
+
+
+def test_convert():
+    from typing import Callable, TypeVar
+
+    from category import (
+        Either,
+        EitherTFuture,
+        EitherTFutureDo,
+        Future,
+        Left,
+        Option,
+        Right,
+        Some,
+        Void,
+    )
+
+    T = TypeVar("T")
+    L = TypeVar("L")
+    R = TypeVar("R")
+    E = TypeVar("E")
+
+    def if_left_then(
+        source: Either[L, R], convert: Callable[[L], E]
+    ) -> EitherTFuture[E, R]:
+        if isinstance(source.pattern, Left):
+            return EitherTFuture[E, R](
+                value=Future[Either[E, R]].successful(
+                    Left[E, R](value=convert(source.pattern.value))
+                )
+            )
+        else:
+            return EitherTFuture[E, R](
+                value=Future[Either[E, R]].successful(
+                    Right[E, R](value=source.pattern.value)
+                )
+            )
+
+    def if_failure_then(
+        source: Future[T], convert: Callable[[Exception], E]
+    ) -> EitherTFuture[E, T]:
+        try:
+            return EitherTFuture[E, T](
+                Future[Either[E, T]].successful(
+                    value=Right[E, T](value=source.result())
+                )
+            )
+        except Exception as error:
+            return EitherTFuture[E, T](
+                Future[Either[E, T]].successful(value=Left[E, T](value=error))
+            )
+
+    def if_not_exists(
+        source: Future[Option[T]], convert: Callable[..., E]
+    ) -> EitherTFuture[E, T]:
+        try:
+            option = source.result()
+            if isinstance(option.pattern, Void):
+                return EitherTFuture[E, T](
+                    Future[Either[E, T]].successful(vlaue=Left[E, T](value=convert()))
+                )
+            else:
+                return EitherTFuture[E, T](
+                    Future[Either[E, T]].successful(
+                        value=Right[E, T](value=option.pattern.value)
+                    )
+                )
+        except Exception as error:
+            return EitherTFuture[E, T](
+                value=Future[Either[E, T]].successful(value=Left[E, T](value=error))
+            )
+
+    @EitherTFuture.do
+    def left_context() -> EitherTFutureDo[Exception, int]:
+        one = yield from if_not_exists(
+            source=Future[Option[int]].successful(value=Some(value=1)),
+            convert=lambda: Exception(),
+        )()
+        two = 2
+        three = yield from if_left_then(
+            source=Left[Exception, int](value=EOFError()),
+            convert=lambda left: Exception(),
+        )()
+        return one + two + three
+
+    assert EitherTFuture is type(left_context())
+    assert Future is type(left_context().value)
+    assert Left is type(left_context().value._result)
+    assert Exception is type(left_context().value._result.value)
+    try:
+        left_context().get()
+        assert False
+    except Exception as error:
+        assert ValueError is type(error)
+
+    @EitherTFuture.do
+    def right_context() -> EitherTFutureDo[Exception, int]:
+        one = yield from if_not_exists(
+            source=Future[Option[int]].successful(value=Some(value=1)),
+            convert=lambda: Exception(),
+        )()
+        two = 2
+        three = yield from if_left_then(
+            source=Right[Exception, int](value=3), convert=lambda left: Exception()
+        )()
+        return one + two + three
+
+    assert EitherTFuture is type(right_context())
+    assert Future is type(right_context().value)
+    assert Right is type(right_context().value._result)
+    assert 6 == right_context().value._result.value
+    assert 6 == right_context().get()
