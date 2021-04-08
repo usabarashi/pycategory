@@ -73,7 +73,11 @@ class Option(ABC, Generic[T]):
 
         return wrapper
 
+    def convart(self, functor: Callable[[Option[T]], TT]) -> TT:
+        raise NotImplementedError
 
+
+@dataclasses.dataclass(frozen=True)
 class Void(Option[T]):
     """Void"""
 
@@ -99,10 +103,10 @@ class Void(Option[T]):
         raise ValueError(self)
 
     def map(self, functor: Callable[[T], TT]) -> Option[TT]:
-        return Void()
+        return Void[T]()
 
     def flatmap(self, functor: Callable[[T], Option[TT]]) -> Option[TT]:
-        return Void()
+        return Void[T]()
 
     def fold(self, /, void: Callable[..., TT], some: Callable[[T], TT]) -> TT:
         return void()
@@ -117,8 +121,11 @@ class Void(Option[T]):
     def pattern(self) -> SubType[T]:
         return self
 
+    def convert(self, functor: Callable[[Void[T]], TT]) -> TT:
+        return functor(self)
 
-@dataclasses.dataclass
+
+@dataclasses.dataclass(frozen=True)
 class Some(Option[T]):
     """Some"""
 
@@ -161,6 +168,9 @@ class Some(Option[T]):
     @property
     def pattern(self) -> SubType[T]:
         return self
+
+    def convert(self, functor: Callable[[Some[T]], TT]) -> TT:
+        return functor(self)
 
 
 SubType = Union[Void[T], Some[T]]

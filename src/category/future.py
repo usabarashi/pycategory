@@ -15,6 +15,7 @@ T = TypeVar("T")
 S = TypeVar("S")
 U = TypeVar("U")
 EE = TypeVar("EE")
+TT = TypeVar("TT")
 
 
 class ExecutionContext(ABC):
@@ -218,6 +219,9 @@ class Future(concurrent.futures.Future[T]):
             return recur(generator_function(*args, **kwargs), None)
 
         return impl
+
+    def convert(self, functor: Callable[[Future[T]], TT]) -> TT:
+        return functor(self)
 
 
 FutureDo = Generator[Union[Try[Any], Any], Union[Try[Any], Any], T]

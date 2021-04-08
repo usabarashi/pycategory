@@ -61,9 +61,9 @@ class Try(ABC, Generic[T]):
     def hold(fuction: Callable[..., T]) -> Callable[..., Try[T]]:
         def wrapper(*args: Any, **kwargs: Any) -> Try[T]:
             try:
-                return Success(value=fuction(*args, **kwargs))
+                return Success[T](value=fuction(*args, **kwargs))
             except Exception as error:
-                return Failure(value=error)
+                return Failure[T](value=error)
 
         return wrapper
 
@@ -88,6 +88,10 @@ class Try(ABC, Generic[T]):
             return recur(generator_fuction(*args, **kwargs), None)
 
         return impl
+
+    @abstractmethod
+    def convert(self, functor: Callable[[Try[T]], TT]) -> TT:
+        raise NotImplementedError
 
 
 @dataclasses.dataclass(frozen=True)
@@ -139,6 +143,9 @@ class Failure(Try[T]):
     def pattern(self) -> SubType[T]:
         return self
 
+    def convert(self, functor: Callable[[Failure[T]], TT]) -> TT:
+        return functor(self)
+
 
 @dataclasses.dataclass(frozen=True)
 class Success(Try[T]):
@@ -188,6 +195,9 @@ class Success(Try[T]):
     @property
     def pattern(self) -> SubType[T]:
         return self
+
+    def convert(self, functor: Callable[[Success[T]], TT]) -> TT:
+        return functor(self)
 
 
 SubType = Union[Failure[T], Success[T]]

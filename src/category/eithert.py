@@ -11,6 +11,7 @@ L = TypeVar("L")
 R = TypeVar("R")
 RR = TypeVar("RR")
 EE = TypeVar("EE")
+TT = TypeVar("TT")
 
 
 @dataclass(frozen=True)
@@ -142,6 +143,9 @@ class EitherTTry(Generic[L, R]):
 
         return impl
 
+    def convert(self, functor: Callable[[EitherTTry[L, R]], TT]) -> TT:
+        return functor(self)
+
 
 EitherTTryDo = Generator[Union[Left[L, Any], Right[L, Any], Any], Any, R]
 EitherTTryGenerator = Generator[
@@ -271,6 +275,9 @@ class EitherTFuture(Generic[L, R]):
             return recur(generator_fuction(*args, **kwargs), None)
 
         return impl
+
+    def convert(self, functor: Callable[[EitherTFuture[L, R]], TT]) -> TT:
+        return functor(self)
 
 
 EitherTFutureDo = Generator[Union[Any, Try[Either[L, R]]], Any, R]
