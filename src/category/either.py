@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Any, Callable, Generator, Generic, Literal, Optional, TypeVar, Union
+from typing import Any, Callable, Generator, Generic, Literal, TypeVar, Union
 
 L = TypeVar("L")
 R = TypeVar("R")
@@ -18,9 +18,7 @@ class Either(ABC, Generic[L, R]):
     value: Union[L, R]
 
     @abstractmethod
-    def __call__(
-        self, /, convert: Optional[Callable[[Either[L, R]], EE]] = None
-    ) -> Generator[Union[EE, Either[L, R]], None, R]:
+    def __call__(self) -> Generator[Either[L, R], None, R]:
         raise NotImplementedError
 
     @abstractmethod
@@ -67,7 +65,7 @@ class Either(ABC, Generic[L, R]):
                 try:
                     result = generator.send(prev)
                 except StopIteration as last:
-                    return Right(value=last.value)
+                    return Right[L, R](value=last.value)
                 if isinstance(result, Left):
                     return result
                 return recur(generator, result)
@@ -90,15 +88,9 @@ class Left(Either[L, R]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(
-        self, /, convert: Optional[Callable[[Either[L, R]], EE]] = None
-    ) -> Generator[Union[EE, Left[L, R]], None, R]:
-        if convert is not None:
-            yield convert(self)
-            raise GeneratorExit(self)
-        else:
-            yield self
-            raise GeneratorExit(self)
+    def __call__(self) -> Generator[Left[L, R], None, R]:
+        yield self
+        raise GeneratorExit(self)
 
     def map(self, functor: Callable[[R], RR]) -> Either[L, RR]:
         return Left[L, RR](self.value)
@@ -138,15 +130,9 @@ class Right(Either[L, R]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __call__(
-        self, convert: Optional[Callable[[Either[L, R]], EE]] = None
-    ) -> Generator[Union[EE, Right[L, R]], None, R]:
-        if convert is not None:
-            yield convert(self)
-            raise GeneratorExit(self)
-        else:
-            yield self
-            return self.value
+    def __call__(self) -> Generator[Right[L, R], None, R]:
+        yield self
+        return self.value
 
     def map(self, functor: Callable[[R], RR]) -> Either[L, RR]:
         return Right[L, RR](functor(self.value))
@@ -246,7 +232,7 @@ class RightProjection(Generic[L, R]):
 
 
 SubType = Union[Left[L, R], Right[L, R]]
-EitherDo = Generator[Union[Either[L, Any], Any], Any, R]
+EitherDo = Generator[Either[L, Any], Any, R]
 EitherGenerator = Generator[
     Union[Either[L, Any], Any],
     Union[Either[L, Any], Any],

@@ -24,13 +24,8 @@ class EitherTTry(Generic[L, R]):
         # Success and Right
         return bool(self.value) and bool(self.value.value)
 
-    def __call__(
-        self, /, convert: Optional[Callable[[Try[Either[L, R]]], EE]] = None
-    ) -> Generator[Union[EE, Try[Either[L, R]]], None, R]:
+    def __call__(self) -> Generator[Try[Either[L, R]], None, R]:
         try_ = self.value
-        if convert is not None:
-            yield convert(try_)
-            raise GeneratorExit(self)
         # Failure[Either[L, R]] case
         if isinstance(try_.pattern, Failure):
             yield try_.pattern
@@ -163,14 +158,9 @@ class EitherTFuture(Generic[L, R]):
         # Success and Right
         return bool(self.value) and bool(self.value.value)
 
-    def __call__(
-        self, /, convert: Optional[Callable[[Try[Either[L, R]]], EE]] = None
-    ) -> Generator[Union[EE, Try[Either[L, R]]], None, R]:
+    def __call__(self) -> Generator[Try[Either[L, R]], None, R]:
         try:
             either = self.value.result()
-            if convert is not None:
-                yield convert(Success[Either[L, R]](value=either))
-                raise GeneratorExit(self)
             # Success[Left[L , R]] case
             if isinstance(either.pattern, Left):
                 yield Success[Either[L, R]](value=either.pattern)
@@ -182,11 +172,8 @@ class EitherTFuture(Generic[L, R]):
 
         # Failure[Either[L, R]] case
         except Exception as error:
-            if convert is not None:
-                yield convert(Failure(value=error))
-                raise GeneratorExit(error) from error
-            else:
-                raise GeneratorExit from error
+            yield Failure[Either[L, R]](value=error)
+            raise GeneratorExit from error
 
     def get(self) -> R:
         try:
@@ -280,7 +267,5 @@ class EitherTFuture(Generic[L, R]):
         return functor(self)
 
 
-EitherTFutureDo = Generator[Union[Any, Try[Either[L, R]]], Any, R]
-EitherTFutureGenerator = Generator[
-    Union[Any, Try[Either[L, R]]], Union[Any, Try[Either[L, R]]], R
-]
+EitherTFutureDo = Generator[Try[Either[L, R]], Any, R]
+EitherTFutureGenerator = Generator[Try[Either[L, R]], Union[Any, Try[Either[L, R]]], R]

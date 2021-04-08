@@ -7,7 +7,7 @@ import concurrent.futures
 import dataclasses
 from abc import ABC
 from concurrent.futures._base import PENDING
-from typing import Any, Callable, Generator, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Generator, Type, TypeVar, Union
 
 from category.try_ import Failure, Success, Try
 
@@ -44,24 +44,14 @@ class Future(concurrent.futures.Future[T]):
     def __bool__(self) -> bool:
         return self.done()
 
-    def __call__(
-        self, /, convert: Optional[Callable[[Try[T]], EE]] = None
-    ) -> Generator[Union[EE, Try[T]], None, T]:
+    def __call__(self) -> Generator[Try[T], None, T]:
         try:
             success = self.result()
-            if convert is not None:
-                yield convert(Success(value=success))
-                raise GeneratorExit(self)
-            else:
-                yield Success(value=success)
-                return success
+            yield Success(value=success)
+            return success
         except Exception as error:
-            if convert is not None:
-                yield convert(Failure(value=error))
-                raise GeneratorExit(self)
-            else:
-                yield Failure(value=error)
-                raise GeneratorExit(self)
+            yield Failure(value=error)
+            raise GeneratorExit(self) from error
 
     def map(self, functor: Callable[[T], S]) -> Callable[..., Future[S]]:
         def with_context(ec: Type[ExecutionContext]) -> Future[S]:
@@ -171,9 +161,9 @@ class Future(concurrent.futures.Future[T]):
     @property
     def value(self) -> Try[T]:
         try:
-            return Success(value=self.result())
+            return Success[T](value=self.result())
         except Exception as failure:
-            return Failure(value=failure)
+            return Failure[T](value=failure)
 
     @staticmethod
     def hold(
@@ -224,5 +214,5 @@ class Future(concurrent.futures.Future[T]):
         return functor(self)
 
 
-FutureDo = Generator[Union[Try[Any], Any], Union[Try[Any], Any], T]
-FutureGenerator = Generator[Union[Try[Any], Any], Union[Try[Any], Any], T]
+FutureDo = Generator[Try[Any], Union[Try[Any], Any], T]
+FutureGenerator = Generator[Try[Any], Union[Try[Any], Any], T]

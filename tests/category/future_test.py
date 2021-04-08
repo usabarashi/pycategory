@@ -166,25 +166,6 @@ def test_do():
     assert Failure is type(failure_context().value)
     assert Exception is type(failure_context().value.value)
 
-    # Failure case
-    @Future.do
-    def failure_convert_context() -> FutureDo[int]:
-        one = yield from multi_context(value=1)(ec)()
-        two = 2
-        three = yield from multi_context(value=0)(ec)(
-            convert=lambda failure: Failure[int](value=Exception())
-        )
-        return one + two + three
-
-    assert Future is type(failure_convert_context())
-    try:
-        failure_convert_context().result()
-        assert False
-    except Exception:
-        assert True
-    assert Failure is type(failure_convert_context().value)
-    assert Exception is type(failure_convert_context().value.value)
-
     # Success case
     @Future.do
     def success_context() -> FutureDo[int]:
@@ -197,21 +178,6 @@ def test_do():
     assert 6 == success_context().result()
     assert Success is type(success_context().value)
     assert 6 == success_context().value.value
-
-    @Future.do
-    def success_convert_context() -> FutureDo[int]:
-        one = yield from multi_context(value=1)(ec)()
-        two = 2
-        three = yield from multi_context(value=3)(ec)(
-            convert=lambda success: Success(value=3)
-        )
-        return one + two + three
-
-    try:
-        success_convert_context()
-        assert False
-    except BaseException as error:
-        GeneratorExit is type(error)
 
 
 def test_convert():
