@@ -76,6 +76,10 @@ class Either(ABC, Generic[L, R]):
 
         return wrapper
 
+    @abstractmethod
+    def convert(self, functor: Callable[[Either[L, R]], TT]) -> TT:
+        raise NotImplementedError
+
 
 @dataclasses.dataclass(frozen=True)
 class Left(Either[L, R]):
@@ -106,10 +110,10 @@ class Left(Either[L, R]):
         return left(self.value)
 
     def left(self) -> LeftProjection[L, R]:
-        return LeftProjection(either=self)
+        return LeftProjection[L, R](either=self)
 
     def right(self) -> RightProjection[L, R]:
-        return RightProjection(either=self)
+        return RightProjection[L, R](either=self)
 
     def is_left(self) -> Literal[True]:
         return True
@@ -120,6 +124,9 @@ class Left(Either[L, R]):
     @property
     def pattern(self) -> SubType[L, R]:
         return self
+
+    def convert(self, functor: Callable[[Left[L, R]], TT]) -> TT:
+        return functor(self)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -151,10 +158,10 @@ class Right(Either[L, R]):
         return right(self.value)
 
     def left(self) -> LeftProjection[L, R]:
-        return LeftProjection(either=self)
+        return LeftProjection[L, R](either=self)
 
     def right(self) -> RightProjection[L, R]:
-        return RightProjection(either=self)
+        return RightProjection[L, R](either=self)
 
     def is_left(self) -> Literal[False]:
         return False
@@ -165,6 +172,9 @@ class Right(Either[L, R]):
     @property
     def pattern(self) -> SubType[L, R]:
         return self
+
+    def convert(self, functor: Callable[[Right[L, R]], TT]) -> TT:
+        return functor(self)
 
 
 @dataclasses.dataclass(frozen=True)

@@ -212,3 +212,37 @@ def test_do():
         assert False
     except BaseException as error:
         GeneratorExit is type(error)
+
+
+def test_convert():
+    from category import Failure, Future, Success
+
+    def to_failure(future: Future[int]) -> Future[int]:
+        try:
+            future.result()
+            failure = Future[int]()
+            failure.set_exception(exception=Exception())
+            return failure
+        except Exception as error:
+            failure = Future[int]()
+            failure.set_exception(exception=error)
+            return failure
+
+    def to_success(future: Future[int]) -> Future[int]:
+        try:
+            value = future.result()
+            return Future[int].successful(value=value)
+        except Exception:
+            return Future[int].successful(value=1)
+
+    failure = Future[int]()
+    failure.set_exception(exception=Exception())
+    success = Future[int].successful(value=1)
+    assert Future is type(failure.convert(to_failure))
+    assert Failure is type(failure.convert(to_failure).value)
+    assert Future is type(failure.convert(to_success))
+    assert Success is type(failure.convert(to_success).value)
+    assert Future is type(success.convert(to_failure))
+    assert Failure is type(success.convert(to_failure).value)
+    assert Future is type(success.convert(to_success))
+    assert Success is type(success.convert(to_success).value)

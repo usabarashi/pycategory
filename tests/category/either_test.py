@@ -293,3 +293,24 @@ def test_either_do():
         assert False
     except BaseException as error:
         GeneratorExit is type(error)
+
+
+def test_convert():
+    from category import Either, Left, Right
+
+    def to_left(either: Either[Exception, int]) -> Left[Exception, int]:
+        if isinstance(either.pattern, Left):
+            return either.pattern
+        else:
+            return Left[Exception, int](value=Exception())
+
+    def to_right(either: Either[Exception, int]) -> Right[Exception, int]:
+        if isinstance(either.pattern, Left):
+            return Right[Exception, int](value=1)
+        else:
+            return either.pattern
+
+    assert Left is type(Left[Exception, int](value=Exception()).convert(to_left))
+    assert Right is type(Left[Exception, int](value=Exception()).convert(to_right))
+    assert Left is type(Right[Exception, int](value=1).convert(to_left))
+    assert Right is type(Right[Exception, int](value=1).convert(to_right))

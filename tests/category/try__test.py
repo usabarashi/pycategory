@@ -185,3 +185,24 @@ def test_try_do():
     assert Success(value=6) == mix_success_context()
     assert 6 == mix_success_context().get()
     assert 6 == mix_success_context().get_or_else(default=lambda: None)
+
+
+def test_convert():
+    from category import Failure, Success, Try
+
+    def to_failure(try_: Try[int]) -> Failure[int]:
+        if isinstance(try_.pattern, Failure):
+            return try_.pattern
+        else:
+            return Failure[int](value=Exception())
+
+    def to_success(try_: Try[int]) -> Success[int]:
+        if isinstance(try_.pattern, Failure):
+            return Success[int](value=1)
+        else:
+            return try_.pattern
+
+    assert Failure is type(Failure[int](value=Exception()).convert(to_failure))
+    assert Success is type(Failure[int](value=Exception()).convert(to_success))
+    assert Failure is type(Success[int](value=1).convert(to_failure))
+    assert Success is type(Success[int](value=1).convert(to_success))

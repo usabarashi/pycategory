@@ -227,3 +227,24 @@ def test_option_do():
         assert False
     except BaseException as error:
         GeneratorExit is type(error)
+
+
+def test_convert():
+    from category import Option, Some, Void
+
+    def to_void(option: Option[int]) -> Void[int]:
+        if isinstance(option.pattern, Void):
+            return option.pattern
+        else:
+            return Void[int]()
+
+    def to_some(option: Option[int]) -> Some[int]:
+        if isinstance(option.pattern, Void):
+            return Some[int](value=0)
+        else:
+            return option.pattern
+
+    assert Void is type(Void[int]().convert(to_void))
+    assert Some is type(Void[int]().convert(to_some))
+    assert Void is type(Some[int](value=1).convert(to_void))
+    assert Some is type(Some[int](value=1).convert(to_some))
