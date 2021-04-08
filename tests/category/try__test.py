@@ -115,23 +115,6 @@ def test_try_do():
         assert ValueError is type(error)
 
     @Try.do
-    def failure_convert_context() -> TryDo[int]:
-        one = yield from Success(value=1)()
-        two = 2
-        three = yield from Failure[int](value=Exception())(
-            convert=lambda exception: Failure[int](value=ValueError())
-        )
-        return one + two + three
-
-    assert Failure is type(failure_convert_context())
-    try:
-        failure_convert_context().get()
-        assert False
-    except Exception as error:
-        assert ValueError is type(error)
-    assert ValueError is type(failure_convert_context().value)
-
-    @Try.do
     def success_context() -> TryDo[int]:
         one = yield from Success(value=1)()
         two = 2
@@ -141,19 +124,6 @@ def test_try_do():
     assert Success(value=6) == success_context()
     assert 6 == success_context().get()
     assert 6 == success_context().get_or_else(default=lambda: None)
-
-    @Try.do
-    def success_convert_context() -> TryDo[int]:
-        one = yield from Success(value=1)()
-        two = 2
-        three = yield from Success(value=3)(convert=lambda success: Success(value=3))
-        return one + two + three
-
-    try:
-        success_convert_context()
-        assert False
-    except BaseException as error:
-        GeneratorExit is type(error)
 
     @Try.hold
     def multi_context(value: int) -> int:

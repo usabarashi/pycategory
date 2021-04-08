@@ -13,9 +13,7 @@ class Option(ABC, Generic[T]):
     """Option"""
 
     @abstractmethod
-    def __call__(
-        self, /, convert: Optional[Callable[[Option[T]], EE]] = None
-    ) -> Generator[Union[EE, Option[T]], None, T]:
+    def __call__(self) -> Generator[Option[T], None, T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -63,7 +61,7 @@ class Option(ABC, Generic[T]):
                     result = generator.send(prev)
                 except StopIteration as last:
                     # Some case
-                    return Some(value=last.value)
+                    return Some[T](value=last.value)
                 # Void case
                 if isinstance(result, Void):
                     return result
@@ -84,15 +82,9 @@ class Void(Option[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(
-        self, /, convert: Optional[Callable[[Option[T]], EE]] = None
-    ) -> Generator[Union[EE, Option[T]], None, T]:
-        if convert is not None:
-            yield convert(self)
-            raise GeneratorExit(self)
-        else:
-            yield self
-            raise GeneratorExit(self)
+    def __call__(self) -> Generator[Option[T], None, T]:
+        yield self
+        raise GeneratorExit(self)
 
     def get(self) -> T:
         raise ValueError(self)
@@ -134,15 +126,9 @@ class Some(Option[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __call__(
-        self, /, convert: Optional[Callable[[Option[T]], EE]] = None
-    ) -> Generator[Union[EE, Option[T]], None, T]:
-        if convert is not None:
-            yield convert(self)
-            raise GeneratorExit(self)
-        else:
-            yield self
-            return self.value
+    def __call__(self) -> Generator[Option[T], None, T]:
+        yield self
+        return self.value
 
     def get(self) -> T:
         return self.value
@@ -174,7 +160,7 @@ class Some(Option[T]):
 
 
 SubType = Union[Void[T], Some[T]]
-OptionDo = Generator[Union[Option[T], Any], Any, T]
+OptionDo = Generator[Option[T], Any, T]
 OptionGenerator = Generator[
     Union[Option[T], Any],
     Union[Option[T], Any],

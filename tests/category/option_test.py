@@ -187,25 +187,10 @@ def test_option_do():
     assert None is void_context().fold(void=lambda: None, some=lambda some: None)
 
     @Option.do
-    def void_convert_context() -> OptionDo[int]:
+    def some_context() -> OptionDo[int]:
         one = yield from Some[int](value=1)()
         two = 2
-        three = yield from Void[int]()(convert=lambda void: Void[int]())
-        return one + two + three
-
-    assert Void is type(void_convert_context())
-    assert False is bool(void_convert_context())
-    assert True is void_convert_context().is_empty()
-    assert False is void_convert_context().not_empty()
-    assert None is void_convert_context().fold(
-        void=lambda: None, some=lambda some: None
-    )
-
-    @Option.do
-    def some_context() -> OptionDo[int]:
-        one = yield from Some(value=1)()
-        two = 2
-        three = yield from Some(value=3)()
+        three = yield from Some[int](value=3)()
         return one + two + three
 
     assert Some(value=6) == some_context()
@@ -214,19 +199,6 @@ def test_option_do():
     assert False is some_context().is_empty()
     assert True is some_context().not_empty()
     assert None is some_context().fold(void=lambda: None, some=lambda some: None)
-
-    @Option.do
-    def some_convert_context() -> OptionDo[int]:
-        one = yield from Some(value=1)()
-        two = 2
-        three = yield from Some(value=3)(convert=lambda some: Some[int](value=3))
-        return one + two + three
-
-    try:
-        some_convert_context()
-        assert False
-    except BaseException as error:
-        GeneratorExit is type(error)
 
 
 def test_convert():

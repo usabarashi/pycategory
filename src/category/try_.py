@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Any, Callable, Generator, Generic, Literal, Optional, TypeVar, Union
+from typing import Any, Callable, Generator, Generic, Literal, TypeVar, Union
 
 T = TypeVar("T")
 TT = TypeVar("TT")
@@ -15,9 +15,7 @@ class Try(ABC, Generic[T]):
     value: Union[Exception, T]
 
     @abstractmethod
-    def __call__(
-        self, /, convert: Optional[Callable[[Try[T]], EE]] = None
-    ) -> Generator[Union[EE, Try[T]], None, T]:
+    def __call__(self) -> Generator[Try[T], None, T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -78,7 +76,7 @@ class Try(ABC, Generic[T]):
                     result: Union[Try[T], Any] = generator.send(prev)
                 except StopIteration as last:
                     # Success case
-                    return Success(value=last.value)
+                    return Success[T](value=last.value)
                 # Failure case
                 if isinstance(result, Failure):
                     failure = Failure[T](value=result.value)
@@ -103,15 +101,9 @@ class Failure(Try[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(
-        self, /, convert: Optional[Callable[[Try[T]], EE]] = None
-    ) -> Generator[Union[EE, Try[T]], None, T]:
-        if convert is not None:
-            yield convert(self)
-            raise GeneratorExit(self) from self.value
-        else:
-            yield self
-            raise GeneratorExit(self) from self.value
+    def __call__(self) -> Generator[Try[T], None, T]:
+        yield self
+        raise GeneratorExit(self) from self.value
 
     def get(self) -> T:
         raise ValueError() from self.value
@@ -156,15 +148,9 @@ class Success(Try[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __call__(
-        self, /, convert: Optional[Callable[[Try[T]], EE]] = None
-    ) -> Generator[Union[EE, Try[T]], None, T]:
-        if convert is not None:
-            yield convert(self)
-            raise GeneratorExit(self)
-        else:
-            yield self
-            return self.value
+    def __call__(self) -> Generator[Try[T], None, T]:
+        yield self
+        return self.value
 
     def get(self) -> T:
         return self.value
@@ -201,7 +187,7 @@ class Success(Try[T]):
 
 
 SubType = Union[Failure[T], Success[T]]
-TryDo = Generator[Union[Try[T], Any], Any, T]
+TryDo = Generator[Try[T], Any, T]
 TryGenerator = Generator[
     Union[Try[Any], Any],
     Union[Try[Any], Any],

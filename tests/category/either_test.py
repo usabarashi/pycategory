@@ -244,26 +244,6 @@ def test_either_do():
     assert None is left_context().fold(left=lambda left: None, right=lambda right: None)
 
     @Either.do
-    def left_convert_context() -> EitherDo[Exception, int]:
-        one = yield from Right[Exception, int](value=1)()
-        two = 2
-        three = yield from Left[Exception, int](value=Exception())(
-            convert=lambda left: Left[Exception, int](value=ValueError())
-        )
-        return one + two + three
-
-    assert ValueError is type(left_convert_context().left().get())
-    assert False is bool(left_convert_context())
-    assert True is left_convert_context().is_left()
-    assert False is left_convert_context().is_right()
-    assert type(Left[Exception, int](value=ValueError()).left().get()) is type(
-        left_convert_context().left().get()
-    )
-    assert None is left_convert_context().fold(
-        left=lambda left: None, right=lambda right: None
-    )
-
-    @Either.do
     def right_context() -> EitherDo[None, int]:
         one = yield from Right[None, int](1)()
         two = 2
@@ -278,21 +258,6 @@ def test_either_do():
     assert None is right_context().fold(
         left=lambda left: None, right=lambda right: None
     )
-
-    @Either.do
-    def right_convert_context() -> EitherDo[None, int]:
-        one = yield from Right[None, int](value=1)()
-        two = 2
-        three = yield from Right[None, int](value=3)(
-            convert=lambda right: Right[None, int](value=3)
-        )
-        return one + two + three
-
-    try:
-        right_convert_context().right().get()
-        assert False
-    except BaseException as error:
-        GeneratorExit is type(error)
 
 
 def test_convert():
