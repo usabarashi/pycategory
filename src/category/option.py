@@ -137,7 +137,7 @@ class Some(Option[T]):
         return self.value
 
     def map(self, functor: Callable[[T], TT]) -> Option[TT]:
-        return Some(value=functor(self.value))
+        return Some[TT](value=functor(self.value))
 
     def flatmap(self, functor: Callable[[T], Option[TT]]) -> Option[TT]:
         return functor(self.value)
@@ -160,9 +160,9 @@ class Some(Option[T]):
 
 
 SubType = Union[Void[T], Some[T]]
-OptionDo = Generator[Option[T], Any, T]
+OptionDo = Generator[Union[Any, Option[T]], None, T]
 OptionGenerator = Generator[
-    Union[Option[T], Any],
-    Union[Option[T], Any],
+    Union[Any, Option[T]],
+    None,
     T,
 ]

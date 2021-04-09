@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Generator, Generic, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Generator, Generic, Type, TypeVar, Union
 
 from category.either import Either, Left, Right
 from category.future import ExecutionContext, Future
@@ -142,10 +142,8 @@ class EitherTTry(Generic[L, R]):
         return functor(self)
 
 
-EitherTTryDo = Generator[Union[Left[L, Any], Right[L, Any], Any], Any, R]
-EitherTTryGenerator = Generator[
-    Union[Left[L, Any], Right[L, R], Any], Union[Left[L, Any], Right[L, Any], Any], R
-]
+EitherTTryDo = Generator[Union[Any, Try[Either[L, Any]]], None, R]
+EitherTTryGenerator = Generator[Union[Any, Try[Either[L, R]]], None, R]
 
 
 @dataclass(frozen=True)
@@ -267,5 +265,5 @@ class EitherTFuture(Generic[L, R]):
         return functor(self)
 
 
-EitherTFutureDo = Generator[Try[Either[L, R]], Any, R]
-EitherTFutureGenerator = Generator[Try[Either[L, R]], Union[Any, Try[Either[L, R]]], R]
+EitherTFutureDo = Generator[Union[Any, Try[Either[L, Any]]], None, R]
+EitherTFutureGenerator = Generator[Union[Any, Try[Either[L, Any]]], None, R]
