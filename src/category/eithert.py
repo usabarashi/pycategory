@@ -142,8 +142,12 @@ class EitherTTry(Generic[L, R]):
         return functor(self)
 
 
-EitherTTryDo = Generator[Union[Any, Try[Either[L, Any]]], None, R]
-EitherTTryGenerator = Generator[Union[Any, Try[Either[L, R]]], None, R]
+EitherTTryDo = Generator[
+    Union[Any, Try[Either[L, Any]]], Union[Any, Try[Either[L, Any]]], R
+]
+EitherTTryGenerator = Generator[
+    Union[Any, Try[Either[L, Any]]], Union[Any, Try[Either[L, Any]]], R
+]
 
 
 @dataclass(frozen=True)
@@ -265,5 +269,9 @@ class EitherTFuture(Generic[L, R]):
         return functor(self)
 
 
-EitherTFutureDo = Generator[Union[Any, Try[Either[L, Any]]], None, R]
-EitherTFutureGenerator = Generator[Union[Any, Try[Either[L, Any]]], None, R]
+EitherTFutureDo = Generator[
+    Union[Any, Try[Either[L, Any]]], Union[Any, Try[Either[L, Any]]], R
+]
+EitherTFutureGenerator = Generator[
+    Union[Any, Try[Either[L, Any]]], Union[Any, Try[Either[L, Any]]], R
+]
