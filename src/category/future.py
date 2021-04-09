@@ -214,5 +214,5 @@ class Future(concurrent.futures.Future[T]):
         return functor(self)
 
 
-FutureDo = Generator[Union[Any, Try[Any]], None, T]
-FutureGenerator = Generator[Union[Any, Try[Any]], None, T]
+FutureDo = Generator[Union[Any, Try[Any]], Union[Any, Try[Any]], T]
+FutureGenerator = Generator[Union[Any, Try[Any]], Union[Any, Try[Any]], T]
