@@ -187,9 +187,9 @@ class Success(Try[T]):
 
 
 SubType = Union[Failure[T], Success[T]]
-TryDo = Generator[Try[T], Any, T]
+TryDo = Generator[Union[Any, Try[T]], None, T]
 TryGenerator = Generator[
-    Union[Try[Any], Any],
-    Union[Try[Any], Any],
+    Union[Any, Try[Any]],
+    None,
     T,
 ]

@@ -102,7 +102,7 @@ def test_try_do():
 
     @Try.do
     def failure_context() -> TryDo[int]:
-        one = yield from Success(value=1)()
+        one = yield from Success[int](value=1)()
         two = 2
         three = yield from Failure[int](value=Exception())()
         return one + two + three
@@ -116,9 +116,9 @@ def test_try_do():
 
     @Try.do
     def success_context() -> TryDo[int]:
-        one = yield from Success(value=1)()
+        one = yield from Success[int](value=1)()
         two = 2
-        three = yield from Success(value=3)()
+        three = yield from Success[int](value=3)()
         return one + two + three
 
     assert Success(value=6) == success_context()

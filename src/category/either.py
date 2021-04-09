@@ -232,9 +232,9 @@ class RightProjection(Generic[L, R]):
 
 
 SubType = Union[Left[L, R], Right[L, R]]
-EitherDo = Generator[Either[L, Any], Any, R]
+EitherDo = Generator[Union[Any, Either[L, Any]], None, R]
 EitherGenerator = Generator[
-    Union[Either[L, Any], Any],
-    Union[Either[L, Any], Any],
+    Union[Any, Either[L, Any]],
+    None,
     R,
 ]
