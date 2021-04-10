@@ -158,7 +158,7 @@ def test_left_get_or_else():
     )
 
 
-def test_left_convert():
+def test_left_method():
     from category import Either, Left, Right
 
     def to_left(either: Either[Exception, int]) -> Left[Exception, int]:
@@ -173,8 +173,8 @@ def test_left_convert():
         else:
             return either.pattern
 
-    assert Left is type(Left[Exception, int](value=Exception()).convert(to_left))
-    assert Right is type(Left[Exception, int](value=Exception()).convert(to_right))
+    assert Left is type(Left[Exception, int](value=Exception()).method(to_left))
+    assert Right is type(Left[Exception, int](value=Exception()).method(to_right))
 
 
 def test_right():
@@ -291,7 +291,7 @@ def test_right_get_or_else():
     assert 1 == Right[Exception, int](value=1).get_or_else(default=lambda: False)
 
 
-def test_right_convert():
+def test_right_method():
     from category import Either, Left, Right
 
     def to_left(either: Either[Exception, int]) -> Left[Exception, int]:
@@ -306,5 +306,5 @@ def test_right_convert():
         else:
             return either.pattern
 
-    assert Left is type(Right[Exception, int](value=1).convert(to_left))
-    assert Right is type(Right[Exception, int](value=1).convert(to_right))
+    assert Left is type(Right[Exception, int](value=1).method(to_left))
+    assert Right is type(Right[Exception, int](value=1).method(to_right))

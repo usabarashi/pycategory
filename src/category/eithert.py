@@ -88,6 +88,9 @@ class EitherTTry(Generic[L, R]):
 
         return self.value.map(functor=catamorphism)
 
+    def method(self, functor: Callable[[EitherTTry[L, R]], TT]) -> TT:
+        return functor(self)
+
     @staticmethod
     def do(
         generator_fuction: Callable[..., EitherTTryDo[L, R]]
@@ -117,9 +120,6 @@ class EitherTTry(Generic[L, R]):
             return recur(generator_fuction(*args, **kwargs), None)
 
         return impl
-
-    def convert(self, functor: Callable[[EitherTTry[L, R]], TT]) -> TT:
-        return functor(self)
 
 
 EitherTTryDo = Generator[
@@ -212,6 +212,9 @@ class EitherTFuture(Generic[L, R]):
 
         return with_context
 
+    def method(self, functor: Callable[[EitherTFuture[L, R]], TT]) -> TT:
+        return functor(self)
+
     @staticmethod
     def do(
         generator_fuction: Callable[..., EitherTFutureDo[L, R]]
@@ -246,9 +249,6 @@ class EitherTFuture(Generic[L, R]):
             return recur(generator_fuction(*args, **kwargs), None)
 
         return impl
-
-    def convert(self, functor: Callable[[EitherTFuture[L, R]], TT]) -> TT:
-        return functor(self)
 
 
 EitherTFutureDo = Generator[

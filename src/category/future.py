@@ -162,6 +162,9 @@ class Future(concurrent.futures.Future[T]):
         except Exception as failure:
             return Failure[T](value=failure)
 
+    def method(self, functor: Callable[[Future[T]], TT]) -> TT:
+        return functor(self)
+
     @staticmethod
     def hold(
         functor: Callable[..., T]
@@ -204,9 +207,6 @@ class Future(concurrent.futures.Future[T]):
             return recur(generator_function(*args, **kwargs), None)
 
         return impl
-
-    def convert(self, functor: Callable[[Future[T]], TT]) -> TT:
-        return functor(self)
 
 
 FutureDo = Generator[Union[Any, Try[Any]], Union[Any, Try[Any]], T]

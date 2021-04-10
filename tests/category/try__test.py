@@ -158,8 +158,8 @@ def test_failure_convert():
         else:
             return try_.pattern
 
-    assert Failure is type(Failure[int](value=Exception()).convert(to_failure))
-    assert Success is type(Failure[int](value=Exception()).convert(to_success))
+    assert Failure is type(Failure[int](value=Exception()).method(to_failure))
+    assert Success is type(Failure[int](value=Exception()).method(to_success))
 
 
 def test_success():
@@ -240,5 +240,5 @@ def test_success_convert():
         else:
             return try_.pattern
 
-    assert Failure is type(Success[int](value=1).convert(to_failure))
-    assert Success is type(Success[int](value=1).convert(to_success))
+    assert Failure is type(Success[int](value=1).method(to_failure))
+    assert Success is type(Success[int](value=1).method(to_success))

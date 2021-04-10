@@ -62,6 +62,10 @@ class Either(ABC, Generic[L, R]):
     def pattern(self) -> SubType[L, R]:
         raise NotImplementedError
 
+    @abstractmethod
+    def method(self, functor: Callable[[Either[L, R]], TT]) -> TT:
+        raise NotImplementedError
+
     @staticmethod
     def do(
         generator_fuction: Callable[..., EitherDo[L, R]]
@@ -82,10 +86,6 @@ class Either(ABC, Generic[L, R]):
             return recur(generator_fuction(*args, **kwargs), None)
 
         return wrapper
-
-    @abstractmethod
-    def convert(self, functor: Callable[[Either[L, R]], TT]) -> TT:
-        raise NotImplementedError
 
 
 @dataclasses.dataclass(frozen=True)
@@ -132,7 +132,7 @@ class Left(Either[L, R]):
     def pattern(self) -> SubType[L, R]:
         return self
 
-    def convert(self, functor: Callable[[Left[L, R]], TT]) -> TT:
+    def method(self, functor: Callable[[Left[L, R]], TT]) -> TT:
         return functor(self)
 
 
@@ -180,7 +180,7 @@ class Right(Either[L, R]):
     def pattern(self) -> SubType[L, R]:
         return self
 
-    def convert(self, functor: Callable[[Right[L, R]], TT]) -> TT:
+    def method(self, functor: Callable[[Right[L, R]], TT]) -> TT:
         return functor(self)
 
 

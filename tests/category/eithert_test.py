@@ -596,7 +596,7 @@ def test_eithertfuture_do():
     assert 6 == success_right_context().get()
 
 
-def test_convert():
+def test_method():
     from typing import Callable, TypeVar
 
     from category import (
@@ -620,18 +620,18 @@ def test_convert():
     ) -> Callable[[Either[L, R]], EitherTFuture[E, R]]:
         def convert(either: Either[L, R]) -> EitherTFuture[E, R]:
             if isinstance(either.pattern, Left):
-                value = report(either.pattern.value)
+                value = report(either.pattern.left().get())
                 left = Left[E, R](value=value)
                 future = Future[Either[E, R]].successful(value=left)
                 return EitherTFuture[E, R](value=future)
             else:
-                right = Right[E, R](value=either.pattern.value)
+                right = Right[E, R](value=either.pattern.right().get())
                 future = Future[Either[E, R]].successful(value=right)
                 return EitherTFuture[E, R](value=future)
 
         return convert
 
-    left = Left[Exception, int](value=Exception()).convert(
+    left = Left[Exception, int](value=Exception()).method(
         functor=if_left_then(report=lambda left: Exception())
     )
     assert EitherTFuture is type(left)
@@ -658,7 +658,7 @@ def test_convert():
 
     future = Future[int]()
     future.set_exception(exception=Exception())
-    failure = future.convert(
+    failure = future.method(
         functor=if_failure_then(report=lambda failure: Exception(failure))
     )
     assert EitherTFuture is type(failure)
@@ -672,13 +672,13 @@ def test_convert():
     ) -> Callable[[Future[Option[T]]], EitherTFuture[E, T]]:
         def convert(future: Future[Option[T]]) -> EitherTFuture[E, T]:
             try:
-                either = future.result()
-                if isinstance(either.pattern, Void):
+                option = future.result()
+                if isinstance(option.pattern, Void):
                     left = Left[E, T](value=report())
                     failure = Future[Either[E, T]].successful(value=left)
                     return EitherTFuture[E, T](value=failure)
                 else:
-                    right = Right[E, T](value=either.pattern.value)
+                    right = Right[E, T](value=option.pattern.get())
                     failure = Future[Either[E, T]].successful(value=right)
                     return EitherTFuture[E, T](value=failure)
             except Exception as error:
@@ -691,7 +691,7 @@ def test_convert():
     none = (
         Future[Option[int]]
         .successful(value=Void[int]())
-        .convert(functor=if_not_exists(report=lambda: Exception()))
+        .method(functor=if_not_exists(report=lambda: Exception()))
     )
     assert EitherTFuture is type(none)
     assert Future is type(none.value)

@@ -57,6 +57,10 @@ class Try(ABC, Generic[T]):
     def pattern(self) -> SubType[T]:
         raise NotImplementedError
 
+    @abstractmethod
+    def method(self, functor: Callable[[Try[T]], TT]) -> TT:
+        raise NotImplementedError
+
     @staticmethod
     def hold(fuction: Callable[..., T]) -> Callable[..., Try[T]]:
         def wrapper(*args: Any, **kwargs: Any) -> Try[T]:
@@ -88,10 +92,6 @@ class Try(ABC, Generic[T]):
             return recur(generator_fuction(*args, **kwargs), None)
 
         return impl
-
-    @abstractmethod
-    def convert(self, functor: Callable[[Try[T]], TT]) -> TT:
-        raise NotImplementedError
 
 
 @dataclasses.dataclass(frozen=True)
@@ -137,7 +137,7 @@ class Failure(Try[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def convert(self, functor: Callable[[Failure[T]], TT]) -> TT:
+    def method(self, functor: Callable[[Failure[T]], TT]) -> TT:
         return functor(self)
 
 
@@ -184,7 +184,7 @@ class Success(Try[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def convert(self, functor: Callable[[Success[T]], TT]) -> TT:
+    def method(self, functor: Callable[[Success[T]], TT]) -> TT:
         return functor(self)
 
 
