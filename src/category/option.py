@@ -51,12 +51,10 @@ class Option(ABC, Generic[T]):
         raise NotImplementedError
 
     @staticmethod
-    def do(
-        generator_fuction: Callable[..., OptionGenerator[T]]
-    ) -> Callable[..., Option[T]]:
+    def do(generator_fuction: Callable[..., OptionDo[T]]) -> Callable[..., Option[T]]:
         def wrapper(*args: Any, **kwargs: Any) -> Option[T]:
             def recur(
-                generator: OptionGenerator[T],
+                generator: OptionDo[T],
                 prev: Union[Any, Option[Any]],
             ) -> Option[T]:
                 try:
@@ -84,14 +82,14 @@ class Void(Option[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(self) -> Generator[Option[T], Option[T], T]:
+    def __call__(self) -> Generator[Void[T], Void[T], T]:
         yield self
         raise GeneratorExit(self)
 
-    def map(self, functor: Callable[[T], TT]) -> Option[TT]:
+    def map(self, functor: Callable[[T], TT]) -> Void[TT]:
         return Void[T]()
 
-    def flatmap(self, functor: Callable[[T], Option[TT]]) -> Option[TT]:
+    def flatmap(self, functor: Callable[[T], Option[TT]]) -> Void[TT]:
         return Void[T]()
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
@@ -106,10 +104,8 @@ class Void(Option[T]):
     def get(self) -> T:
         raise ValueError(self)
 
-    def get_or_else(self, default: Callable[..., EE]) -> Union[EE, T]:
-        if default is not None:
-            return default()
-        raise ValueError(self)
+    def get_or_else(self, default: Callable[..., EE]) -> EE:
+        return default()
 
     @property
     def pattern(self) -> SubType[T]:
@@ -128,11 +124,11 @@ class Some(Option[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __call__(self) -> Generator[Option[T], Option[T], T]:
+    def __call__(self) -> Generator[Some[T], Some[T], T]:
         yield self
         return self.value
 
-    def map(self, functor: Callable[[T], TT]) -> Option[TT]:
+    def map(self, functor: Callable[[T], TT]) -> Some[TT]:
         return Some[TT](value=functor(self.value))
 
     def flatmap(self, functor: Callable[[T], Option[TT]]) -> Option[TT]:
@@ -150,7 +146,7 @@ class Some(Option[T]):
     def get(self) -> T:
         return self.value
 
-    def get_or_else(self, default: Callable[..., EE]) -> Union[EE, T]:
+    def get_or_else(self, default: Callable[..., Any]) -> T:
         return self.value
 
     @property
@@ -163,8 +159,3 @@ class Some(Option[T]):
 
 SubType = Union[Void[T], Some[T]]
 OptionDo = Generator[Union[Any, Option[Any]], Union[Any, Option[Any]], T]
-OptionGenerator = Generator[
-    Union[Any, Option[Any]],
-    Union[Any, Option[Any]],
-    T,
-]

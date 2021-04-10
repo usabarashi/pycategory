@@ -39,15 +39,21 @@ def test_void():
 def test_void_map():
     from category import Void
 
-    assert Void is type(Void[int]().map(functor=lambda some: None))
-    assert False is bool(Void[int]().map(functor=lambda some: 0))
+    void = Void[int]()
+    mapped_void = void.map(functor=lambda some: 0)
+    assert void is not mapped_void
+    assert Void is type(mapped_void)
+    assert False is bool(mapped_void)
 
 
 def test_void_flatmap():
     from category import Some, Void
 
-    assert Void is type(Void[int]().flatmap(functor=lambda some: Some[int](value=0)))
-    assert False is bool(Void[int]().flatmap(functor=lambda some: Some[int](value=0)))
+    void = Void[int]()
+    flatmapped_void = void.flatmap(functor=lambda some: Some[int](value=0))
+    assert void is not flatmapped_void
+    assert Void is type(flatmapped_void)
+    assert False is bool(flatmapped_void)
 
 
 def test_void_fold():
@@ -113,26 +119,23 @@ def test_some():
 def test_some_map():
     from category import Some
 
-    assert Some is type(Some[int](value=0).map(functor=lambda some: some + 1))
-    assert True is bool(Some[int](value=0).map(functor=lambda some: some + 1))
-    assert 1 == Some[int](value=0).map(functor=lambda some: some + 1).get()
+    some = Some[int](value=0)
+    mapped_some = some.map(functor=lambda some: some + 1)
+    assert some is not mapped_some
+    assert Some is type(mapped_some)
+    assert True is bool(mapped_some)
+    assert 1 == mapped_some.get()
 
 
 def test_some_flatmap():
     from category import Some
 
-    assert Some is type(
-        Some[int](value=0).flatmap(functor=lambda some: Some[int](value=some + 1))
-    )
-    assert True is bool(
-        Some[int](value=0).flatmap(functor=lambda some: Some[int](value=some + 1))
-    )
-    assert (
-        1
-        == Some[int](value=0)
-        .flatmap(functor=lambda some: Some[int](value=some + 1))
-        .get()
-    )
+    some = Some[int](value=0)
+    flatmapped_some = some.flatmap(functor=lambda some: Some[int](value=some + 1))
+    assert some is not flatmapped_some
+    assert Some is type(flatmapped_some)
+    assert True is bool(flatmapped_some)
+    assert 1 == flatmapped_some.get()
 
 
 def test_some_fold():

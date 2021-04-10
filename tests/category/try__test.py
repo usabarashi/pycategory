@@ -90,19 +90,21 @@ def test_failure():
 def test_failure_map():
     from category import Failure
 
-    assert Failure is type(
-        Failure[int](value=Exception()).map(functor=lambda success: None)
-    )
+    failure = Failure[int](value=Exception())
+    mapped_failure = failure.map(functor=lambda success: None)
+    failure is not mapped_failure
+    assert Failure is type(mapped_failure)
 
 
 def test_failure_flatmap():
     from category import Failure, Success
 
-    assert Failure is type(
-        Failure[int](value=Exception()).flatmap(
-            functor=lambda success: Success[bool](value=True)
-        )
+    failure = Failure[int](value=Exception())
+    flatmapped_failure = failure.flatmap(
+        functor=lambda success: Success[bool](value=True)
     )
+    assert failure is not flatmapped_failure
+    assert Failure is type(flatmapped_failure)
 
 
 def test_failure_fold():
@@ -170,18 +172,22 @@ def test_success():
 def test_success_map():
     from category import Success
 
-    assert Success is type(Success[int](value=0).map(functor=lambda success: None))
-    assert None is Success[int](value=0).map(functor=lambda success: None).get()
+    success = Success[int](value=0)
+    mapped_success = success.map(functor=lambda success: None)
+    assert success is not mapped_success
+    assert Success is type(mapped_success)
+    assert None is mapped_success.get()
 
 
 def test_success_flatmap():
     from category import Failure, Success
 
-    assert Failure is type(
-        Success[int](value=0).flatmap(
-            functor=lambda success: Failure[None](value=Exception())
-        )
+    success = Success[int](value=0)
+    flatmapped_failure = success.flatmap(
+        functor=lambda success: Failure[None](value=Exception())
     )
+    assert success is not flatmapped_failure
+    assert Failure is type(flatmapped_failure)
     assert Success is type(
         Success[int](value=0).flatmap(functor=lambda success: Success[None](value=None))
     )
