@@ -1,3 +1,11 @@
+def test_future():
+    from category import Future
+
+    assert Future is type(Future[int].successful(value=1))
+    assert True is bool(Future[int].successful(value=1))
+    assert False is bool(Future[int]())
+
+
 def test_map():
     from category import Failure, Future, Success
     from category import ThreadPoolExecutionContext as ec
@@ -5,29 +13,25 @@ def test_map():
     # Failure case
     failure_future = Future[int]()
     failure_future.set_exception(exception=Exception())
-    failure_mapped_future = failure_future.map(functor=lambda success: success + 1)(
-        ec=ec
-    )
+    failure_mapped_future = failure_future.map(functor=lambda success: success + 1)(ec)
     assert failure_future is not failure_mapped_future
     assert Future is type(failure_mapped_future)
     try:
         failure_mapped_future.result()
         assert False
-    except Exception:
-        assert True
+    except Exception as error:
+        assert Exception is type(error)
     assert Failure is type(failure_mapped_future.value)
     assert Exception is type(failure_mapped_future.value.value)
 
     # Success case
     success_future = Future.successful(value=1)
-    success_mapped_future = success_future.map(functor=lambda success: success + 1)(
-        ec=ec
-    )
+    success_mapped_future = success_future.map(functor=lambda success: success + 1)(ec)
     assert success_future is not success_mapped_future
     assert Future is type(success_mapped_future)
     assert 2 == success_mapped_future.result()
     assert Success is type(success_mapped_future.value)
-    assert 2 == success_mapped_future.value.value
+    assert 2 == success_mapped_future.value.get()
 
 
 def test_flatmap():
@@ -39,14 +43,14 @@ def test_flatmap():
     failure_future.set_exception(exception=Exception())
     failure_flatmapped_future = failure_future.flatmap(
         functor=lambda success: Future[int].successful(value=success + 1)
-    )(ec=ec)
+    )(ec)
     assert failure_future is not failure_flatmapped_future
     assert Future is type(failure_flatmapped_future)
     try:
         failure_flatmapped_future.result()
         assert False
-    except Exception:
-        assert True
+    except Exception as error:
+        assert Exception is type(error)
     assert Failure is type(failure_flatmapped_future.value)
     assert Exception is type(failure_flatmapped_future.value.value)
 
@@ -54,12 +58,12 @@ def test_flatmap():
     success_future = Future[int].successful(value=1)
     success_flatmapped_future = success_future.flatmap(
         functor=lambda success: Future[int].successful(value=success + 1)
-    )(ec=ec)
+    )(ec)
     assert success_future is not success_flatmapped_future
     assert Future is type(success_flatmapped_future)
     assert 2 == success_flatmapped_future.result()
     assert Success is type(success_flatmapped_future.value)
-    assert 2 == success_flatmapped_future.value.value
+    assert 2 == success_flatmapped_future.value.get()
 
 
 def test_try_complete():
@@ -72,8 +76,8 @@ def test_try_complete():
     try:
         failure_future.result()
         assert False
-    except Exception:
-        assert True
+    except Exception as error:
+        assert Exception is type(error)
     assert Failure is type(failure_future.value)
     assert Exception is type(failure_future.value.value)
 
@@ -82,7 +86,7 @@ def test_try_complete():
     assert False is success_future.try_complete(result=Success(value=2))
     assert 1 == success_future.result()
     assert Success is type(success_future.value)
-    assert 1 == success_future.value.value
+    assert 1 == success_future.value.get()
 
 
 def test_on_complete():
@@ -99,7 +103,7 @@ def test_on_complete():
             return try_.get_or_else(lambda: 0) + 1
 
     true_future = Future.successful(value=1)
-    true_future.on_complete(functor=functor)(ec=ec)
+    true_future.on_complete(functor=functor)(ec)
     assert 2 == true_future.result()
 
 
@@ -110,7 +114,7 @@ def test_successful():
     assert Future is type(success_future)
     assert True is success_future.result()
     assert Success(value=True) == success_future.value
-    assert True is success_future.value.value
+    assert True is success_future.value.get()
 
 
 def test_hold():
@@ -135,7 +139,7 @@ def test_hold():
     assert Future is type(success_future)
     assert 1 == success_future.result()
     assert Success is type(success_future.value)
-    assert 1 == success_future.value.value
+    assert 1 == success_future.value.get()
 
 
 def test_do():
@@ -177,7 +181,7 @@ def test_do():
     assert Future is type(success_context())
     assert 6 == success_context().result()
     assert Success is type(success_context().value)
-    assert 6 == success_context().value.value
+    assert 6 == success_context().value.get()
 
 
 def test_convert():

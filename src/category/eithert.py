@@ -1,3 +1,4 @@
+"""EitherT"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ R = TypeVar("R")
 RR = TypeVar("RR")
 EE = TypeVar("EE")
 TT = TypeVar("TT")
+U = TypeVar("U")
 
 
 @dataclass(frozen=True)
@@ -56,7 +58,7 @@ class EitherTTry(Generic[L, R]):
     def get_or_else(self, default: Callable[..., EE]) -> Union[EE, R]:
         try_ = self.value
         if isinstance(try_.pattern, Failure):
-            return default()
+            raise try_.pattern.value
         else:
             either = try_.pattern.value
             if isinstance(either.pattern, Left):
@@ -104,6 +106,15 @@ class EitherTTry(Generic[L, R]):
             # Success[Right[L, R]] case
             else:
                 return functor(either.pattern.value)
+
+    def fold(self, left: Callable[[L], U], right: Callable[[R], U]) -> Try[U]:
+        def catamorphism(either: Either[L, R]) -> U:
+            if isinstance(either.pattern, Left):
+                return left(either.pattern.left().get())
+            else:
+                return right(either.pattern.right().get())
+
+        return self.value.map(functor=catamorphism)
 
     @staticmethod
     def do(
@@ -157,8 +168,10 @@ class EitherTFuture(Generic[L, R]):
     value: Future[Either[L, R]]
 
     def __bool__(self) -> bool:
-        # Success and Right
-        return bool(self.value) and bool(self.value.value)
+        # Complete and Success and Right
+        return (
+            bool(self.value) and bool(self.value.value) and bool(self.value.value.value)
+        )
 
     def __call__(self) -> Generator[Try[Either[L, R]], None, R]:
         try:
@@ -207,7 +220,7 @@ class EitherTFuture(Generic[L, R]):
                     return Right[L, RR](value=mapped_value)
 
             future = self.value
-            mapped_future = future.map(functor=transformer)(ec=ec)
+            mapped_future = future.map(functor=transformer)(ec)
             return EitherTFuture[L, RR](value=mapped_future)
 
         return with_context
@@ -231,6 +244,26 @@ class EitherTFuture(Generic[L, R]):
                 return EitherTFuture[L, RR](value=future)
 
         return with_context
+
+    def fold(
+        self, left: Callable[[L], U], right: Callable[[R], U]
+    ) -> Callable[[Type[ExecutionContext]], Future[U]]:
+        def with_context(ec: Type[ExecutionContext]) -> Future[U]:
+            def catamorphism(either: Either[L, R]) -> U:
+                if isinstance(either.pattern, Left):
+                    return left(either.pattern.left().get())
+                else:
+                    return right(either.pattern.right().get())
+
+            return self.value.map(functor=catamorphism)(ec)
+
+        return with_context
+
+    def is_left(self) -> bool:
+        ...
+
+    def is_right(self) -> bool:
+        ...
 
     @staticmethod
     def do(

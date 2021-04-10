@@ -1,80 +1,3 @@
-def test_failure():
-    from category import Failure
-
-    assert Failure is type(Failure[int](value=Exception()))
-    try:
-        Failure[int](value=Exception()).get()
-        assert False
-    except Exception as error:
-        assert ValueError is type(error)
-    assert None is Failure[int](value=Exception()).get_or_else(default=lambda: None)
-    assert True is Failure[int](value=Exception()).is_failure()
-    assert False is Failure[int](value=Exception()).is_success()
-
-
-def test_failure_map():
-    from category import Failure
-
-    assert Failure is type(
-        Failure[int](value=Exception()).map(functor=lambda success: None)
-    )
-
-
-def test_failure_flatmap():
-    from category import Failure, Success
-
-    assert Failure is type(
-        Failure[int](value=Exception()).flatmap(
-            functor=lambda success: Failure[None](value=Exception())
-        )
-    )
-    assert Failure is type(
-        Failure[int](value=Exception()).flatmap(
-            functor=lambda success: Success[None](value=None)
-        )
-    )
-
-
-def test_success():
-    from category import Success
-
-    assert Success is type(Success[int](value=0))
-    assert 0 == Success[int](value=0).get()
-    assert 0 == Success[int](value=0).get_or_else(default=lambda: None)
-    assert False is Success[int](value=0).is_failure()
-    assert True is Success[int](value=0).is_success()
-
-
-def test_success_map():
-    from category import Success
-
-    assert Success is type(Success[int](value=0).map(functor=lambda success: None))
-
-
-def test_success_flatmap():
-    from category import Failure, Success
-
-    assert Failure is type(
-        Success[int](value=0).flatmap(
-            functor=lambda success: Failure[None](value=Exception())
-        )
-    )
-    assert Success is type(
-        Success[int](value=0).flatmap(functor=lambda success: Success[None](value=None))
-    )
-
-
-def test_try_fold():
-    from category import Failure, Success
-
-    assert None is Failure[int](value=Exception()).fold(
-        failure=lambda failure: None, success=lambda success: None
-    )
-    assert None is Success[int](value=0).fold(
-        failure=lambda failure: None, success=lambda success: None
-    )
-
-
 def test_try_hold():
     from category import Failure, Success, Try
 
@@ -157,7 +80,68 @@ def test_try_do():
     assert 6 == mix_success_context().get_or_else(default=lambda: None)
 
 
-def test_convert():
+def test_failure():
+    from category import Failure
+
+    assert Failure is type(Failure[int](value=Exception()))
+    assert False is bool(Failure[int](value=Exception()))
+
+
+def test_failure_map():
+    from category import Failure
+
+    assert Failure is type(
+        Failure[int](value=Exception()).map(functor=lambda success: None)
+    )
+
+
+def test_failure_flatmap():
+    from category import Failure, Success
+
+    assert Failure is type(
+        Failure[int](value=Exception()).flatmap(
+            functor=lambda success: Success[bool](value=True)
+        )
+    )
+
+
+def test_failure_fold():
+    from category import Failure
+
+    assert False is Failure[int](value=Exception()).fold(
+        failure=lambda failure: False, success=lambda success: True
+    )
+
+
+def test_failure_is_failure():
+    from category import Failure
+
+    assert True is Failure[int](value=Exception()).is_failure()
+
+
+def test_failure_is_success():
+    from category import Failure
+
+    assert False is Failure[int](value=Exception()).is_success()
+
+
+def test_failure_get():
+    from category import Failure
+
+    try:
+        Failure[int](value=Exception()).get()
+        assert False
+    except Exception as error:
+        assert ValueError is type(error)
+
+
+def test_failure_get_or_else():
+    from category import Failure
+
+    assert False is Failure[int](value=Exception()).get_or_else(default=lambda: False)
+
+
+def test_failure_convert():
     from category import Failure, Success, Try
 
     def to_failure(try_: Try[int]) -> Failure[int]:
@@ -174,5 +158,81 @@ def test_convert():
 
     assert Failure is type(Failure[int](value=Exception()).convert(to_failure))
     assert Success is type(Failure[int](value=Exception()).convert(to_success))
+
+
+def test_success():
+    from category import Success
+
+    assert Success is type(Success[int](value=0))
+    assert True is bool(Success[int](value=0))
+
+
+def test_success_map():
+    from category import Success
+
+    assert Success is type(Success[int](value=0).map(functor=lambda success: None))
+    assert None is Success[int](value=0).map(functor=lambda success: None).get()
+
+
+def test_success_flatmap():
+    from category import Failure, Success
+
+    assert Failure is type(
+        Success[int](value=0).flatmap(
+            functor=lambda success: Failure[None](value=Exception())
+        )
+    )
+    assert Success is type(
+        Success[int](value=0).flatmap(functor=lambda success: Success[None](value=None))
+    )
+
+
+def test_success_fold():
+    from category import Success
+
+    assert None is Success[int](value=0).fold(
+        failure=lambda failure: None, success=lambda success: None
+    )
+
+
+def test_success_is_failure():
+    from category import Success
+
+    assert False is Success[int](value=0).is_failure()
+
+
+def test_success_is_success():
+    from category import Success
+
+    assert True is Success[int](value=0).is_success()
+
+
+def test_success_get():
+    from category import Success
+
+    assert 1 == Success[int](value=1).get()
+
+
+def test_success_get_or_else():
+    from category import Success
+
+    assert 1 == Success[int](value=1).get_or_else(default=lambda: Exception())
+
+
+def test_success_convert():
+    from category import Failure, Success, Try
+
+    def to_failure(try_: Try[int]) -> Failure[int]:
+        if isinstance(try_.pattern, Failure):
+            return try_.pattern
+        else:
+            return Failure[int](value=Exception())
+
+    def to_success(try_: Try[int]) -> Success[int]:
+        if isinstance(try_.pattern, Failure):
+            return Success[int](value=1)
+        else:
+            return try_.pattern
+
     assert Failure is type(Success[int](value=1).convert(to_failure))
     assert Success is type(Success[int](value=1).convert(to_success))
