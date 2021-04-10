@@ -50,7 +50,7 @@ class Try(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def get_or_else(self, default: Callable[..., TT]) -> Union[T, TT]:
+    def get_or_else(self, default: Callable[..., EE]) -> Union[EE, T]:
         raise NotImplementedError
 
     @abstractproperty
@@ -68,10 +68,10 @@ class Try(ABC, Generic[T]):
         return wrapper
 
     @staticmethod
-    def do(generator_fuction: Callable[..., TryGenerator[T]]) -> Callable[..., Try[T]]:
+    def do(generator_fuction: Callable[..., TryDo[T]]) -> Callable[..., Try[T]]:
         def impl(*args: Any, **kwargs: Any) -> Try[T]:
             def recur(
-                generator: TryGenerator[T],
+                generator: TryDo[T],
                 prev: Union[Any, Try[T]],
             ) -> Try[T]:
                 try:
@@ -130,7 +130,7 @@ class Failure(Try[T]):
     def get(self) -> T:
         raise ValueError() from self.value
 
-    def get_or_else(self, default: Callable[..., EE]) -> Union[EE, T]:
+    def get_or_else(self, default: Callable[..., EE]) -> EE:
         return default()
 
     @property
@@ -190,8 +190,3 @@ class Success(Try[T]):
 
 SubType = Union[Failure[T], Success[T]]
 TryDo = Generator[Union[Any, Try[Any]], Union[Any, Try[Any]], T]
-TryGenerator = Generator[
-    Union[Any, Try[Any]],
-    Union[Any, Try[Any]],
-    T,
-]

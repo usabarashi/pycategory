@@ -64,11 +64,11 @@ class Either(ABC, Generic[L, R]):
 
     @staticmethod
     def do(
-        generator_fuction: Callable[..., EitherGenerator[L, R]]
+        generator_fuction: Callable[..., EitherDo[L, R]]
     ) -> Callable[..., Either[L, R]]:
         def wrapper(*args: Any, **kwargs: Any) -> Either[L, R]:
             def recur(
-                generator: EitherGenerator[L, R],
+                generator: EitherDo[L, R],
                 prev: Union[Any, Either[L, Any]],
             ) -> Either[L, R]:
                 try:
@@ -101,7 +101,7 @@ class Left(Either[L, R]):
         yield self
         raise GeneratorExit(self)
 
-    def map(self, functor: Callable[[R], RR]) -> Either[L, RR]:
+    def map(self, functor: Callable[[R], RR]) -> Left[L, RR]:
         return Left[L, RR](self.value)
 
     def flatmap(self, functor: Callable[[R], Either[L, RR]]) -> Either[L, RR]:
@@ -149,7 +149,7 @@ class Right(Either[L, R]):
         yield self
         return self.value
 
-    def map(self, functor: Callable[[R], RR]) -> Either[L, RR]:
+    def map(self, functor: Callable[[R], RR]) -> Right[L, RR]:
         return Right[L, RR](functor(self.value))
 
     def flatmap(self, functor: Callable[[R], Either[L, RR]]) -> Either[L, RR]:
@@ -173,7 +173,7 @@ class Right(Either[L, R]):
     def get(self) -> R:
         return self.value
 
-    def get_or_else(self, default: Callable[..., LL]) -> R:
+    def get_or_else(self, default: Callable[..., Any]) -> R:
         return self.value
 
     @property
@@ -254,8 +254,3 @@ class RightProjection(Generic[L, R]):
 
 SubType = Union[Left[L, R], Right[L, R]]
 EitherDo = Generator[Union[Any, Either[L, Any]], Union[Any, Either[L, Any]], R]
-EitherGenerator = Generator[
-    Union[Any, Either[L, Any]],
-    Union[Any, Either[L, Any]],
-    R,
-]

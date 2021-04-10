@@ -183,12 +183,10 @@ class Future(concurrent.futures.Future[T]):
         return wrapper
 
     @staticmethod
-    def do(
-        generator_function: Callable[..., FutureGenerator[T]]
-    ) -> Callable[..., Future[T]]:
+    def do(generator_function: Callable[..., FutureDo[T]]) -> Callable[..., Future[T]]:
         def impl(*args: Any, **kwargs: Any) -> Future[T]:
             def recur(
-                generator: FutureGenerator[T],
+                generator: FutureDo[T],
                 prev: Union[Any, Try[Any]],
             ) -> Future[T]:
                 try:
@@ -212,4 +210,3 @@ class Future(concurrent.futures.Future[T]):
 
 
 FutureDo = Generator[Union[Any, Try[Any]], Union[Any, Try[Any]], T]
-FutureGenerator = Generator[Union[Any, Try[Any]], Union[Any, Try[Any]], T]

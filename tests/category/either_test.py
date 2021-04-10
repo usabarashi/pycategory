@@ -32,6 +32,7 @@ def test_either_do():
     assert None is right_context().fold(
         left=lambda left: None, right=lambda right: None
     )
+    assert 6 == right_context().get()
 
 
 def test_left():
@@ -44,63 +45,41 @@ def test_left():
 def test_left_map():
     from category import Left, LeftProjection, RightProjection
 
-    assert Left is type(Left[int, None](0).map(functor=lambda right: right))
-    assert LeftProjection is type(
-        Left[int, None](0).map(functor=lambda right: right).left()
-    )
-    assert 0 == Left[int, None](0).map(functor=lambda right: right).left().get()
-    assert 0 == Left[int, None](0).map(functor=lambda right: right).left().get_or_else(
-        default=lambda: 0
-    )
-    assert RightProjection is type(
-        Left[int, None](value=0).map(functor=lambda right: right).right()
-    )
+    left = Left[int, None](0)
+    mapped_left = left.map(functor=lambda right: right)
+    assert left is not mapped_left
+    assert Left is type(mapped_left)
+    assert LeftProjection is type(mapped_left.left())
+    assert 0 == mapped_left.left().get()
+    assert 0 == mapped_left.left().get_or_else(default=lambda: 0)
+    assert RightProjection is type(mapped_left.right())
     try:
-        Left[int, None](value=0).map(functor=lambda right: right).right().get()
+        mapped_left.right().get()
         assert False
     except Exception as error:
         assert ValueError is type(error)
-    None is Left[int, None](value=0).map(
-        functor=lambda right: right
-    ).right().get_or_else(default=lambda: None)
+    None is mapped_left.right().get_or_else(default=lambda: None)
 
 
 def test_left_faltmap():
     from category import Left, LeftProjection, RightProjection
 
-    assert Left is type(
-        Left[int, None](value=0).flatmap(functor=lambda right: Left[int, None](value=0))
-    )
-    assert LeftProjection is type(
-        Left[int, None](value=0)
-        .flatmap(functor=lambda right: Left[int, None](value=0))
-        .left()
-    )
-    assert (
-        0
-        == Left[int, None](value=0)
-        .flatmap(functor=lambda right: Left[int, None](value=1))
-        .left()
-        .get()
-    )
-    assert 0 == Left[int, None](value=0).flatmap(
+    left = Left[int, None](value=0)
+    flatmapped_left = left.flatmap(functor=lambda right: Left[int, None](value=0))
+    assert left is not flatmapped_left
+    assert Left is type(flatmapped_left)
+    assert LeftProjection is type(flatmapped_left.left())
+    assert 0 == flatmapped_left.left().get()
+    assert 0 == left.flatmap(
         functor=lambda right: Left[int, None](value=1)
     ).left().get_or_else(default=lambda: 0)
-    assert RightProjection is type(
-        Left[int, None](value=0)
-        .flatmap(functor=lambda right: Left[int, None](value=1))
-        .right()
-    )
+    assert RightProjection is type(flatmapped_left.right())
     try:
-        Left[int, None](value=0).flatmap(
-            functor=lambda right: Left[int, None](value=1)
-        ).right().get()
+        flatmapped_left.right().get()
         assert False
     except Exception as error:
         assert ValueError is type(error)
-    assert None is Left[int, None](value=0).flatmap(
-        functor=lambda none: Left[int, None](value=1)
-    ).right().get_or_else(default=lambda: None)
+    assert None is flatmapped_left.right().get_or_else(default=lambda: None)
 
 
 def test_left_fold():
@@ -208,65 +187,40 @@ def test_right():
 def test_right_map():
     from category import LeftProjection, Right, RightProjection
 
-    assert Right is type(Right[None, int](value=0).map(functor=lambda right: right))
-    assert RightProjection is type(
-        Right[None, int](value=0).map(functor=lambda right: right).right()
-    )
-    assert 0 == Right[None, int](value=0).map(functor=lambda right: right).right().get()
-    assert 0 == Right[None, int](value=0).map(
-        functor=lambda right: right
-    ).right().get_or_else(default=lambda: 0)
-    assert LeftProjection is type(
-        Right[None, int](value=0).map(functor=lambda right: right).left()
-    )
+    right = Right[None, int](value=0)
+    mapped_right = right.map(functor=lambda right: right)
+    assert right is not mapped_right
+    assert Right is type(mapped_right)
+    assert RightProjection is type(mapped_right.right())
+    assert 0 == mapped_right.right().get()
+    assert 0 == mapped_right.right().get_or_else(default=lambda: 0)
+    assert LeftProjection is type(mapped_right.left())
     try:
-        Right[None, int](value=0).map(functor=lambda right: right).left().get()
+        mapped_right.left().get()
         assert False
     except Exception as error:
         assert ValueError is type(error)
-    assert None is Right[None, int](value=0).map(
-        functor=lambda right: right
-    ).left().get_or_else(default=lambda: None)
+    assert None is mapped_right.left().get_or_else(default=lambda: None)
 
 
 def test_right_flatmap():
     from category import LeftProjection, Right, RightProjection
 
-    assert Right is type(
-        Right[None, int](value=0).flatmap(
-            functor=lambda right: Right[None, int](value=right + 1)
-        )
-    )
-    assert RightProjection is type(
-        Right[None, int](value=0)
-        .map(functor=lambda right: Right[None, int](value=right + 1))
-        .right()
-    )
-    assert (
-        1
-        == Right[None, int](value=0)
-        .flatmap(functor=lambda right: Right[None, int](value=right + 1))
-        .right()
-        .get()
-    )
-    1 == Right[None, int](value=0).flatmap(
+    right = Right[None, int](value=0)
+    flatmapped_right = right.flatmap(
         functor=lambda right: Right[None, int](value=right + 1)
-    ).right().get()
-    assert LeftProjection is type(
-        Right[None, int](value=0)
-        .flatmap(functor=lambda right: Right[None, int](value=right + 1))
-        .left()
     )
+    assert right is not flatmapped_right
+    assert Right is type(flatmapped_right)
+    assert RightProjection is type(flatmapped_right.right())
+    assert 1 == flatmapped_right.right().get()
+    assert LeftProjection is type(flatmapped_right.left())
     try:
-        Right[None, int](value=0).flatmap(
-            functor=lambda right: Right[None, int](value=right + 1)
-        ).left().get()
+        flatmapped_right.left().get()
         assert False
     except Exception as error:
         assert ValueError is type(error)
-    assert None is Right[None, int](value=0).map(
-        functor=lambda right: Right[None, int](value=right + 1)
-    ).left().get_or_else(default=lambda: None)
+    assert None is flatmapped_right.left().get_or_else(default=lambda: None)
 
 
 def test_right_fold():
