@@ -50,6 +50,9 @@ class Option(ABC, Generic[T]):
     def pattern(self) -> SubType[T]:
         raise NotImplementedError
 
+    def method(self, functor: Callable[[Option[T]], TT]) -> TT:
+        raise NotImplementedError
+
     @staticmethod
     def do(generator_fuction: Callable[..., OptionDo[T]]) -> Callable[..., Option[T]]:
         def wrapper(*args: Any, **kwargs: Any) -> Option[T]:
@@ -70,9 +73,6 @@ class Option(ABC, Generic[T]):
             return recur(generator_fuction(*args, **kwargs), None)
 
         return wrapper
-
-    def convart(self, functor: Callable[[Option[T]], TT]) -> TT:
-        raise NotImplementedError
 
 
 @dataclasses.dataclass(frozen=True)
@@ -111,7 +111,7 @@ class Void(Option[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def convert(self, functor: Callable[[Void[T]], TT]) -> TT:
+    def method(self, functor: Callable[[Void[T]], TT]) -> TT:
         return functor(self)
 
 
@@ -153,7 +153,7 @@ class Some(Option[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def convert(self, functor: Callable[[Some[T]], TT]) -> TT:
+    def method(self, functor: Callable[[Some[T]], TT]) -> TT:
         return functor(self)
 
 

@@ -90,7 +90,7 @@ def test_void_get_or_else():
     assert False is Void[int]().get_or_else(default=lambda: False)
 
 
-def test_void_convert():
+def test_void_method():
     from category import Option, Some, Void
 
     def to_void(option: Option[int]) -> Void[int]:
@@ -105,8 +105,8 @@ def test_void_convert():
         else:
             return option.pattern
 
-    assert Void is type(Void[int]().convert(to_void))
-    assert Some is type(Void[int]().convert(to_some))
+    assert Void is type(Void[int]().method(to_void))
+    assert Some is type(Void[int]().method(to_some))
 
 
 def test_some():
@@ -168,7 +168,7 @@ def test_some_get_or_else():
     assert 0 == Some[int](value=0).get_or_else(default=lambda: 1)
 
 
-def test_some_convert():
+def test_some_method():
     from category import Option, Some, Void
 
     def to_void(option: Option[int]) -> Void[int]:
@@ -183,5 +183,5 @@ def test_some_convert():
         else:
             return option.pattern
 
-    assert Void is type(Some[int](value=1).convert(to_void))
-    assert Some is type(Some[int](value=1).convert(to_some))
+    assert Void is type(Some[int](value=1).method(to_void))
+    assert Some is type(Some[int](value=1).method(to_some))

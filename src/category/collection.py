@@ -53,7 +53,7 @@ class Vector(list[T], Generic[T]):
         sequence.pop(index)
         return self.__class__(sequence)
 
-    def clear(self) -> NoReturn:
+    def clear(self) -> None:
         raise TypeError("Does not support the clear method")
 
     def index(self, obj: T, start: int, end: int) -> int:

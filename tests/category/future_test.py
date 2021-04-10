@@ -184,7 +184,7 @@ def test_do():
     assert 6 == success_context().value.get()
 
 
-def test_convert():
+def test_method():
     from category import Failure, Future, Success
 
     def to_failure(future: Future[int]) -> Future[int]:
@@ -208,11 +208,11 @@ def test_convert():
     failure = Future[int]()
     failure.set_exception(exception=Exception())
     success = Future[int].successful(value=1)
-    assert Future is type(failure.convert(to_failure))
-    assert Failure is type(failure.convert(to_failure).value)
-    assert Future is type(failure.convert(to_success))
-    assert Success is type(failure.convert(to_success).value)
-    assert Future is type(success.convert(to_failure))
-    assert Failure is type(success.convert(to_failure).value)
-    assert Future is type(success.convert(to_success))
-    assert Success is type(success.convert(to_success).value)
+    assert Future is type(failure.method(to_failure))
+    assert Failure is type(failure.method(to_failure).value)
+    assert Future is type(failure.method(to_success))
+    assert Success is type(failure.method(to_success).value)
+    assert Future is type(success.method(to_failure))
+    assert Failure is type(success.method(to_failure).value)
+    assert Future is type(success.method(to_success))
+    assert Success is type(success.method(to_success).value)
