@@ -1,3 +1,4 @@
+"""Either"""
 from __future__ import annotations
 
 import dataclasses
@@ -9,7 +10,7 @@ R = TypeVar("R")
 LL = TypeVar("LL")
 RR = TypeVar("RR")
 TT = TypeVar("TT")
-EE = TypeVar("EE")
+U = TypeVar("U")
 
 
 class Either(ABC, Generic[L, R]):
@@ -18,7 +19,7 @@ class Either(ABC, Generic[L, R]):
     value: Union[L, R]
 
     @abstractmethod
-    def __call__(self) -> Generator[Either[L, R], None, R]:
+    def __call__(self) -> Generator[Either[L, R], Either[L, R], R]:
         raise NotImplementedError
 
     @abstractmethod
@@ -30,7 +31,7 @@ class Either(ABC, Generic[L, R]):
         raise NotImplementedError
 
     @abstractmethod
-    def fold(self, /, left: Callable[[L], TT], right: Callable[[R], TT]) -> TT:
+    def fold(self, *, left: Callable[[L], U], right: Callable[[R], U]) -> U:
         raise NotImplementedError
 
     @abstractmethod
@@ -49,6 +50,14 @@ class Either(ABC, Generic[L, R]):
     def is_right(self) -> bool:
         raise NotImplementedError
 
+    @abstractmethod
+    def get(self) -> R:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_or_else(self, default: Callable[..., LL]) -> Union[LL, R]:
+        raise NotImplementedError
+
     @abstractproperty
     def pattern(self) -> SubType[L, R]:
         raise NotImplementedError
@@ -60,7 +69,7 @@ class Either(ABC, Generic[L, R]):
         def wrapper(*args: Any, **kwargs: Any) -> Either[L, R]:
             def recur(
                 generator: EitherGenerator[L, R],
-                prev: Any,
+                prev: Union[Any, Either[L, Any]],
             ) -> Either[L, R]:
                 try:
                     result = generator.send(prev)
@@ -88,7 +97,7 @@ class Left(Either[L, R]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(self) -> Generator[Left[L, R], None, R]:
+    def __call__(self) -> Generator[Left[L, R], Left[L, R], R]:
         yield self
         raise GeneratorExit(self)
 
@@ -98,7 +107,7 @@ class Left(Either[L, R]):
     def flatmap(self, functor: Callable[[R], Either[L, RR]]) -> Either[L, RR]:
         return Left[L, RR](value=self.value)
 
-    def fold(self, /, left: Callable[[L], TT], right: Callable[[R], TT]) -> TT:
+    def fold(self, *, left: Callable[[L], U], right: Callable[[R], U]) -> U:
         return left(self.value)
 
     def left(self) -> LeftProjection[L, R]:
@@ -112,6 +121,12 @@ class Left(Either[L, R]):
 
     def is_right(self) -> Literal[False]:
         return False
+
+    def get(self) -> R:
+        raise ValueError(self.value)
+
+    def get_or_else(self, default: Callable[..., LL]) -> LL:
+        return default()
 
     @property
     def pattern(self) -> SubType[L, R]:
@@ -130,7 +145,7 @@ class Right(Either[L, R]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __call__(self) -> Generator[Right[L, R], None, R]:
+    def __call__(self) -> Generator[Right[L, R], Right[L, R], R]:
         yield self
         return self.value
 
@@ -140,7 +155,7 @@ class Right(Either[L, R]):
     def flatmap(self, functor: Callable[[R], Either[L, RR]]) -> Either[L, RR]:
         return functor(self.value)
 
-    def fold(self, /, left: Callable[[L], TT], right: Callable[[R], TT]) -> TT:
+    def fold(self, *, left: Callable[[L], U], right: Callable[[R], U]) -> U:
         return right(self.value)
 
     def left(self) -> LeftProjection[L, R]:
@@ -154,6 +169,12 @@ class Right(Either[L, R]):
 
     def is_right(self) -> Literal[True]:
         return True
+
+    def get(self) -> R:
+        return self.value
+
+    def get_or_else(self, default: Callable[..., LL]) -> R:
+        return self.value
 
     @property
     def pattern(self) -> SubType[L, R]:

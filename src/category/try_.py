@@ -1,3 +1,4 @@
+"""Try"""
 from __future__ import annotations
 
 import dataclasses
@@ -7,6 +8,7 @@ from typing import Any, Callable, Generator, Generic, Literal, TypeVar, Union
 T = TypeVar("T")
 TT = TypeVar("TT")
 EE = TypeVar("EE")
+U = TypeVar("U")
 
 
 class Try(ABC, Generic[T]):
@@ -15,15 +17,7 @@ class Try(ABC, Generic[T]):
     value: Union[Exception, T]
 
     @abstractmethod
-    def __call__(self) -> Generator[Try[T], None, T]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get(self) -> T:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_or_else(self, default: Callable[..., TT]) -> Union[T, TT]:
+    def __call__(self) -> Generator[Try[T], Try[T], T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -37,7 +31,7 @@ class Try(ABC, Generic[T]):
     @abstractmethod
     def fold(
         self,
-        /,
+        *,
         failure: Callable[[Exception], TT],
         success: Callable[[T], TT],
     ) -> TT:
@@ -49,6 +43,14 @@ class Try(ABC, Generic[T]):
 
     @abstractmethod
     def is_success(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get(self) -> T:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_or_else(self, default: Callable[..., TT]) -> Union[T, TT]:
         raise NotImplementedError
 
     @abstractproperty
@@ -70,7 +72,7 @@ class Try(ABC, Generic[T]):
         def impl(*args: Any, **kwargs: Any) -> Try[T]:
             def recur(
                 generator: TryGenerator[T],
-                prev: Any,
+                prev: Union[Any, Try[T]],
             ) -> Try[T]:
                 try:
                     result: Union[Try[T], Any] = generator.send(prev)
@@ -101,15 +103,9 @@ class Failure(Try[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(self) -> Generator[Try[T], None, T]:
+    def __call__(self) -> Generator[Try[T], Try[T], T]:
         yield self
         raise GeneratorExit(self) from self.value
-
-    def get(self) -> T:
-        raise ValueError() from self.value
-
-    def get_or_else(self, default: Callable[..., TT]) -> Union[T, TT]:
-        return default()
 
     def map(self, functor: Callable[[T], TT]) -> Try[TT]:
         return Failure[TT](value=self.value)
@@ -119,10 +115,10 @@ class Failure(Try[T]):
 
     def fold(
         self,
-        /,
-        failure: Callable[[Exception], TT],
-        success: Callable[[T], TT],
-    ) -> TT:
+        *,
+        failure: Callable[[Exception], U],
+        success: Callable[[T], U],
+    ) -> U:
         return failure(self.value)
 
     def is_failure(self) -> Literal[True]:
@@ -130,6 +126,12 @@ class Failure(Try[T]):
 
     def is_success(self) -> Literal[False]:
         return False
+
+    def get(self) -> T:
+        raise ValueError() from self.value
+
+    def get_or_else(self, default: Callable[..., EE]) -> Union[EE, T]:
+        return default()
 
     @property
     def pattern(self) -> SubType[T]:
@@ -148,14 +150,8 @@ class Success(Try[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __call__(self) -> Generator[Try[T], None, T]:
+    def __call__(self) -> Generator[Try[T], Try[T], T]:
         yield self
-        return self.value
-
-    def get(self) -> T:
-        return self.value
-
-    def get_or_else(self, default: Callable[..., Any]) -> T:
         return self.value
 
     def map(self, functor: Callable[[T], TT]) -> Try[TT]:
@@ -166,7 +162,7 @@ class Success(Try[T]):
 
     def fold(
         self,
-        /,
+        *,
         failure: Callable[[Exception], TT],
         success: Callable[[T], TT],
     ) -> TT:
@@ -177,6 +173,12 @@ class Success(Try[T]):
 
     def is_success(self) -> Literal[True]:
         return True
+
+    def get(self) -> T:
+        return self.value
+
+    def get_or_else(self, default: Callable[..., Any]) -> T:
+        return self.value
 
     @property
     def pattern(self) -> SubType[T]:

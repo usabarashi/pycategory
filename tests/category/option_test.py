@@ -1,175 +1,3 @@
-def test_void():
-    from category import Void
-
-    assert Void is type(Void[int]())
-    assert False is bool(Void[int]())
-    try:
-        Void[int]().get()
-        assert False
-    except Exception as error:
-        assert ValueError is type(error)
-    try:
-        Void[int]().get_or_else()
-        assert False
-    except Exception as error:
-        assert ValueError is type(error)
-    assert None is Void[int]().get_or_else(default=lambda: None)
-    assert True is Void[int]().is_empty()
-    assert False is Void[int]().not_empty()
-
-
-def test_void_map():
-    from category import Void
-
-    assert Void is type(Void[int]().map(functor=lambda some: None))
-    assert False is bool(Void[int]().map(functor=lambda some: None))
-    try:
-        Void[int]().map(functor=lambda some: None).get()
-        assert False
-    except Exception as error:
-        assert ValueError is type(error)
-    try:
-        Void[int]().map(functor=lambda some: None).get_or_else()
-        assert False
-    except Exception as error:
-        assert ValueError is type(error)
-    assert None is Void[int]().map(functor=lambda some: None).get_or_else(
-        default=lambda: None
-    )
-    assert True is Void[int]().map(functor=lambda some: None).is_empty()
-    assert False is Void[int]().map(functor=lambda some: None).not_empty()
-
-
-def test_void_flatmap():
-    from category import Some, Void
-
-    assert Void is type(Void[int]().flatmap(functor=lambda some: Some[int](value=0)))
-    assert False is bool(Void[int]().flatmap(functor=lambda some: Some[int](value=0)))
-    try:
-        Void[int]().flatmap(functor=lambda some: Some[int](value=0)).get()
-        assert False
-    except Exception as error:
-        assert ValueError is type(error)
-    try:
-        Void[int]().flatmap(functor=lambda some: Some[int](value=0)).get_or_else()
-        assert False
-    except Exception as error:
-        assert ValueError is type(error)
-    assert None is Void[int]().flatmap(
-        functor=lambda some: Some[int](value=0)
-    ).get_or_else(default=lambda: None)
-    assert (
-        True is Void[int]().flatmap(functor=lambda some: Some[int](value=0)).is_empty()
-    )
-    assert (
-        False
-        is Void[int]().flatmap(functor=lambda some: Some[int](value=0)).not_empty()
-    )
-
-
-def test_some():
-    from category import Some
-
-    assert Some is type(Some[int](value=0))
-    assert True is bool(Some[int](value=0))
-    assert 0 == Some[int](value=0).get()
-    assert 0 == Some[int](value=0).get_or_else()
-    assert 0 == Some[int](value=0).get_or_else(default=lambda: None)
-    assert False is Some[int](value=0).is_empty()
-    assert True is Some[int](value=0).not_empty()
-
-
-def test_some_map():
-    from category import Some
-
-    assert Some is type(Some[int](value=0).map(functor=lambda some: some + 1))
-    assert True is bool(Some[int](value=0).map(functor=lambda some: some + 1))
-    assert 1 == Some[int](value=0).map(functor=lambda some: some + 1).get()
-    assert 1 == Some[int](value=0).map(functor=lambda some: some + 1).get_or_else()
-    assert 1 == Some[int](value=0).map(functor=lambda some: some + 1).get_or_else(
-        default=lambda: None
-    )
-    assert False is Some[int](value=0).map(functor=lambda some: some + 1).is_empty()
-    assert (
-        True is Some[int](value=0).map(functor=lambda integer: integer + 1).not_empty()
-    )
-
-
-def test_some_flatmap():
-    from category import Some
-
-    assert Some is type(
-        Some[int](value=0).flatmap(functor=lambda some: Some[int](value=some + 1))
-    )
-    assert True is bool(
-        Some[int](value=0).flatmap(functor=lambda some: Some[int](value=some + 1))
-    )
-    assert (
-        1
-        == Some[int](value=0)
-        .flatmap(functor=lambda some: Some[int](value=some + 1))
-        .get()
-    )
-    assert (
-        1
-        == Some[int](value=0)
-        .flatmap(functor=lambda some: Some[int](value=some + 1))
-        .get_or_else()
-    )
-    assert 1 == Some[int](value=0).flatmap(
-        functor=lambda some: Some[int](value=some + 1)
-    ).get_or_else(default=lambda: None)
-    assert (
-        False
-        is Some[int](value=0)
-        .flatmap(functor=lambda some: Some[int](value=some + 1))
-        .is_empty()
-    )
-    assert (
-        True
-        is Some[int](value=0)
-        .flatmap(functor=lambda some: Some[int](value=some + 1))
-        .not_empty()
-    )
-
-
-def test_option_fold():
-    from category import Some, Void
-
-    try:
-        assert (
-            None
-            is Void[int]()
-            .fold(void=lambda: Void[int](), some=lambda some: Some(value=some + 1))
-            .get()
-        )
-        assert False
-    except Exception as error:
-        assert ValueError is type(error)
-    try:
-        assert (
-            None
-            is Void[int]()
-            .fold(void=lambda: Void[int](), some=lambda some: Some[int](value=some + 1))
-            .get_or_else()
-        )
-        assert False
-    except Exception as error:
-        assert ValueError is type(error)
-    assert None is Void[int]().fold(
-        void=lambda: Void[int](), some=lambda some: Some[int](value=some + 1)
-    ).get_or_else(default=lambda: None)
-    assert (
-        1
-        == Some[int](value=0)
-        .fold(void=lambda: Void[int](), some=lambda some: Some[int](value=some + 1))
-        .get_or_else()
-    )
-    assert 1 == Some[int](value=0).fold(
-        void=lambda: Void[int](), some=lambda some: Some[int](value=some + 1)
-    ).get_or_else(default=lambda: None)
-
-
 def test_option_do():
     from category import Option, OptionDo, Some, Void
 
@@ -201,7 +29,62 @@ def test_option_do():
     assert None is some_context().fold(void=lambda: None, some=lambda some: None)
 
 
-def test_convert():
+def test_void():
+    from category import Void
+
+    assert Void is type(Void[int]())
+    assert False is bool(Void[int]())
+
+
+def test_void_map():
+    from category import Void
+
+    assert Void is type(Void[int]().map(functor=lambda some: None))
+    assert False is bool(Void[int]().map(functor=lambda some: 0))
+
+
+def test_void_flatmap():
+    from category import Some, Void
+
+    assert Void is type(Void[int]().flatmap(functor=lambda some: Some[int](value=0)))
+    assert False is bool(Void[int]().flatmap(functor=lambda some: Some[int](value=0)))
+
+
+def test_void_fold():
+    from category import Void
+
+    assert False is Void[int]().fold(void=lambda: False, some=lambda some: True)
+
+
+def test_void_is_empty():
+    from category import Void
+
+    assert True is Void[int]().is_empty()
+
+
+def test_void_not_empty():
+    from category import Void
+
+    assert False is Void[int]().not_empty()
+
+
+def test_void_get():
+    from category import Void
+
+    try:
+        Void[int]().get()
+        assert False
+    except Exception as error:
+        assert ValueError is type(error)
+
+
+def test_void_get_or_else():
+    from category import Void
+
+    assert False is Void[int]().get_or_else(default=lambda: False)
+
+
+def test_void_convert():
     from category import Option, Some, Void
 
     def to_void(option: Option[int]) -> Void[int]:
@@ -218,5 +101,84 @@ def test_convert():
 
     assert Void is type(Void[int]().convert(to_void))
     assert Some is type(Void[int]().convert(to_some))
+
+
+def test_some():
+    from category import Some
+
+    assert Some is type(Some[int](value=0))
+    assert True is bool(Some[int](value=0))
+
+
+def test_some_map():
+    from category import Some
+
+    assert Some is type(Some[int](value=0).map(functor=lambda some: some + 1))
+    assert True is bool(Some[int](value=0).map(functor=lambda some: some + 1))
+    assert 1 == Some[int](value=0).map(functor=lambda some: some + 1).get()
+
+
+def test_some_flatmap():
+    from category import Some
+
+    assert Some is type(
+        Some[int](value=0).flatmap(functor=lambda some: Some[int](value=some + 1))
+    )
+    assert True is bool(
+        Some[int](value=0).flatmap(functor=lambda some: Some[int](value=some + 1))
+    )
+    assert (
+        1
+        == Some[int](value=0)
+        .flatmap(functor=lambda some: Some[int](value=some + 1))
+        .get()
+    )
+
+
+def test_some_fold():
+    from category import Some
+
+    assert True is Some[int](value=0).fold(void=lambda: False, some=lambda some: True)
+
+
+def test_some_is_empty():
+    from category import Some
+
+    assert False is Some[int](value=0).is_empty()
+
+
+def test_some_not_empty():
+    from category import Some
+
+    assert True is Some[int](value=0).not_empty()
+
+
+def test_some_get():
+    from category import Some
+
+    assert 0 == Some[int](value=0).get()
+
+
+def test_some_get_or_else():
+    from category import Some
+
+    assert 0 == Some[int](value=0).get_or_else(default=lambda: 1)
+
+
+def test_some_convert():
+    from category import Option, Some, Void
+
+    def to_void(option: Option[int]) -> Void[int]:
+        if isinstance(option.pattern, Void):
+            return option.pattern
+        else:
+            return Void[int]()
+
+    def to_some(option: Option[int]) -> Some[int]:
+        if isinstance(option.pattern, Void):
+            return Some[int](value=0)
+        else:
+            return option.pattern
+
     assert Void is type(Some[int](value=1).convert(to_void))
     assert Some is type(Some[int](value=1).convert(to_some))

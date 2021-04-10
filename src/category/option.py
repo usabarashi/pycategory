@@ -1,27 +1,21 @@
+"""Option"""
 from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Any, Callable, Generator, Generic, Literal, Optional, TypeVar, Union
+from typing import Any, Callable, Generator, Generic, Literal, TypeVar, Union
 
 T = TypeVar("T")
 TT = TypeVar("TT")
 EE = TypeVar("EE")
+U = TypeVar("U")
 
 
 class Option(ABC, Generic[T]):
     """Option"""
 
     @abstractmethod
-    def __call__(self) -> Generator[Option[T], None, T]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get(self) -> T:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_or_else(self, default: Optional[Callable[..., TT]] = None) -> Union[T, TT]:
+    def __call__(self) -> Generator[Option[T], Option[T], T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -33,7 +27,7 @@ class Option(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def fold(self, /, void: Callable[..., TT], some: Callable[[T], TT]) -> TT:
+    def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
         raise NotImplementedError
 
     @abstractmethod
@@ -42,6 +36,14 @@ class Option(ABC, Generic[T]):
 
     @abstractmethod
     def not_empty(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get(self) -> T:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_or_else(self, default: Callable[..., EE]) -> Union[EE, T]:
         raise NotImplementedError
 
     @abstractproperty
@@ -55,7 +57,7 @@ class Option(ABC, Generic[T]):
         def wrapper(*args: Any, **kwargs: Any) -> Option[T]:
             def recur(
                 generator: OptionGenerator[T],
-                prev: Any,
+                prev: Union[Any, Option[Any]],
             ) -> Option[T]:
                 try:
                     result = generator.send(prev)
@@ -82,17 +84,9 @@ class Void(Option[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(self) -> Generator[Option[T], None, T]:
+    def __call__(self) -> Generator[Option[T], Option[T], T]:
         yield self
         raise GeneratorExit(self)
-
-    def get(self) -> T:
-        raise ValueError(self)
-
-    def get_or_else(self, default: Optional[Callable[..., TT]] = None) -> Union[T, TT]:
-        if default is not None:
-            return default()
-        raise ValueError(self)
 
     def map(self, functor: Callable[[T], TT]) -> Option[TT]:
         return Void[T]()
@@ -100,7 +94,7 @@ class Void(Option[T]):
     def flatmap(self, functor: Callable[[T], Option[TT]]) -> Option[TT]:
         return Void[T]()
 
-    def fold(self, /, void: Callable[..., TT], some: Callable[[T], TT]) -> TT:
+    def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
         return void()
 
     def is_empty(self) -> Literal[True]:
@@ -108,6 +102,14 @@ class Void(Option[T]):
 
     def not_empty(self) -> Literal[False]:
         return False
+
+    def get(self) -> T:
+        raise ValueError(self)
+
+    def get_or_else(self, default: Callable[..., EE]) -> Union[EE, T]:
+        if default is not None:
+            return default()
+        raise ValueError(self)
 
     @property
     def pattern(self) -> SubType[T]:
@@ -126,14 +128,8 @@ class Some(Option[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __call__(self) -> Generator[Option[T], None, T]:
+    def __call__(self) -> Generator[Option[T], Option[T], T]:
         yield self
-        return self.value
-
-    def get(self) -> T:
-        return self.value
-
-    def get_or_else(self, default: Optional[Callable[..., TT]] = None) -> Union[T, TT]:
         return self.value
 
     def map(self, functor: Callable[[T], TT]) -> Option[TT]:
@@ -142,7 +138,7 @@ class Some(Option[T]):
     def flatmap(self, functor: Callable[[T], Option[TT]]) -> Option[TT]:
         return functor(self.value)
 
-    def fold(self, /, void: Callable[..., TT], some: Callable[[T], TT]) -> TT:
+    def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
         return some(self.value)
 
     def is_empty(self) -> Literal[False]:
@@ -150,6 +146,12 @@ class Some(Option[T]):
 
     def not_empty(self) -> Literal[True]:
         return True
+
+    def get(self) -> T:
+        return self.value
+
+    def get_or_else(self, default: Callable[..., EE]) -> Union[EE, T]:
+        return self.value
 
     @property
     def pattern(self) -> SubType[T]:
