@@ -41,7 +41,7 @@ def test_void_map():
 
     void = Void[int]()
     mapped_void = void.map(functor=lambda some: 0)
-    assert void is not mapped_void
+    assert void is mapped_void
     assert Void is type(mapped_void)
     assert False is bool(mapped_void)
 
@@ -51,7 +51,7 @@ def test_void_flatmap():
 
     void = Void[int]()
     flatmapped_void = void.flatmap(functor=lambda some: Some[int](value=0))
-    assert void is not flatmapped_void
+    assert void is flatmapped_void
     assert Void is type(flatmapped_void)
     assert False is bool(flatmapped_void)
 
