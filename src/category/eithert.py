@@ -1,8 +1,9 @@
 """EitherT"""
 from __future__ import annotations
 
+from collections.abc import Generator
 from dataclasses import dataclass
-from typing import Any, Callable, Generator, Generic, Type, TypeVar, Union
+from typing import Any, Callable, Generic, Type, TypeVar, Union
 
 from category.either import Either, Left, Right
 from category.future import ExecutionContext, Future
