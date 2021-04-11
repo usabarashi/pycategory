@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Any, Callable, Generator, Generic, Literal, TypeVar, Union
+from collections.abc import Generator
+from typing import Any, Callable, Generic, Literal, TypeVar, Union
 
 T = TypeVar("T")
 TT = TypeVar("TT")

@@ -5,8 +5,9 @@ import asyncio
 import concurrent.futures
 import dataclasses
 from abc import ABC
+from collections.abc import Generator
 from concurrent.futures._base import PENDING
-from typing import Any, Callable, Generator, Type, TypeVar, Union
+from typing import Any, Callable, Type, TypeVar, Union
 
 from category.try_ import Failure, Success, Try
 
