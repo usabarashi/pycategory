@@ -139,7 +139,7 @@ class EitherTFuture(Generic[L, R]):
 
     value: Future[Either[L, R]]
 
-    def __new__(cls, value: Try[Future[L, R]], /):
+    def __new__(cls, value: Future[Either[L, R]], /):
         return super().__new__(cls)
 
     def __bool__(self) -> bool:
