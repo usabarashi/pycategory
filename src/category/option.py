@@ -20,11 +20,11 @@ class Option(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, functor: Callable[[T], TT]) -> Option[TT]:
+    def map(self, functor: Callable[[T], TT], /) -> Option[TT]:
         raise NotImplementedError
 
     @abstractmethod
-    def flatmap(self, functor: Callable[[T], Option[TT]]) -> Option[TT]:
+    def flatmap(self, functor: Callable[[T], Option[TT]], /) -> Option[TT]:
         raise NotImplementedError
 
     @abstractmethod
@@ -44,14 +44,14 @@ class Option(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def get_or_else(self, default: Callable[..., EE]) -> Union[EE, T]:
+    def get_or_else(self, default: Callable[..., EE], /) -> Union[EE, T]:
         raise NotImplementedError
 
     @abstractproperty
     def pattern(self) -> SubType[T]:
         raise NotImplementedError
 
-    def method(self, functor: Callable[[Option[T]], TT]) -> TT:
+    def method(self, functor: Callable[[Option[T]], TT], /) -> TT:
         raise NotImplementedError
 
     @staticmethod
@@ -65,7 +65,7 @@ class Option(ABC, Generic[T]):
                     result = generator.send(prev)
                 except StopIteration as last:
                     # Some case
-                    return Some[T](value=last.value)
+                    return Some[T](last.value)
                 # Void case
                 if isinstance(result, Void):
                     return result
@@ -92,10 +92,10 @@ class Void(Option[T]):
         yield self
         raise GeneratorExit(self)
 
-    def map(self, functor: Callable[[T], TT]) -> Void[TT]:
+    def map(self, functor: Callable[[T], TT], /) -> Void[TT]:
         return Void[TT]()
 
-    def flatmap(self, functor: Callable[[T], Option[TT]]) -> Void[TT]:
+    def flatmap(self, functor: Callable[[T], Option[TT]], /) -> Void[TT]:
         return Void[TT]()
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
@@ -110,14 +110,14 @@ class Void(Option[T]):
     def get(self) -> T:
         raise ValueError(self)
 
-    def get_or_else(self, default: Callable[..., EE]) -> EE:
+    def get_or_else(self, default: Callable[..., EE], /) -> EE:
         return default()
 
     @property
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, functor: Callable[[Void[T]], TT]) -> TT:
+    def method(self, functor: Callable[[Void[T]], TT], /) -> TT:
         return functor(self)
 
 
@@ -127,6 +127,9 @@ class Some(Option[T]):
 
     value: T
 
+    def __new__(cls, value: T, /):
+        return super().__new__(cls)
+
     def __bool__(self) -> Literal[True]:
         return True
 
@@ -134,10 +137,10 @@ class Some(Option[T]):
         yield self
         return self.value
 
-    def map(self, functor: Callable[[T], TT]) -> Some[TT]:
-        return Some[TT](value=functor(self.value))
+    def map(self, functor: Callable[[T], TT], /) -> Some[TT]:
+        return Some[TT](functor(self.value))
 
-    def flatmap(self, functor: Callable[[T], Option[TT]]) -> Option[TT]:
+    def flatmap(self, functor: Callable[[T], Option[TT]], /) -> Option[TT]:
         return functor(self.value)
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
@@ -152,14 +155,14 @@ class Some(Option[T]):
     def get(self) -> T:
         return self.value
 
-    def get_or_else(self, default: Callable[..., Any]) -> T:
+    def get_or_else(self, default: Callable[..., Any], /) -> T:
         return self.value
 
     @property
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, functor: Callable[[Some[T]], TT]) -> TT:
+    def method(self, functor: Callable[[Some[T]], TT], /) -> TT:
         return functor(self)
 
 
