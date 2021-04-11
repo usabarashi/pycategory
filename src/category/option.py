@@ -79,6 +79,11 @@ class Option(ABC, Generic[T]):
 class Void(Option[T]):
     """Void"""
 
+    def __new__(cls) -> Void[T]:
+        if not hasattr(cls, "_singleton"):
+            cls._singleton = super(Void, cls).__new__(cls)
+        return cls._singleton
+
     def __bool__(self) -> Literal[False]:
         return False
 
@@ -87,10 +92,10 @@ class Void(Option[T]):
         raise GeneratorExit(self)
 
     def map(self, functor: Callable[[T], TT]) -> Void[TT]:
-        return Void[T]()
+        return Void[TT]()
 
     def flatmap(self, functor: Callable[[T], Option[TT]]) -> Void[TT]:
-        return Void[T]()
+        return Void[TT]()
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
         return void()
