@@ -180,7 +180,7 @@ class Right(Either[L, R]):
     def get(self) -> R:
         return self.value
 
-    def get_or_else(self, default: Callable[..., Any], /) -> R:
+    def get_or_else(self, default: Callable[..., LL], /) -> R:
         return self.value
 
     @property

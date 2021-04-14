@@ -27,23 +27,23 @@ class EitherTTry(Generic[L, R]):
         return super().__new__(cls)
 
     def __bool__(self) -> bool:
-        # Success and Right
-        return bool(self.value) and bool(self.value.value)
+        try_ = self.value
+        if isinstance(try_.pattern, Failure):
+            return False
+        else:
+            either = try_.pattern.value
+            return bool(either)
 
     def __call__(self) -> Generator[Try[Either[L, R]], None, R]:
         try_ = self.value
-        # Failure[Either[L, R]] case
         if isinstance(try_.pattern, Failure):
             yield try_.pattern
-            raise GeneratorExit(self) from try_.pattern.value
-        # Success[Eihter[L, R]] case
+            raise GeneratorExit(self) from try_.pattern.exception
         else:
             either = try_.pattern.get()
-            # Success[Left[L , R]] case
             if isinstance(either.pattern, Left):
                 yield try_.pattern
                 raise GeneratorExit(self)
-            # Success[Right[L, R]] case
             else:
                 yield try_.pattern
                 return either.pattern.get()
@@ -54,7 +54,7 @@ class EitherTTry(Generic[L, R]):
     def get_or_else(self, default: Callable[..., EE], /) -> Union[EE, R]:
         try_ = self.value
         if isinstance(try_.pattern, Failure):
-            raise try_.pattern.value
+            raise try_.pattern.exception
         else:
             either = try_.pattern.get()
             return either.get_or_else(default)
@@ -68,20 +68,16 @@ class EitherTTry(Generic[L, R]):
         self, functor: Callable[[R], EitherTTry[L, RR]], /
     ) -> EitherTTry[L, RR]:
         try_ = self.value
-        # Failure case
         if isinstance(try_.pattern, Failure):
-            exception: Exception = try_.pattern.value
+            exception: Exception = try_.pattern.exception
             failure = Failure[Either[L, RR]](exception)
             return EitherTTry[L, RR](failure)
-        # Success[Either[L, R]] case
         else:
             either = try_.pattern.get()
-            # Success[Left[L, R]] case
             if isinstance(either.pattern, Left):
                 left = Left[L, RR](either.pattern.left().get())
                 success = Success[Left[L, RR]](left)
                 return EitherTTry[L, RR](success)
-            # Success[Right[L, R]] case
             else:
                 return functor(either.pattern.right().get())
 
@@ -113,10 +109,8 @@ class EitherTTry(Generic[L, R]):
                     return EitherTTry[L, R](success)
                 if isinstance(result, Try):
                     try_ = result
-                    # Failure case
                     if isinstance(try_.pattern, Failure):
                         return EitherTTry[L, R](try_.pattern)
-                    # Success[Left[L, R]] case
                     if isinstance(try_.pattern, Success) and isinstance(
                         try_.pattern.value.pattern, Left
                     ):
@@ -143,24 +137,26 @@ class EitherTFuture(Generic[L, R]):
         return super().__new__(cls)
 
     def __bool__(self) -> bool:
-        # Complete and Success and Right
-        return (
-            bool(self.value) and bool(self.value.value) and bool(self.value.value.value)
-        )
+        future = self.value
+        if not future.done():
+            return False
+        else:
+            try_ = future.value
+            if isinstance(try_.pattern, Failure):
+                return False
+            else:
+                either = try_.pattern.value
+                return bool(either)
 
     def __call__(self) -> Generator[Try[Either[L, R]], None, R]:
         try:
             either = self.value.result()
-            # Success[Left[L , R]] case
             if isinstance(either.pattern, Left):
                 yield Success[Either[L, R]](either.pattern)
                 raise GeneratorExit(self)
-            # Success[Right[L, R]] case
             else:
                 yield Success[Either[L, R]](either.pattern)
                 return either.pattern.right().get()
-
-        # Failure[Either[L, R]] case
         except Exception as error:
             yield Failure[Either[L, R]](error)
             raise GeneratorExit from error
@@ -238,12 +234,10 @@ class EitherTFuture(Generic[L, R]):
                     return EitherTFuture[L, R](future)
                 if isinstance(result, Try):
                     try_ = result
-                    # Failure case
                     if isinstance(try_.pattern, Failure):
                         future = Future[Either[L, R]]()
-                        future.set_exception(exception=try_.pattern.value)
+                        future.set_exception(exception=try_.pattern.exception)
                         return EitherTFuture[L, R](future)
-                    # Success[Left[L, R]] case
                     if isinstance(try_.pattern, Success) and isinstance(
                         try_.pattern.value.pattern, Left
                     ):

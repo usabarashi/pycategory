@@ -155,7 +155,7 @@ class Some(Option[T]):
     def get(self) -> T:
         return self.value
 
-    def get_or_else(self, default: Callable[..., Any], /) -> T:
+    def get_or_else(self, default: Callable[..., EE], /) -> T:
         return self.value
 
     @property

@@ -27,7 +27,7 @@ def test_eitherttry_map():
     assert failure is not mapped_failure
     assert EitherTTry is type(mapped_failure)
     assert Failure is type(mapped_failure.value)
-    assert Exception is type(mapped_failure.value.value)
+    assert Exception is type(mapped_failure.value.exception)
 
     # Success[Left[L, R]] case
     success_left = EitherTTry[Exception, int](
@@ -64,7 +64,7 @@ def test_eitherttry_flatmap():
     assert failure is not flatmapped_failure
     assert EitherTTry is type(flatmapped_failure)
     assert Failure is type(flatmapped_failure.value)
-    assert Exception is type(flatmapped_failure.value.value)
+    assert Exception is type(flatmapped_failure.value.exception)
 
     # Success[Left[L, R]] case
     success_left = EitherTTry[Exception, int](
@@ -200,7 +200,7 @@ def test_eitherttry_do():
     except Exception as error:
         ValueError is type(error)
     assert Failure is type(failure_context().value)
-    assert Exception is type(failure_context().value.value)
+    assert Exception is type(failure_context().value.exception)
 
     # Success[Left[L, R]] case
     @EitherTTry.do
@@ -484,7 +484,7 @@ def test_eithertfuture_do():
     assert EitherTFuture is type(failure_context())
     assert Future is type(failure_context().value)
     assert Failure is type(failure_context().value.value)
-    assert Exception is type(failure_context().value.value.value)
+    assert Exception is type(failure_context().value.value.exception)
     try:
         failure_context().get()
         assert False
