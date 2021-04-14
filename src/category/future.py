@@ -55,7 +55,7 @@ class Future(concurrent.futures.Future[T]):
         def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
             def fold(try_: Try[T]) -> Try[TT]:
                 if isinstance(try_.pattern, Failure):
-                    return Failure[TT](try_.pattern.value)
+                    return Failure[TT](try_.pattern.exception)
                 else:
                     return Success[TT](functor(try_.pattern.value))
 
@@ -70,7 +70,7 @@ class Future(concurrent.futures.Future[T]):
             def fold(try_: Try[T]) -> Future[TT]:
                 if isinstance(try_.pattern, Failure):
                     future = Future[TT]()
-                    future.set_exception(exception=try_.pattern.value)
+                    future.set_exception(exception=try_.pattern.exception)
                     return future
                 else:
                     return functor(try_.pattern.value)
@@ -112,18 +112,18 @@ class Future(concurrent.futures.Future[T]):
         elif self._state is PENDING:
             try_ = result
             if isinstance(try_.pattern, Failure):
-                self.set_exception(exception=try_.pattern.value)
+                self.set_exception(exception=try_.pattern.exception)
             else:
-                self.set_result(result=result.value)
+                self.set_result(result=try_.pattern.value)
             return True
         else:
 
             def callback(self: Future[T]):
-                if isinstance(result, Failure):
+                if isinstance(try_.pattern, Failure):
                     self._result = None
-                    self._exception = result.value
+                    self._exception = try_.pattern.exception
                 else:
-                    self._result = result.value
+                    self._result = try_.pattern.value
                     self._exception = None
 
             self.add_done_callback(fn=callback)
@@ -196,13 +196,11 @@ class Future(concurrent.futures.Future[T]):
             ) -> Future[T]:
                 try:
                     result: Union[Any, Try[T]] = generator.send(prev)
-                # Success case
                 except StopIteration as last:
                     return Future[T].successful(last.value)
-                # Failure case
                 if isinstance(result, Failure):
                     future = Future[T]()
-                    future.set_exception(exception=result.value)
+                    future.set_exception(exception=result.exception)
                     return future
                 return recur(generator, result)
 

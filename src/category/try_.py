@@ -15,8 +15,6 @@ U = TypeVar("U")
 class Try(ABC, Generic[T]):
     """Try"""
 
-    value: Union[Exception, T]
-
     @abstractmethod
     def __call__(self) -> Generator[Try[T], Try[T], T]:
         raise NotImplementedError
@@ -82,11 +80,9 @@ class Try(ABC, Generic[T]):
                 try:
                     result: Union[Try[T], Any] = generator.send(prev)
                 except StopIteration as last:
-                    # Success case
                     return Success[T](last.value)
-                # Failure case
                 if isinstance(result, Failure):
-                    failure = Failure[T](result.value)
+                    failure = Failure[T](result.exception)
                     return failure
                 return recur(generator, result)
 
@@ -99,9 +95,9 @@ class Try(ABC, Generic[T]):
 class Failure(Try[T]):
     """Failure"""
 
-    value: Exception
+    exception: Exception
 
-    def __new__(cls, value: T, /):
+    def __new__(cls, exception: Exception, /):
         return super().__new__(cls)
 
     def __bool__(self) -> Literal[False]:
@@ -109,13 +105,13 @@ class Failure(Try[T]):
 
     def __call__(self) -> Generator[Try[T], Try[T], T]:
         yield self
-        raise GeneratorExit(self) from self.value
+        raise GeneratorExit(self) from self.exception
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
-        return Failure[TT](self.value)
+        return Failure[TT](self.exception)
 
     def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
-        return Failure[TT](self.value)
+        return Failure[TT](self.exception)
 
     def fold(
         self,
@@ -123,7 +119,7 @@ class Failure(Try[T]):
         failure: Callable[[Exception], U],
         success: Callable[[T], U],
     ) -> U:
-        return failure(self.value)
+        return failure(self.exception)
 
     def is_failure(self) -> Literal[True]:
         return True
@@ -132,7 +128,7 @@ class Failure(Try[T]):
         return False
 
     def get(self) -> T:
-        raise ValueError() from self.value
+        raise ValueError() from self.exception
 
     def get_or_else(self, default: Callable[..., EE], /) -> EE:
         return default()
@@ -184,7 +180,7 @@ class Success(Try[T]):
     def get(self) -> T:
         return self.value
 
-    def get_or_else(self, default: Callable[..., Any], /) -> T:
+    def get_or_else(self, default: Callable[..., EE], /) -> T:
         return self.value
 
     @property
