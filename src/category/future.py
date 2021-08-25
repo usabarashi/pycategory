@@ -11,7 +11,7 @@ from typing import Any, Callable, Type, TypeVar, Union
 
 from category.try_ import Failure, Success, Try
 
-T = TypeVar("T")
+T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
 U = TypeVar("U")
 
