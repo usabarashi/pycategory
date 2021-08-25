@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
 from typing import Any, Callable, Generic, Literal, TypeVar, Union
 
-T = TypeVar("T")
+T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
 EE = TypeVar("EE")
 U = TypeVar("U")

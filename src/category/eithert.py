@@ -9,8 +9,8 @@ from category.either import Either, Left, Right
 from category.future import ExecutionContext, Future
 from category.try_ import Failure, Success, Try
 
-L = TypeVar("L")
-R = TypeVar("R")
+L = TypeVar("L", covariant=True)
+R = TypeVar("R", covariant=True)
 RR = TypeVar("RR")
 EE = TypeVar("EE")
 TT = TypeVar("TT")

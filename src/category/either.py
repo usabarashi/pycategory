@@ -6,8 +6,8 @@ from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
 from typing import Any, Callable, Generic, Literal, TypeVar, Union
 
-L = TypeVar("L")
-R = TypeVar("R")
+L = TypeVar("L", covariant=True)
+R = TypeVar("R", covariant=True)
 LL = TypeVar("LL")
 RR = TypeVar("RR")
 TT = TypeVar("TT")
@@ -64,7 +64,9 @@ class Either(ABC, Generic[L, R]):
         raise NotImplementedError
 
     @abstractmethod
-    def method(self, functor: Callable[[Either[L, R]], TT], /) -> TT:
+    def method(
+        self, functor: Callable[[Either[L, R]], TT], /, *args: Any, **kwargs: Any
+    ) -> TT:
         raise NotImplementedError
 
     @staticmethod
