@@ -198,14 +198,14 @@ def test_immutable_vector_size():
 
 def test_immutable_vector_map():
     vector = Vector([0, 1, 2])
-    mapped_vector = vector.map(function=lambda x: x * 2)
+    mapped_vector = vector.map(lambda x: x * 2)
     assert mapped_vector is not vector
     assert [0, 2, 4] == mapped_vector
 
 
 def test_immutable_vector_redece():
     vector = Vector([0, 1, 2])
-    reduced_vector = vector.reduce(function=lambda left, right: left * right)
+    reduced_vector = vector.reduce(lambda left, right: left * right)
     assert reduced_vector is not vector
     assert 0 == reduced_vector
 

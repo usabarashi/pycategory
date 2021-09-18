@@ -94,11 +94,11 @@ class Vector(list[T], Generic[T]):
     def size(self) -> int:
         return len(self)
 
-    def map(self, /, *, function: Callable[[T], A]) -> Vector[A]:
+    def map(self, function: Callable[[T], A], /) -> Vector[A]:
         return self.__class__([function(element) for element in self])
 
-    def reduce(self, /, *, function: Callable[[T, T], T]):
+    def reduce(self, function: Callable[[T, T], T], /):
         return reduce(function, self)
 
-    def filter(self, /, *, function: Callable[[T], bool]) -> Vector[T]:
+    def filter(self, function: Callable[[T], bool], /) -> Vector[T]:
         return self.__class__([element for element in self if function(element)])
