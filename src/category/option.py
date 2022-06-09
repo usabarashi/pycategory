@@ -168,3 +168,5 @@ class Some(Option[T]):
 
 SubType = Union[Void[T], Some[T]]
 OptionDo = Generator[Union[Any, Option[Any]], Union[Any, Option[Any]], T]
+
+SINGLETON_VOID = Void[Any]()
