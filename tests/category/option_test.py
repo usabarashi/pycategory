@@ -1,11 +1,11 @@
 def test_option_do():
-    from category import Option, OptionDo, Some, Void
+    from category import VOID, Option, OptionDo, Some, Void
 
     @Option.do
     def void_context() -> OptionDo[int]:
         one = yield from Some[int](1)()
         two = 2
-        three = yield from Void[int]()()
+        three = yield from VOID()
         return one + two + three
 
     assert Void is type(void_context())
@@ -30,16 +30,16 @@ def test_option_do():
 
 
 def test_void():
-    from category import Void
+    from category import VOID, Void
 
-    assert Void is type(Void[int]())
-    assert False is bool(Void[int]())
+    assert Void is type(VOID)
+    assert False is bool(VOID)
 
 
 def test_void_map():
-    from category import Void
+    from category import VOID, Void
 
-    void = Void[int]()
+    void = VOID
     mapped_void = void.map(lambda some: 0)
     assert void is mapped_void
     assert Void is type(mapped_void)
@@ -57,47 +57,47 @@ def test_void_flatmap():
 
 
 def test_void_fold():
-    from category import Void
+    from category import VOID
 
-    assert False is Void[int]().fold(void=lambda: False, some=lambda some: True)
+    assert False is VOID.fold(void=lambda: False, some=lambda some: True)
 
 
 def test_void_is_empty():
-    from category import Void
+    from category import VOID
 
-    assert True is Void[int]().is_empty()
+    assert True is VOID.is_empty()
 
 
 def test_void_not_empty():
-    from category import Void
+    from category import VOID
 
-    assert False is Void[int]().not_empty()
+    assert False is VOID.not_empty()
 
 
 def test_void_get():
-    from category import Void
+    from category import VOID
 
     try:
-        Void[int]().get()
+        VOID.get()
         assert False
     except Exception as error:
         assert ValueError is type(error)
 
 
 def test_void_get_or_else():
-    from category import Void
+    from category import VOID
 
-    assert False is Void[int]().get_or_else(lambda: False)
+    assert False is VOID.get_or_else(lambda: False)
 
 
 def test_void_method():
-    from category import Option, Some, Void
+    from category import VOID, Option, Some, Void
 
     def to_void(self: Option[int], /) -> Void[int]:
         if isinstance(self.pattern, Void):
             return self.pattern
         else:
-            return Void[int]()
+            return VOID
 
     def to_some(self: Option[int], /) -> Some[int]:
         if isinstance(self.pattern, Void):
@@ -105,8 +105,8 @@ def test_void_method():
         else:
             return self.pattern
 
-    assert Void is type(Void[int]().method(to_void))
-    assert Some is type(Void[int]().method(to_some))
+    assert Void is type(VOID.method(to_void))
+    assert Some is type(VOID.method(to_some))
 
 
 def test_some():
@@ -169,13 +169,13 @@ def test_some_get_or_else():
 
 
 def test_some_method():
-    from category import Option, Some, Void
+    from category import VOID, Option, Some, Void
 
     def to_void(self: Option[int], /) -> Void[int]:
         if isinstance(self.pattern, Void):
             return self.pattern
         else:
-            return Void[int]()
+            return VOID
 
     def to_some(self: Option[int], /) -> Some[int]:
         if isinstance(self.pattern, Void):
