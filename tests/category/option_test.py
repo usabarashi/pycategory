@@ -201,3 +201,31 @@ def test_dataclass():
     assert VOID is dict_data.get("void", None)
     assert Some is type(dict_data.get("some", None))
     assert 42 == dict_data.get("some", None).get()
+
+
+def test_pattern_match():
+    from category import VOID, Some, Void
+
+    match VOID:
+        case Void():
+            assert True
+        case _:
+            assert False
+
+    match Some(42):
+        case Some() as some if some.get() == 42:
+            assert True
+        case _:
+            assert False
+
+    match VOID, VOID:
+        case Void() as a, Void() as b if a is b:
+            assert True
+        case _:
+            assert False
+
+    match Some(41), Some(42), Some(43):
+        case Some() as x, Some() as y, Some() as z if x.get() < y.get() < z.get():
+            assert True
+        case _:
+            assert False

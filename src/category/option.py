@@ -122,6 +122,8 @@ class Void(Option[T]):
 class Some(Option[T]):
     """Some"""
 
+    __match_args__ = ("value",)
+
     def __init__(self, value: T, /):
         self._value = value
 
