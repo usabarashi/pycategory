@@ -1,7 +1,6 @@
 """Option"""
 from __future__ import annotations
 
-import dataclasses
 from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
 from typing import Any, Callable, Generic, Literal, TypeVar, Union
@@ -76,7 +75,6 @@ class Option(ABC, Generic[T]):
         return wrapper
 
 
-@dataclasses.dataclass(frozen=True)
 class Void(Option[T]):
     """Void"""
 
@@ -121,30 +119,27 @@ class Void(Option[T]):
         return functor(self)
 
 
-@dataclasses.dataclass(frozen=True)
 class Some(Option[T]):
     """Some"""
 
-    value: T
-
-    def __new__(cls, value: T, /):
-        return super().__new__(cls)
+    def __init__(self, value: T, /):
+        self._value = value
 
     def __bool__(self) -> Literal[True]:
         return True
 
     def __call__(self) -> Generator[Some[T], Some[T], T]:
         yield self
-        return self.value
+        return self._value
 
     def map(self, functor: Callable[[T], TT], /) -> Some[TT]:
-        return Some[TT](functor(self.value))
+        return Some[TT](functor(self._value))
 
     def flatmap(self, functor: Callable[[T], Option[TT]], /) -> Option[TT]:
-        return functor(self.value)
+        return functor(self._value)
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
-        return some(self.value)
+        return some(self._value)
 
     def is_empty(self) -> Literal[False]:
         return False
@@ -153,10 +148,10 @@ class Some(Option[T]):
         return True
 
     def get(self) -> T:
-        return self.value
+        return self._value
 
     def get_or_else(self, default: Callable[..., EE], /) -> T:
-        return self.value
+        return self._value
 
     @property
     def pattern(self) -> SubType[T]:
