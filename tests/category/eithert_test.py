@@ -301,7 +301,7 @@ def test_eithertfuture_map():
     assert EitherTFuture is type(mapped_left)
     assert False is mapped_left.get_or_else(lambda: False)
     assert Left is type(mapped_left.value.result())
-    assert Exception is type(mapped_left.value.result().value)
+    assert Exception is type(mapped_left.value.result().left().get())
 
     # Success[Right[L, R]] case
     right = EitherTFuture[Exception, int](
@@ -351,7 +351,7 @@ def test_eithertfuture_flatmap():
     assert EitherTFuture is type(mapped_left)
     assert False is mapped_left.get_or_else(lambda: False)
     assert Left is type(mapped_left.value.result())
-    assert Exception is type(mapped_left.value.result().value)
+    assert Exception is type(mapped_left.value.result().left().get())
 
     # Success[Right[L, R]] case
     right = EitherTFuture[Exception, int](
