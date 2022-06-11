@@ -187,11 +187,11 @@ class EitherTFuture(Generic[L, R]):
             try:
                 either = self.value.result()
                 if isinstance(either.pattern, Left):
-                    left = Left[L, RR](either.pattern.value)
+                    left = Left[L, RR](either.pattern._value)
                     future = Future[Left[L, RR]].successful(left)
                     return EitherTFuture[L, RR](future)
                 else:
-                    return functor(either.pattern.value)
+                    return functor(either.pattern._value)
             except Exception as error:
                 future = Future[Either[L, RR]]()
                 future.set_exception(exception=error)
