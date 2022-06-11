@@ -28,7 +28,7 @@ def test_either_do():
     assert True is bool(right_context())
     assert False is right_context().is_left()
     assert True is right_context().is_right()
-    assert Right[None, int](6) == right_context()
+    assert Right is type(right_context())
     assert None is right_context().fold(
         left=lambda left: None, right=lambda right: None
     )
@@ -291,16 +291,63 @@ def test_right_method():
     from category import Either, Left, Right
 
     def to_left(either: Either[Exception, int]) -> Left[Exception, int]:
-        if isinstance(either.pattern, Left):
-            return either.pattern
-        else:
-            return Left[Exception, int](Exception())
+        match either.pattern:
+            case Left():
+                return either.pattern
+            case _:
+                return Left[Exception, int](Exception())
 
     def to_right(either: Either[Exception, int]) -> Right[Exception, int]:
-        if isinstance(either.pattern, Left):
-            return Right[Exception, int](1)
-        else:
-            return either.pattern
+        match either.pattern:
+            case Left():
+                return Right[Exception, int](1)
+            case _:
+                return either.pattern
 
     assert Left is type(Right[Exception, int](1).method(to_left))
     assert Right is type(Right[Exception, int](1).method(to_right))
+
+
+def test_dataclass():
+    from dataclasses import asdict, dataclass
+
+    from category import Left, Right
+
+    @dataclass(frozen=True)
+    class AsDict:
+        left: Left[None, int]
+        right: Right[None, int]
+
+    dict_data = asdict(AsDict(left=Left[None, int](None), right=Right[None, int](42)))
+    assert Left is type(dict_data.get("left", None))
+    assert None is dict_data.get("left", None).left().get()
+    assert Right is type(dict_data.get("right", None))
+    assert 42 == dict_data.get("right", None).get()
+
+
+def test_pattern_match():
+    from category import Left, Right
+
+    match Left[None, int](None):
+        case Left():
+            assert True
+        case _:
+            assert False
+
+    match Right[None, int](42):
+        case Right() as right if right.get() == 42:
+            assert True
+        case _:
+            assert False
+
+    match Left[None, int](None), Left[None, int](None):
+        case Left() as a, Left() as b if a.left().get() is b.left().get():
+            assert True
+        case _:
+            assert False
+
+    match Right[None, int](41), Right[None, int](42), Right[None, int](43):
+        case Right() as x, Right() as y, Right() as z if x.get() < y.get() < z.get():
+            assert True
+        case _:
+            assert False

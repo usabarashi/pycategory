@@ -1,7 +1,6 @@
 """Either"""
 from __future__ import annotations
 
-import dataclasses
 from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
 from typing import Any, Callable, Generic, Literal, TypeVar, Union
@@ -16,8 +15,6 @@ U = TypeVar("U")
 
 class Either(ABC, Generic[L, R]):
     """Either"""
-
-    value: Union[L, R]
 
     @abstractmethod
     def __call__(self) -> Generator[Either[L, R], Either[L, R], R]:
@@ -64,9 +61,7 @@ class Either(ABC, Generic[L, R]):
         raise NotImplementedError
 
     @abstractmethod
-    def method(
-        self, functor: Callable[[Either[L, R]], TT], /, *args: Any, **kwargs: Any
-    ) -> TT:
+    def method(self, functor: Callable[[Either[L, R]], TT]) -> TT:
         raise NotImplementedError
 
     @staticmethod
@@ -91,14 +86,13 @@ class Either(ABC, Generic[L, R]):
         return wrapper
 
 
-@dataclasses.dataclass(frozen=True)
 class Left(Either[L, R]):
     """Left"""
 
-    value: L
+    __match_args__ = ("value",)
 
-    def __new__(cls, value: L, /):
-        return super().__new__(cls)
+    def __init__(self, value: L, /):
+        self._value = value
 
     def __bool__(self) -> Literal[False]:
         return False
@@ -108,13 +102,13 @@ class Left(Either[L, R]):
         raise GeneratorExit(self)
 
     def map(self, functor: Callable[[R], RR], /) -> Left[L, RR]:
-        return Left[L, RR](self.value)
+        return Left[L, RR](self._value)
 
     def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
-        return Left[L, RR](self.value)
+        return Left[L, RR](self._value)
 
     def fold(self, *, left: Callable[[L], U], right: Callable[[R], U]) -> U:
-        return left(self.value)
+        return left(self._value)
 
     def left(self) -> LeftProjection[L, R]:
         return LeftProjection[L, R](either=self)
@@ -129,7 +123,7 @@ class Left(Either[L, R]):
         return False
 
     def get(self) -> R:
-        raise ValueError(self.value)
+        raise ValueError(self._value)
 
     def get_or_else(self, default: Callable[..., LL], /) -> LL:
         return default()
@@ -142,30 +136,29 @@ class Left(Either[L, R]):
         return functor(self)
 
 
-@dataclasses.dataclass(frozen=True)
 class Right(Either[L, R]):
     """Right"""
 
-    value: R
+    __match_args__ = ("value",)
 
-    def __new__(cls, value: R, /):
-        return super().__new__(cls)
+    def __init__(self, value: R, /):
+        self._value = value
 
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __call__(self) -> Generator[Right[L, R], Right[L, R], R]:
+    def __call__(self) -> Generator[Either[L, R], Either[L, R], R]:
         yield self
-        return self.value
+        return self._value
 
     def map(self, functor: Callable[[R], RR], /) -> Right[L, RR]:
-        return Right[L, RR](functor(self.value))
+        return Right[L, RR](functor(self._value))
 
     def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
-        return functor(self.value)
+        return functor(self._value)
 
     def fold(self, *, left: Callable[[L], U], right: Callable[[R], U]) -> U:
-        return right(self.value)
+        return right(self._value)
 
     def left(self) -> LeftProjection[L, R]:
         return LeftProjection[L, R](either=self)
@@ -180,10 +173,10 @@ class Right(Either[L, R]):
         return True
 
     def get(self) -> R:
-        return self.value
+        return self._value
 
     def get_or_else(self, default: Callable[..., LL], /) -> R:
-        return self.value
+        return self._value
 
     @property
     def pattern(self) -> SubType[L, R]:
@@ -193,73 +186,86 @@ class Right(Either[L, R]):
         return functor(self)
 
 
-@dataclasses.dataclass(frozen=True)
 class LeftProjection(Generic[L, R]):
     """LeftProjection"""
 
-    either: SubType[L, R]
+    __match_args__ = ("either",)
+
+    def __init__(self, either: SubType[L, R]):
+        self._either = either
 
     def __bool__(self) -> bool:
-        return bool(self.either)
+        return bool(self._either)
 
     def get(self) -> L:
-        if isinstance(self.either, Left):
-            return self.either.value
-        else:
-            raise ValueError(self)
+        match self._either:
+            case Left() as left:
+                return left._value
+            case _:
+                raise ValueError(self)
 
     def get_or_else(self, default: Callable[..., RR], /) -> Union[L, RR]:
-        if isinstance(self.either, Left):
-            return self.either.value
-        else:
-            return default()
+        match self._either:
+            case Left() as left:
+                return left._value
+            case _:
+                return default()
 
     def map(self, functor: Callable[[L], LL], /) -> Either[LL, R]:
-        if isinstance(self.either, Left):
-            return Left[LL, R](functor(self.either.value))
-        else:
-            return Right[LL, R](self.either.value)
+        match self._either:
+            case Left() as left:
+                return Left[LL, R](functor(left._value))
+            case Right() as right:
+                return Right[LL, R](right.get())
 
     def flatmap(self, functor: Callable[[L], Either[LL, R]], /) -> Either[LL, R]:
-        if isinstance(self.either, Left):
-            return functor(self.either.value)
-        else:
-            return Right[LL, R](self.either.value)
+        match self._either:
+            case Left() as left:
+                return functor(left._value)
+            case Right() as right:
+                return Right[LL, R](right.get())
 
 
-@dataclasses.dataclass(frozen=True)
 class RightProjection(Generic[L, R]):
     """RightProjection"""
 
-    either: SubType[L, R]
+    __match_args__ = ("either",)
+
+    def __init__(self, either: SubType[L, R]):
+        self._either = either
 
     def __bool__(self) -> bool:
-        return bool(self.either)
+        return bool(self._either)
 
     def get(self) -> R:
-        if isinstance(self.either, Left):
-            raise ValueError(self)
-        else:
-            return self.either.value
+        match self._either:
+            case Left():
+                raise ValueError(self)
+            case Right() as right:
+                return right.get()
 
     def get_or_else(self, default: Callable[..., LL], /) -> Union[LL, R]:
-        if isinstance(self.either, Left):
-            return default()
-        else:
-            return self.either.value
+        match self._either:
+            case Left():
+                return default()
+            case Right() as right:
+                return right.get()
 
     def map(self, functor: Callable[[R], RR], /) -> Either[L, RR]:
-        if isinstance(self.either, Left):
-            return Left[L, RR](self.either.value)
-        else:
-            return Right[L, RR](functor(self.either.value))
+        match self._either:
+            case Left() as left:
+                return Left[L, RR](left._value)
+            case Right() as right:
+                return Right[L, RR](functor(right.get()))
 
     def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
-        if isinstance(self.either, Left):
-            return Left[L, RR](self.either.value)
-        else:
-            return functor(self.either.value)
+        match self._either:
+            case Left() as left:
+                return Left[L, RR](left._value)
+            case Right() as right:
+                return functor(right.get())
 
 
 SubType = Union[Left[L, R], Right[L, R]]
 EitherDo = Generator[Union[Any, Either[L, Any]], Union[Any, Either[L, Any]], R]
+ReturnEither = EitherDo
