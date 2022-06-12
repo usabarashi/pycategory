@@ -17,17 +17,14 @@ TT = TypeVar("TT")
 U = TypeVar("U")
 
 
-@dataclass(frozen=True)
 class EitherTTry(Generic[L, R]):
     """Either Transformer Try"""
 
-    value: Try[Either[L, R]]
-
-    def __new__(cls, value: Try[Either[L, R]], /):
-        return super().__new__(cls)
+    def __init__(self, value: Try[Either[L, R]], /):
+        self._value = value
 
     def __bool__(self) -> bool:
-        try_ = self.value
+        try_ = self._value
         if isinstance(try_.pattern, Failure):
             return False
         else:
@@ -35,7 +32,7 @@ class EitherTTry(Generic[L, R]):
             return bool(either)
 
     def __call__(self) -> Generator[Try[Either[L, R]], None, R]:
-        try_ = self.value
+        try_ = self._value
         if isinstance(try_.pattern, Failure):
             yield try_.pattern
             raise GeneratorExit(self) from try_.pattern._exception
@@ -49,10 +46,10 @@ class EitherTTry(Generic[L, R]):
                 return either.pattern.get()
 
     def get(self) -> R:
-        return self.value.get().get()
+        return self._value.get().get()
 
     def get_or_else(self, default: Callable[..., EE], /) -> Union[EE, R]:
-        try_ = self.value
+        try_ = self._value
         if isinstance(try_.pattern, Failure):
             raise try_.pattern._exception
         else:
@@ -60,14 +57,14 @@ class EitherTTry(Generic[L, R]):
             return either.get_or_else(default)
 
     def map(self, functor: Callable[[R], RR], /) -> EitherTTry[L, RR]:
-        try_ = self.value
+        try_ = self._value
         mapped_try = try_.map(lambda either: either.map(functor))
         return EitherTTry[L, RR](mapped_try)
 
     def flatmap(
         self, functor: Callable[[R], EitherTTry[L, RR]], /
     ) -> EitherTTry[L, RR]:
-        try_ = self.value
+        try_ = self._value
         if isinstance(try_.pattern, Failure):
             exception: Exception = try_.pattern._exception
             failure = Failure[Either[L, RR]](exception)
@@ -88,7 +85,7 @@ class EitherTTry(Generic[L, R]):
             else:
                 return right(either.pattern.right().get())
 
-        return self.value.map(catamorphism)
+        return self._value.map(catamorphism)
 
     def method(self, functor: Callable[[EitherTTry[L, R]], TT], /) -> TT:
         return functor(self)
@@ -127,17 +124,14 @@ EitherTTryDo = Generator[
 ]
 
 
-@dataclass(frozen=True)
 class EitherTFuture(Generic[L, R]):
     """Either Transformer Future"""
 
-    value: Future[Either[L, R]]
-
-    def __new__(cls, value: Future[Either[L, R]], /):
-        return super().__new__(cls)
+    def __init__(self, value: Future[Either[L, R]], /):
+        self._value = value
 
     def __bool__(self) -> bool:
-        future = self.value
+        future = self._value
         if not future.done():
             return False
         else:
@@ -150,7 +144,7 @@ class EitherTFuture(Generic[L, R]):
 
     def __call__(self) -> Generator[Try[Either[L, R]], None, R]:
         try:
-            either = self.value.result()
+            either = self._value.result()
             if isinstance(either.pattern, Left):
                 yield Success[Either[L, R]](either.pattern)
                 raise GeneratorExit(self)
@@ -162,18 +156,18 @@ class EitherTFuture(Generic[L, R]):
             raise GeneratorExit from error
 
     def get(self) -> R:
-        return self.value.result().get()
+        return self._value.result().get()
 
     def get_or_else(self, default: Callable[..., EE], /) -> Union[EE, R]:
         try:
-            either = self.value.result()
+            either = self._value.result()
             return either.get_or_else(default)
         except Exception:
             return default()
 
     def map(self, functor: Callable[[R], RR], /) -> Callable[..., EitherTFuture[L, RR]]:
         def with_context(ec: Type[ExecutionContext], /) -> EitherTFuture[L, RR]:
-            future = self.value
+            future = self._value
             mapped_future = future.map(lambda either: either.map(functor))(ec)
             return EitherTFuture[L, RR](mapped_future)
 
@@ -185,7 +179,7 @@ class EitherTFuture(Generic[L, R]):
         def with_context(ec: Type[ExecutionContext], /) -> EitherTFuture[L, RR]:
             # FIXME: Threaded processing
             try:
-                either = self.value.result()
+                either = self._value.result()
                 if isinstance(either.pattern, Left):
                     left = Left[L, RR](either.pattern._value)
                     future = Future[Left[L, RR]].successful(left)
@@ -209,7 +203,7 @@ class EitherTFuture(Generic[L, R]):
                 else:
                     return right(either.pattern.right().get())
 
-            future = self.value
+            future = self._value
             return future.map(catamorphism)(ec)
 
         return with_context
