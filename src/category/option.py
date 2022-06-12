@@ -125,23 +125,23 @@ class Some(Option[T]):
     __match_args__ = ("value",)
 
     def __init__(self, value: T, /):
-        self._value = value
+        self.value = value
 
     def __bool__(self) -> Literal[True]:
         return True
 
     def __call__(self) -> Generator[Some[T], Some[T], T]:
         yield self
-        return self._value
+        return self.value
 
     def map(self, functor: Callable[[T], TT], /) -> Some[TT]:
-        return Some[TT](functor(self._value))
+        return Some[TT](functor(self.value))
 
     def flatmap(self, functor: Callable[[T], Option[TT]], /) -> Option[TT]:
-        return functor(self._value)
+        return functor(self.value)
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
-        return some(self._value)
+        return some(self.value)
 
     def is_empty(self) -> Literal[False]:
         return False
@@ -150,10 +150,10 @@ class Some(Option[T]):
         return True
 
     def get(self) -> T:
-        return self._value
+        return self.value
 
     def get_or_else(self, default: Callable[..., EE], /) -> T:
-        return self._value
+        return self.value
 
     @property
     def pattern(self) -> SubType[T]:

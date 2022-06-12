@@ -204,28 +204,32 @@ def test_dataclass():
 
 
 def test_pattern_match():
-    from category import VOID, Some, Void
+    from typing import cast
 
-    match VOID:
+    from category import VOID, Option, Some, Void
+
+    match cast(Option[int], VOID):
         case Void():
             assert True
         case _:
             assert False
 
-    match Some(42):
-        case Some() as some if some.get() == 42:
+    match cast(Option[int], Some(42)):
+        case Some(42):
             assert True
         case _:
             assert False
 
-    match VOID, VOID:
+    match cast(Option[int], VOID), cast(Option[int], VOID):
         case Void() as a, Void() as b if a is b:
             assert True
         case _:
             assert False
 
-    match Some(41), Some(42), Some(43):
-        case Some() as x, Some() as y, Some() as z if x.get() < y.get() < z.get():
+    match cast(Option[int], Some(41)), cast(Option[int], Some(42)), cast(
+        Option[int], Some(43)
+    ):
+        case Some(x), Some(y), Some(z) if x < y < z:
             assert True
         case _:
             assert False

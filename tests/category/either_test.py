@@ -326,28 +326,34 @@ def test_dataclass():
 
 
 def test_pattern_match():
-    from category import Left, Right
+    from typing import cast
 
-    match Left[None, int](None):
-        case Left():
+    from category import Either, Left, Right
+
+    match cast(Either[None, int], Left[None, int](None)):
+        case Left(None):
             assert True
         case _:
             assert False
 
-    match Right[None, int](42):
-        case Right() as right if right.get() == 42:
+    match cast(Either[None, int], Right[None, int](42)):
+        case Right(42):
             assert True
         case _:
             assert False
 
-    match Left[None, int](None), Left[None, int](None):
-        case Left() as a, Left() as b if a.left().get() is b.left().get():
+    match cast(Either[None, int], Left[None, int](None)), cast(
+        Either[None, int], Left[None, int](None)
+    ):
+        case Left(x), Left(y) if x is y:
             assert True
         case _:
             assert False
 
-    match Right[None, int](41), Right[None, int](42), Right[None, int](43):
-        case Right() as x, Right() as y, Right() as z if x.get() < y.get() < z.get():
+    match cast(Either[None, int], Right[None, int](41)), cast(
+        Either[None, int], Right[None, int](42)
+    ):
+        case Right(x), Right(y) if x < y:
             assert True
         case _:
             assert False

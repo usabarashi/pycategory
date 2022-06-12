@@ -55,7 +55,7 @@ class Future(concurrent.futures.Future[T]):
         def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
             def fold(try_: Try[T]) -> Try[TT]:
                 if isinstance(try_.pattern, Failure):
-                    return Failure[TT](try_.pattern._exception)
+                    return Failure[TT](try_.pattern.exception)
                 else:
                     return Success[TT](functor(try_.pattern.get()))
 
@@ -70,7 +70,7 @@ class Future(concurrent.futures.Future[T]):
             def fold(try_: Try[T]) -> Future[TT]:
                 if isinstance(try_.pattern, Failure):
                     future = Future[TT]()
-                    future.set_exception(exception=try_.pattern._exception)
+                    future.set_exception(exception=try_.pattern.exception)
                     return future
                 else:
                     return functor(try_.pattern.get())
@@ -112,7 +112,7 @@ class Future(concurrent.futures.Future[T]):
         elif self._state is PENDING:
             try_ = result
             if isinstance(try_.pattern, Failure):
-                self.set_exception(exception=try_.pattern._exception)
+                self.set_exception(exception=try_.pattern.exception)
             else:
                 self.set_result(result=try_.pattern.get())
             return True
@@ -121,7 +121,7 @@ class Future(concurrent.futures.Future[T]):
             def callback(self: Future[T]):
                 if isinstance(try_.pattern, Failure):
                     self._result = None
-                    self._exception = try_.pattern._exception
+                    self._exception = try_.pattern.exception
                 else:
                     self._result = try_.pattern.get()
                     self._exception = None
@@ -200,7 +200,7 @@ class Future(concurrent.futures.Future[T]):
                     return Future[T].successful(last.value)
                 if isinstance(result, Failure):
                     future = Future[T]()
-                    future.set_exception(exception=result._exception)
+                    future.set_exception(exception=result.exception)
                     return future
                 return recur(generator, result)
 
