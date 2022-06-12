@@ -55,9 +55,9 @@ class Future(concurrent.futures.Future[T]):
         def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
             def fold(try_: Try[T]) -> Try[TT]:
                 if isinstance(try_.pattern, Failure):
-                    return Failure[TT](try_.pattern.exception)
+                    return Failure[TT](try_.pattern._exception)
                 else:
-                    return Success[TT](functor(try_.pattern.value))
+                    return Success[TT](functor(try_.pattern.get()))
 
             return self.transform(fold)(ec)
 
@@ -70,10 +70,10 @@ class Future(concurrent.futures.Future[T]):
             def fold(try_: Try[T]) -> Future[TT]:
                 if isinstance(try_.pattern, Failure):
                     future = Future[TT]()
-                    future.set_exception(exception=try_.pattern.exception)
+                    future.set_exception(exception=try_.pattern._exception)
                     return future
                 else:
-                    return functor(try_.pattern.value)
+                    return functor(try_.pattern.get())
 
             return self.transform_with(fold)(ec)
 
@@ -112,18 +112,18 @@ class Future(concurrent.futures.Future[T]):
         elif self._state is PENDING:
             try_ = result
             if isinstance(try_.pattern, Failure):
-                self.set_exception(exception=try_.pattern.exception)
+                self.set_exception(exception=try_.pattern._exception)
             else:
-                self.set_result(result=try_.pattern.value)
+                self.set_result(result=try_.pattern.get())
             return True
         else:
 
             def callback(self: Future[T]):
                 if isinstance(try_.pattern, Failure):
                     self._result = None
-                    self._exception = try_.pattern.exception
+                    self._exception = try_.pattern._exception
                 else:
-                    self._result = try_.pattern.value
+                    self._result = try_.pattern.get()
                     self._exception = None
 
             self.add_done_callback(fn=callback)
@@ -200,7 +200,7 @@ class Future(concurrent.futures.Future[T]):
                     return Future[T].successful(last.value)
                 if isinstance(result, Failure):
                     future = Future[T]()
-                    future.set_exception(exception=result.exception)
+                    future.set_exception(exception=result._exception)
                     return future
                 return recur(generator, result)
 

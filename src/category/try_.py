@@ -1,7 +1,6 @@
 """Try"""
 from __future__ import annotations
 
-import dataclasses
 from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
 from typing import Any, Callable, Generic, Literal, TypeVar, Union
@@ -82,7 +81,7 @@ class Try(ABC, Generic[T]):
                 except StopIteration as last:
                     return Success[T](last.value)
                 if isinstance(result, Failure):
-                    failure = Failure[T](result.exception)
+                    failure = Failure[T](result._exception)
                     return failure
                 return recur(generator, result)
 
@@ -91,27 +90,24 @@ class Try(ABC, Generic[T]):
         return impl
 
 
-@dataclasses.dataclass(frozen=True)
 class Failure(Try[T]):
     """Failure"""
 
-    exception: Exception
-
-    def __new__(cls, exception: Exception, /):
-        return super().__new__(cls)
+    def __init__(self, exception: Exception, /):
+        self._exception = exception
 
     def __bool__(self) -> Literal[False]:
         return False
 
     def __call__(self) -> Generator[Try[T], Try[T], T]:
         yield self
-        raise GeneratorExit(self) from self.exception
+        raise GeneratorExit(self) from self._exception
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
-        return Failure[TT](self.exception)
+        return Failure[TT](self._exception)
 
     def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
-        return Failure[TT](self.exception)
+        return Failure[TT](self._exception)
 
     def fold(
         self,
@@ -119,7 +115,7 @@ class Failure(Try[T]):
         failure: Callable[[Exception], U],
         success: Callable[[T], U],
     ) -> U:
-        return failure(self.exception)
+        return failure(self._exception)
 
     def is_failure(self) -> Literal[True]:
         return True
@@ -128,7 +124,7 @@ class Failure(Try[T]):
         return False
 
     def get(self) -> T:
-        raise ValueError() from self.exception
+        raise ValueError() from self._exception
 
     def get_or_else(self, default: Callable[..., EE], /) -> EE:
         return default()
@@ -141,27 +137,24 @@ class Failure(Try[T]):
         return functor(self)
 
 
-@dataclasses.dataclass(frozen=True)
 class Success(Try[T]):
     """Success"""
 
-    value: T
-
-    def __new__(cls, value: T, /):
-        return super().__new__(cls)
+    def __init__(self, value: T, /):
+        self._value = value
 
     def __bool__(self) -> Literal[True]:
         return True
 
     def __call__(self) -> Generator[Try[T], Try[T], T]:
         yield self
-        return self.value
+        return self._value
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
-        return Success[TT](functor(self.value))
+        return Success[TT](functor(self._value))
 
     def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
-        return functor(self.value)
+        return functor(self._value)
 
     def fold(
         self,
@@ -169,7 +162,7 @@ class Success(Try[T]):
         failure: Callable[[Exception], TT],
         success: Callable[[T], TT],
     ) -> TT:
-        return success(self.value)
+        return success(self._value)
 
     def is_failure(self) -> Literal[False]:
         return False
@@ -178,10 +171,10 @@ class Success(Try[T]):
         return True
 
     def get(self) -> T:
-        return self.value
+        return self._value
 
     def get_or_else(self, default: Callable[..., EE], /) -> T:
-        return self.value
+        return self._value
 
     @property
     def pattern(self) -> SubType[T]:

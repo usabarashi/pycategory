@@ -44,7 +44,7 @@ def test_try_do():
         three = yield from Success[int](3)()
         return one + two + three
 
-    assert Success(6) == success_context()
+    assert Success is type(success_context())
     assert 6 == success_context().get()
     assert 6 == success_context().get_or_else(lambda: None)
 
@@ -75,7 +75,7 @@ def test_try_do():
         three = yield from multi_context(3)()
         return one + two + three
 
-    assert Success(6) == mix_success_context()
+    assert Success is type(mix_success_context())
     assert 6 == mix_success_context().get()
     assert 6 == mix_success_context().get_or_else(lambda: None)
 
@@ -236,3 +236,38 @@ def test_success_method():
 
     assert Failure is type(Success[int](1).method(to_failure))
     assert Success is type(Success[int](1).method(to_success))
+
+
+def test_dataclass():
+    from dataclasses import asdict, dataclass
+
+    from category import Failure, Success
+
+    @dataclass(frozen=True)
+    class AsDict:
+        failure: Failure[int]
+        success: Success[int]
+
+    dict_data = asdict(
+        AsDict(failure=Failure[int](Exception(42)), success=Success[int](42))
+    )
+    assert Failure is type(dict_data.get("failure", None))
+    assert Exception is type(dict_data.get("failure", None)._exception)
+    assert Success is type(dict_data.get("success", None))
+    assert 42 == dict_data.get("success", None).get()
+
+
+def test_pattern_match():
+    from category import Failure, Success
+
+    match Failure[int](Exception(42)):
+        case Failure():
+            assert True
+        case _:
+            assert False
+
+    match Success[int](42):
+        case Success() as success if success.get() == 42:
+            assert True
+        case _:
+            assert False
