@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from dataclasses import dataclass
-from typing import Any, Callable, Generic, Type, TypeVar, Union
+from typing import Any, Callable, Generic, Type, TypeVar
 
 from category.either import Either, Left, Right
 from category.future import ExecutionContext, Future
@@ -48,7 +47,7 @@ class EitherTTry(Generic[L, R]):
     def get(self) -> R:
         return self._value.get().get()
 
-    def get_or_else(self, default: Callable[..., EE], /) -> Union[EE, R]:
+    def get_or_else(self, default: Callable[..., EE], /) -> EE | R:
         try_ = self._value
         if isinstance(try_.pattern, Failure):
             raise try_.pattern._exception
@@ -96,7 +95,7 @@ class EitherTTry(Generic[L, R]):
     ) -> Callable[..., EitherTTry[L, R]]:
         def impl(*args: Any, **kwargs: Any) -> EitherTTry[L, R]:
             def recur(
-                generator: EitherTTryDo[L, R], prev: Union[Any, EitherTTry[L, Any]]
+                generator: EitherTTryDo[L, R], prev: Any | EitherTTry[L, Any]
             ) -> EitherTTry[L, R]:
                 try:
                     result = generator.send(prev)
@@ -119,9 +118,7 @@ class EitherTTry(Generic[L, R]):
         return impl
 
 
-EitherTTryDo = Generator[
-    Union[Any, Try[Either[L, Any]]], Union[Any, Try[Either[L, Any]]], R
-]
+EitherTTryDo = Generator[Any | Try[Either[L, Any]], Any | Try[Either[L, Any]], R]
 
 
 class EitherTFuture(Generic[L, R]):
@@ -158,7 +155,7 @@ class EitherTFuture(Generic[L, R]):
     def get(self) -> R:
         return self._value.result().get()
 
-    def get_or_else(self, default: Callable[..., EE], /) -> Union[EE, R]:
+    def get_or_else(self, default: Callable[..., EE], /) -> EE | R:
         try:
             either = self._value.result()
             return either.get_or_else(default)
@@ -218,10 +215,10 @@ class EitherTFuture(Generic[L, R]):
         def impl(*args: Any, **kwargs: Any) -> EitherTFuture[L, R]:
             def recur(
                 generator: EitherTFutureDo[L, R],
-                prev: Union[Any, EitherTFuture[L, Any]],
+                prev: Any | EitherTFuture[L, Any],
             ) -> EitherTFuture[L, R]:
                 try:
-                    result: Union[Try[Either[L, R]], Any] = generator.send(prev)
+                    result: Try[Either[L, R]] | Any = generator.send(prev)
                 except StopIteration as last:
                     right = Right[L, R](last.value)
                     future = Future[Right[L, R]].successful(right)
@@ -245,6 +242,4 @@ class EitherTFuture(Generic[L, R]):
         return impl
 
 
-EitherTFutureDo = Generator[
-    Union[Any, Try[Either[L, Any]]], Union[Any, Try[Either[L, Any]]], R
-]
+EitherTFutureDo = Generator[Any | Try[Either[L, Any]], Any | Try[Either[L, Any]], R]
