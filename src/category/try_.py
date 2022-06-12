@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar, Union
+from typing import Any, Callable, Generic, Literal, TypeVar
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -48,7 +48,7 @@ class Try(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def get_or_else(self, default: Callable[..., EE], /) -> Union[EE, T]:
+    def get_or_else(self, default: Callable[..., EE], /) -> EE | T:
         raise NotImplementedError
 
     @abstractproperty
@@ -74,10 +74,10 @@ class Try(ABC, Generic[T]):
         def impl(*args: Any, **kwargs: Any) -> Try[T]:
             def recur(
                 generator: TryDo[T],
-                prev: Union[Any, Try[T]],
+                prev: Any | Try[T],
             ) -> Try[T]:
                 try:
-                    result: Union[Try[T], Any] = generator.send(prev)
+                    result: Try[T] | Any = generator.send(prev)
                 except StopIteration as last:
                     return Success[T](last.value)
                 if isinstance(result, Failure):
@@ -184,5 +184,5 @@ class Success(Try[T]):
         return functor(self)
 
 
-SubType = Union[Failure[T], Success[T]]
-TryDo = Generator[Union[Any, Try[Any]], Union[Any, Try[Any]], T]
+SubType = Failure[T] | Success[T]
+TryDo = Generator[Any | Try[Any], Any | Try[Any], T]

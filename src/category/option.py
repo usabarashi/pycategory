@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar, Union
+from typing import Any, Callable, Generic, Literal, TypeVar
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -43,7 +43,7 @@ class Option(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def get_or_else(self, default: Callable[..., EE], /) -> Union[EE, T]:
+    def get_or_else(self, default: Callable[..., EE], /) -> EE | T:
         raise NotImplementedError
 
     @abstractproperty
@@ -58,7 +58,7 @@ class Option(ABC, Generic[T]):
         def wrapper(*args: Any, **kwargs: Any) -> Option[T]:
             def recur(
                 generator: OptionDo[T],
-                prev: Union[Any, Option[Any]],
+                prev: Any | Option[Any],
             ) -> Option[T]:
                 try:
                     result = generator.send(prev)
@@ -163,7 +163,7 @@ class Some(Option[T]):
         return functor(self)
 
 
-SubType = Union[Void[T], Some[T]]
-OptionDo = Generator[Union[Any, Option[Any]], Union[Any, Option[Any]], T]
+SubType = Void[T] | Some[T]
+OptionDo = Generator[Any | Option[Any], Any | Option[Any], T]
 
 SINGLETON_VOID = Void[Any]()

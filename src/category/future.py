@@ -7,7 +7,7 @@ import dataclasses
 from abc import ABC
 from collections.abc import Generator
 from concurrent.futures._base import PENDING
-from typing import Any, Callable, Type, TypeVar, Union
+from typing import Any, Callable, Type, TypeVar
 
 from category.try_ import Failure, Success, Try
 
@@ -192,10 +192,10 @@ class Future(concurrent.futures.Future[T]):
         def impl(*args: Any, **kwargs: Any) -> Future[T]:
             def recur(
                 generator: FutureDo[T],
-                prev: Union[Any, Try[Any]],
+                prev: Any | Try[Any],
             ) -> Future[T]:
                 try:
-                    result: Union[Any, Try[T]] = generator.send(prev)
+                    result: Any | Try[T] = generator.send(prev)
                 except StopIteration as last:
                     return Future[T].successful(last.value)
                 if isinstance(result, Failure):
@@ -209,4 +209,4 @@ class Future(concurrent.futures.Future[T]):
         return impl
 
 
-FutureDo = Generator[Union[Any, Try[Any]], Union[Any, Try[Any]], T]
+FutureDo = Generator[Any | Try[Any], Any | Try[Any], T]

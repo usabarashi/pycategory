@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar, Union
+from typing import Any, Callable, Generic, Literal, TypeVar
 
 L = TypeVar("L", covariant=True)
 R = TypeVar("R", covariant=True)
@@ -53,7 +53,7 @@ class Either(ABC, Generic[L, R]):
         raise NotImplementedError
 
     @abstractmethod
-    def get_or_else(self, default: Callable[..., LL], /) -> Union[LL, R]:
+    def get_or_else(self, default: Callable[..., LL], /) -> LL | R:
         raise NotImplementedError
 
     @abstractproperty
@@ -71,7 +71,7 @@ class Either(ABC, Generic[L, R]):
         def wrapper(*args: Any, **kwargs: Any) -> Either[L, R]:
             def recur(
                 generator: EitherDo[L, R],
-                prev: Union[Any, Either[L, Any]],
+                prev: Any | Either[L, Any],
             ) -> Either[L, R]:
                 try:
                     result = generator.send(prev)
@@ -204,7 +204,7 @@ class LeftProjection(Generic[L, R]):
             case _:
                 raise ValueError(self)
 
-    def get_or_else(self, default: Callable[..., RR], /) -> Union[L, RR]:
+    def get_or_else(self, default: Callable[..., RR], /) -> L | RR:
         match self._either:
             case Left() as left:
                 return left._value
@@ -244,7 +244,7 @@ class RightProjection(Generic[L, R]):
             case Right() as right:
                 return right.get()
 
-    def get_or_else(self, default: Callable[..., LL], /) -> Union[LL, R]:
+    def get_or_else(self, default: Callable[..., LL], /) -> LL | R:
         match self._either:
             case Left():
                 return default()
@@ -266,6 +266,6 @@ class RightProjection(Generic[L, R]):
                 return functor(right.get())
 
 
-SubType = Union[Left[L, R], Right[L, R]]
-EitherDo = Generator[Union[Any, Either[L, Any]], Union[Any, Either[L, Any]], R]
+SubType = Left[L, R] | Right[L, R]
+EitherDo = Generator[Any | Either[L, Any], Any | Either[L, Any], R]
 ReturnEither = EitherDo

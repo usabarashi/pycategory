@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import reduce
-from typing import Any, Callable, Generic, Iterable, NoReturn, Optional, TypeVar, Union
+from typing import Any, Callable, Generic, Iterable, NoReturn, Optional, TypeVar
 
 T = TypeVar("T")
 A = TypeVar("A")
@@ -13,7 +13,7 @@ class Vector(list[T], Generic[T]):
     see: https://docs.python.org/3.9/library/collections.abc.html#collections.abc.Sequence
     """
 
-    def __init__(self, items: Optional[Union[list[T], tuple[T], tuple[()]]] = None):
+    def __init__(self, items: Optional[list[T] | tuple[T] | tuple[()]] = None):
         if items is None:
             items = list()
         list[T].__init__(self, items)
