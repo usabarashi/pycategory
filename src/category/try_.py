@@ -81,7 +81,7 @@ class Try(ABC, Generic[T]):
                 except StopIteration as last:
                     return Success[T](last.value)
                 if isinstance(result, Failure):
-                    failure = Failure[T](result._exception)
+                    failure = Failure[T](result.exception)
                     return failure
                 return recur(generator, result)
 
@@ -93,21 +93,23 @@ class Try(ABC, Generic[T]):
 class Failure(Try[T]):
     """Failure"""
 
+    __match_args__ = ()
+
     def __init__(self, exception: Exception, /):
-        self._exception = exception
+        self.exception = exception
 
     def __bool__(self) -> Literal[False]:
         return False
 
     def __call__(self) -> Generator[Try[T], Try[T], T]:
         yield self
-        raise GeneratorExit(self) from self._exception
+        raise GeneratorExit(self) from self.exception
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
-        return Failure[TT](self._exception)
+        return Failure[TT](self.exception)
 
     def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
-        return Failure[TT](self._exception)
+        return Failure[TT](self.exception)
 
     def fold(
         self,
@@ -115,7 +117,7 @@ class Failure(Try[T]):
         failure: Callable[[Exception], U],
         success: Callable[[T], U],
     ) -> U:
-        return failure(self._exception)
+        return failure(self.exception)
 
     def is_failure(self) -> Literal[True]:
         return True
@@ -124,7 +126,7 @@ class Failure(Try[T]):
         return False
 
     def get(self) -> T:
-        raise ValueError() from self._exception
+        raise ValueError() from self.exception
 
     def get_or_else(self, default: Callable[..., EE], /) -> EE:
         return default()
@@ -140,21 +142,23 @@ class Failure(Try[T]):
 class Success(Try[T]):
     """Success"""
 
+    __match_args__ = ("value",)
+
     def __init__(self, value: T, /):
-        self._value = value
+        self.value = value
 
     def __bool__(self) -> Literal[True]:
         return True
 
     def __call__(self) -> Generator[Try[T], Try[T], T]:
         yield self
-        return self._value
+        return self.value
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
-        return Success[TT](functor(self._value))
+        return Success[TT](functor(self.value))
 
     def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
-        return functor(self._value)
+        return functor(self.value)
 
     def fold(
         self,
@@ -162,7 +166,7 @@ class Success(Try[T]):
         failure: Callable[[Exception], TT],
         success: Callable[[T], TT],
     ) -> TT:
-        return success(self._value)
+        return success(self.value)
 
     def is_failure(self) -> Literal[False]:
         return False
@@ -171,10 +175,10 @@ class Success(Try[T]):
         return True
 
     def get(self) -> T:
-        return self._value
+        return self.value
 
     def get_or_else(self, default: Callable[..., EE], /) -> T:
-        return self._value
+        return self.value
 
     @property
     def pattern(self) -> SubType[T]:

@@ -92,7 +92,7 @@ class Left(Either[L, R]):
     __match_args__ = ("value",)
 
     def __init__(self, value: L, /):
-        self._value = value
+        self.value = value
 
     def __bool__(self) -> Literal[False]:
         return False
@@ -102,13 +102,13 @@ class Left(Either[L, R]):
         raise GeneratorExit(self)
 
     def map(self, functor: Callable[[R], RR], /) -> Left[L, RR]:
-        return Left[L, RR](self._value)
+        return Left[L, RR](self.value)
 
     def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
-        return Left[L, RR](self._value)
+        return Left[L, RR](self.value)
 
     def fold(self, *, left: Callable[[L], U], right: Callable[[R], U]) -> U:
-        return left(self._value)
+        return left(self.value)
 
     def left(self) -> LeftProjection[L, R]:
         return LeftProjection[L, R](either=self)
@@ -123,7 +123,7 @@ class Left(Either[L, R]):
         return False
 
     def get(self) -> R:
-        raise ValueError(self._value)
+        raise ValueError(self.value)
 
     def get_or_else(self, default: Callable[..., LL], /) -> LL:
         return default()
@@ -142,23 +142,23 @@ class Right(Either[L, R]):
     __match_args__ = ("value",)
 
     def __init__(self, value: R, /):
-        self._value = value
+        self.value = value
 
     def __bool__(self) -> Literal[True]:
         return True
 
     def __call__(self) -> Generator[Either[L, R], Either[L, R], R]:
         yield self
-        return self._value
+        return self.value
 
     def map(self, functor: Callable[[R], RR], /) -> Right[L, RR]:
-        return Right[L, RR](functor(self._value))
+        return Right[L, RR](functor(self.value))
 
     def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
-        return functor(self._value)
+        return functor(self.value)
 
     def fold(self, *, left: Callable[[L], U], right: Callable[[R], U]) -> U:
-        return right(self._value)
+        return right(self.value)
 
     def left(self) -> LeftProjection[L, R]:
         return LeftProjection[L, R](either=self)
@@ -173,10 +173,10 @@ class Right(Either[L, R]):
         return True
 
     def get(self) -> R:
-        return self._value
+        return self.value
 
     def get_or_else(self, default: Callable[..., LL], /) -> R:
-        return self._value
+        return self.value
 
     @property
     def pattern(self) -> SubType[L, R]:
@@ -200,28 +200,28 @@ class LeftProjection(Generic[L, R]):
     def get(self) -> L:
         match self._either:
             case Left() as left:
-                return left._value
+                return left.value
             case _:
                 raise ValueError(self)
 
     def get_or_else(self, default: Callable[..., RR], /) -> L | RR:
         match self._either:
             case Left() as left:
-                return left._value
+                return left.value
             case _:
                 return default()
 
     def map(self, functor: Callable[[L], LL], /) -> Either[LL, R]:
         match self._either:
             case Left() as left:
-                return Left[LL, R](functor(left._value))
+                return Left[LL, R](functor(left.value))
             case Right() as right:
                 return Right[LL, R](right.get())
 
     def flatmap(self, functor: Callable[[L], Either[LL, R]], /) -> Either[LL, R]:
         match self._either:
             case Left() as left:
-                return functor(left._value)
+                return functor(left.value)
             case Right() as right:
                 return Right[LL, R](right.get())
 
@@ -254,14 +254,14 @@ class RightProjection(Generic[L, R]):
     def map(self, functor: Callable[[R], RR], /) -> Either[L, RR]:
         match self._either:
             case Left() as left:
-                return Left[L, RR](left._value)
+                return Left[L, RR](left.value)
             case Right() as right:
                 return Right[L, RR](functor(right.get()))
 
     def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         match self._either:
             case Left() as left:
-                return Left[L, RR](left._value)
+                return Left[L, RR](left.value)
             case Right() as right:
                 return functor(right.get())
 

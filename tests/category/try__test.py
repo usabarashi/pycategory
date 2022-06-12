@@ -252,22 +252,24 @@ def test_dataclass():
         AsDict(failure=Failure[int](Exception(42)), success=Success[int](42))
     )
     assert Failure is type(dict_data.get("failure", None))
-    assert Exception is type(dict_data.get("failure", None)._exception)
+    assert Exception is type(dict_data.get("failure", None).exception)
     assert Success is type(dict_data.get("success", None))
     assert 42 == dict_data.get("success", None).get()
 
 
 def test_pattern_match():
-    from category import Failure, Success
+    from typing import cast
 
-    match Failure[int](Exception(42)):
-        case Failure():
+    from category import Failure, Success, Try
+
+    match cast(Try[int], Failure[int](Exception(42))):
+        case Failure() as failure if isinstance(failure.exception, Exception):
             assert True
         case _:
             assert False
 
-    match Success[int](42):
-        case Success() as success if success.get() == 42:
+    match cast(Try[int], Success(42)):
+        case Success(42):
             assert True
         case _:
             assert False

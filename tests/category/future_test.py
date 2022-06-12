@@ -22,7 +22,7 @@ def test_map():
     except Exception as error:
         assert Exception is type(error)
     assert Failure is type(failure_mapped_future.value)
-    assert Exception is type(failure_mapped_future.value._exception)
+    assert Exception is type(failure_mapped_future.value.exception)
 
     # Success case
     success_future = Future.successful(1)
@@ -52,7 +52,7 @@ def test_flatmap():
     except Exception as error:
         assert Exception is type(error)
     assert Failure is type(failure_flatmapped_future.value)
-    assert Exception is type(failure_flatmapped_future.value._exception)
+    assert Exception is type(failure_flatmapped_future.value.exception)
 
     # Success case
     success_future = Future[int].successful(1)
@@ -79,7 +79,7 @@ def test_try_complete():
     except Exception as error:
         assert Exception is type(error)
     assert Failure is type(failure_future.value)
-    assert Exception is type(failure_future.value._exception)
+    assert Exception is type(failure_future.value.exception)
 
     # Success case
     success_future = Future[int].successful(1)
@@ -98,7 +98,7 @@ def test_on_complete():
 
     def functor(try_: Try[int], /) -> Union[Exception, int]:
         if isinstance(try_, Failure):
-            return try_._exception
+            return try_.exception
         else:
             return try_.get_or_else(lambda: 0) + 1
 
@@ -132,7 +132,7 @@ def test_hold():
     failure_future = multi_context(0)(ec)
     assert Future is type(failure_future)
     assert Failure is type(failure_future.value)
-    assert Exception is type(failure_future.value._exception)
+    assert Exception is type(failure_future.value.exception)
 
     # Success case
     success_future = multi_context(1)(ec)
@@ -168,7 +168,7 @@ def test_do():
     except Exception:
         assert True
     assert Failure is type(failure_context().value)
-    assert Exception is type(failure_context().value._exception)
+    assert Exception is type(failure_context().value.exception)
 
     # Success case
     @Future.do
