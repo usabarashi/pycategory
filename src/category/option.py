@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar
+from typing import Any, Callable, Generic, Literal, Optional, TypeVar
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -56,21 +56,20 @@ class Option(ABC, Generic[T]):
     @staticmethod
     def do(generator_fuction: Callable[..., OptionDo[T]]) -> Callable[..., Option[T]]:
         def wrapper(*args: Any, **kwargs: Any) -> Option[T]:
-            def recur(
-                generator: OptionDo[T],
-                prev: Any | Option[Any],
-            ) -> Option[T]:
+            state: Optional[Any] = None
+            context = generator_fuction(*args, **kwargs)
+            while True:
                 try:
-                    result = generator.send(prev)
-                except StopIteration as last:
-                    # Some case
-                    return Some[T](last.value)
-                # Void case
-                if isinstance(result, Void):
-                    return result
-                return recur(generator, result)
-
-            return recur(generator_fuction(*args, **kwargs), None)
+                    result = context.send(state)
+                except StopIteration as return_:
+                    return Some[T](return_.value)
+                match result:
+                    case Void():
+                        return Void[T]()
+                    case Some(value):
+                        state = value
+                    case _:
+                        raise ValueError(result)
 
         return wrapper
 
