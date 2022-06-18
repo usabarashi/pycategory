@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar
+from typing import Any, Callable, Generic, Literal, Optional, TypeVar
 
 L = TypeVar("L", covariant=True)
 R = TypeVar("R", covariant=True)
@@ -69,19 +69,20 @@ class Either(ABC, Generic[L, R]):
         generator_fuction: Callable[..., EitherDo[L, R]]
     ) -> Callable[..., Either[L, R]]:
         def wrapper(*args: Any, **kwargs: Any) -> Either[L, R]:
-            def recur(
-                generator: EitherDo[L, R],
-                prev: Any | Either[L, Any],
-            ) -> Either[L, R]:
+            state: Optional[Any] = None
+            context = generator_fuction(*args, **kwargs)
+            while True:
                 try:
-                    result = generator.send(prev)
-                except StopIteration as last:
-                    return Right[L, R](last.value)
-                if isinstance(result, Left):
-                    return result
-                return recur(generator, result)
-
-            return recur(generator_fuction(*args, **kwargs), None)
+                    result = context.send(state)
+                except StopIteration as return_:
+                    return Right[L, R](return_.value)
+                match result:
+                    case Left(value):
+                        return Left[L, R](value)
+                    case Right(value):
+                        state = value
+                    case _:
+                        raise ValueError(result)
 
         return wrapper
 
