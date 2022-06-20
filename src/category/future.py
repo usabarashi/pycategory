@@ -19,7 +19,7 @@ U = TypeVar("U")
 class ExecutionContext(ABC):
     """ExecutionContext"""
 
-    loop: asyncio.AbstractEventLoop
+    loop: Callable[[], asyncio.AbstractEventLoop]
     executor: Type[concurrent.futures.ThreadPoolExecutor]
 
 
@@ -27,7 +27,7 @@ class ExecutionContext(ABC):
 class ThreadPoolExecutionContext(ExecutionContext):
     """ThreadPoolExecutionContext"""
 
-    loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
+    loop: Callable[[], asyncio.AbstractEventLoop] = asyncio.get_running_loop
     executor: Type[
         concurrent.futures.ThreadPoolExecutor
     ] = concurrent.futures.ThreadPoolExecutor
@@ -54,10 +54,11 @@ class Future(concurrent.futures.Future[T]):
     def map(self, functor: Callable[[T], TT], /) -> Callable[..., Future[TT]]:
         def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
             def fold(try_: Try[T]) -> Try[TT]:
-                if isinstance(try_.pattern, Failure):
-                    return Failure[TT](try_.pattern.exception)
-                else:
-                    return Success[TT](functor(try_.pattern.get()))
+                match try_.pattern:
+                    case Failure() as failure:
+                        return Failure[TT](failure.exception)
+                    case Success(value):
+                        return Success[TT](functor(value))
 
             return self.transform(fold)(ec)
 
@@ -68,12 +69,13 @@ class Future(concurrent.futures.Future[T]):
     ) -> Callable[..., Future[TT]]:
         def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
             def fold(try_: Try[T]) -> Future[TT]:
-                if isinstance(try_.pattern, Failure):
-                    future = Future[TT]()
-                    future.set_exception(exception=try_.pattern.exception)
-                    return future
-                else:
-                    return functor(try_.pattern.get())
+                match try_.pattern:
+                    case Failure() as failure:
+                        future = Future[TT]()
+                        future.set_exception(exception=failure.exception)
+                        return future
+                    case Success(value):
+                        return functor(value)
 
             return self.transform_with(fold)(ec)
 
@@ -110,21 +112,22 @@ class Future(concurrent.futures.Future[T]):
         if self.done():
             return False
         elif self._state is PENDING:
-            try_ = result
-            if isinstance(try_.pattern, Failure):
-                self.set_exception(exception=try_.pattern.exception)
-            else:
-                self.set_result(result=try_.pattern.get())
+            match result.pattern:
+                case Failure() as failure:
+                    self.set_exception(exception=failure.exception)
+                case Success(value):
+                    self.set_result(result=value)
             return True
         else:
 
             def callback(self: Future[T]):
-                if isinstance(try_.pattern, Failure):
-                    self._result = None
-                    self._exception = try_.pattern.exception
-                else:
-                    self._result = try_.pattern.get()
-                    self._exception = None
+                match result.pattern:
+                    case Failure() as failure:
+                        self._result = None
+                        self._exception = failure.exception
+                    case Success(value):
+                        self._result = value
+                        self._exceptoin = None
 
             self.add_done_callback(fn=callback)
             return True
