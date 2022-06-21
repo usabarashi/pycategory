@@ -3,9 +3,9 @@ def test_either_do():
 
     @Either.do
     def left_context() -> EitherDo[Exception, int]:
-        one = yield from Right[Exception, int](1)()
+        one = yield from Right[Exception, int](1)
         two = 2
-        three = yield from Left[Exception, int](Exception())()
+        three = yield from Left[Exception, int](Exception())
         return one + two + three
 
     assert Exception is type(left_context().left().get())
@@ -19,9 +19,9 @@ def test_either_do():
 
     @Either.do
     def right_context() -> EitherDo[None, int]:
-        one = yield from Right[None, int](1)()
+        one = yield from Right[None, int](1)
         two = 2
-        three = yield from Right[None, int](3)()
+        three = yield from Right[None, int](3)
         return one + two + three
 
     assert 6 == right_context().right().get()

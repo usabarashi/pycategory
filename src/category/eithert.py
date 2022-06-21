@@ -30,7 +30,7 @@ class EitherTTry(Generic[L, R]):
             either = try_.pattern.get()
             return bool(either)
 
-    def __call__(self) -> Generator[Try[Either[L, R]], None, R]:
+    def __iter__(self) -> Generator[Try[Either[L, R]], None, R]:
         try_ = self._value
         if isinstance(try_.pattern, Failure):
             yield try_.pattern
@@ -140,7 +140,7 @@ class EitherTFuture(Generic[L, R]):
                 either = try_.pattern.get()
                 return bool(either)
 
-    def __call__(self) -> Generator[Try[Either[L, R]], None, R]:
+    def __iter__(self) -> Generator[Try[Either[L, R]], None, R]:
         try:
             either = self._value.result()
             if isinstance(either.pattern, Left):
@@ -240,4 +240,4 @@ class EitherTFuture(Generic[L, R]):
         return wrapper
 
 
-EitherTFutureDo = Generator[Any | Try[Either[L, Any]], Any | Try[Either[L, Any]], R]
+EitherTFutureDo = Generator[Try[Either[L, Any]], Try[Either[L, Any]], R]

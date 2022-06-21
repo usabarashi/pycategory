@@ -3,9 +3,9 @@ def test_option_do():
 
     @Option.do
     def void_context() -> OptionDo[int]:
-        one = yield from Some[int](1)()
+        one = yield from Some[int](1)
         two = 2
-        three = yield from VOID()
+        three = yield from VOID
         return one + two + three
 
     assert Void is type(void_context())
@@ -16,9 +16,9 @@ def test_option_do():
 
     @Option.do
     def some_context() -> OptionDo[int]:
-        one = yield from Some[int](1)()
+        one = yield from Some[int](1)
         two = 2
-        three = yield from Some[int](3)()
+        three = yield from Some[int](3)
         return one + two + three
 
     assert Some is type(some_context())

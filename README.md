@@ -12,9 +12,9 @@ from category import Either, EitherDo, Left, Right
 
 @Either.do
 def context() -> EitherDo[str, int]:
-    one = yield from Left[str, int]("one")()
+    one = yield from Left[str, int]("one")
     two = 2
-    three = yield from Right[str, int](3)()
+    three = yield from Right[str, int](3)
     return one + two + three
 
 match context().pattern:
@@ -31,9 +31,9 @@ from category import VOID, Option, OptionDo, Some, Void
 
 @Option.do
 def context() -> OptionDo[int]:
-    one = yield from VOID()
+    one = yield from VOID
     two = 2
-    three = yield from Some[int](3)()
+    three = yield from Some[int](3)
     return one + two + three
 
 match context().pattern:
@@ -56,9 +56,9 @@ def hold_context(value: int, /) -> int:
 
 @Try.do
 def context() -> TryDo[int]:
-    one = yield from hold_context(0)() 
+    one = yield from hold_context(0)
     two = 2
-    three = yield from Success[int](3)()
+    three = yield from Success[int](3)
     return one + two + three
 
 match context().pattern:

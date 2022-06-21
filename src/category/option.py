@@ -15,7 +15,7 @@ class Option(ABC, Generic[T]):
     """Option"""
 
     @abstractmethod
-    def __call__(self) -> Generator[Option[T], Option[T], T]:
+    def __iter__(self) -> Generator[Option[T], Option[T], T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -85,7 +85,7 @@ class Void(Option[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(self) -> Generator[Void[T], Void[T], T]:
+    def __iter__(self) -> Generator[Void[T], Void[T], T]:
         yield self
         raise GeneratorExit(self)
 
@@ -129,7 +129,7 @@ class Some(Option[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __call__(self) -> Generator[Some[T], Some[T], T]:
+    def __iter__(self) -> Generator[Some[T], Some[T], T]:
         yield self
         return self.value
 
@@ -163,6 +163,6 @@ class Some(Option[T]):
 
 
 SubType = Void[T] | Some[T]
-OptionDo = Generator[Any | Option[Any], Any | Option[Any], T]
+OptionDo = Generator[Option[Any], Option[Any], T]
 
 SINGLETON_VOID = Void[Any]()

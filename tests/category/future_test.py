@@ -156,9 +156,9 @@ def test_do():
     # Failure case
     @Future.do
     def failure_context() -> FutureDo[int]:
-        one = yield from multi_context(1)(ec)()
+        one = yield from multi_context(1)(ec)
         two = 2
-        three = yield from multi_context(0)(ec)()
+        three = yield from multi_context(0)(ec)
         return one + two + three
 
     assert Future is type(failure_context())
@@ -173,9 +173,9 @@ def test_do():
     # Success case
     @Future.do
     def success_context() -> FutureDo[int]:
-        one = yield from multi_context(1)(ec)()
+        one = yield from multi_context(1)(ec)
         two = 2
-        three = yield from multi_context(3)(ec)()
+        three = yield from multi_context(3)(ec)
         return one + two + three
 
     assert Future is type(success_context())

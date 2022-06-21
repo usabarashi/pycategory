@@ -42,7 +42,7 @@ class Future(concurrent.futures.Future[T]):
     def __bool__(self) -> bool:
         return self.done()
 
-    def __call__(self) -> Generator[Try[T], Try[T], T]:
+    def __iter__(self) -> Generator[Try[T], Try[T], T]:
         try:
             success = self.result()
             yield Success(success)
@@ -213,4 +213,4 @@ class Future(concurrent.futures.Future[T]):
         return wrapper
 
 
-FutureDo = Generator[Any | Try[Any], Any | Try[Any], T]
+FutureDo = Generator[Try[Any], Try[Any], T]

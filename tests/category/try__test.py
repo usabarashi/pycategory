@@ -25,9 +25,9 @@ def test_try_do():
 
     @Try.do
     def failure_context() -> TryDo[int]:
-        one = yield from Success[int](1)()
+        one = yield from Success[int](1)
         two = 2
-        three = yield from Failure[int](Exception())()
+        three = yield from Failure[int](Exception())
         return one + two + three
 
     assert Failure is type(failure_context())
@@ -39,9 +39,9 @@ def test_try_do():
 
     @Try.do
     def success_context() -> TryDo[int]:
-        one = yield from Success[int](1)()
+        one = yield from Success[int](1)
         two = 2
-        three = yield from Success[int](3)()
+        three = yield from Success[int](3)
         return one + two + three
 
     assert Success is type(success_context())
@@ -56,8 +56,8 @@ def test_try_do():
 
     @Try.do
     def mix_failure_context() -> TryDo[int]:
-        success = yield from multi_context(1)()
-        _ = yield from multi_context(0)()
+        success = yield from multi_context(1)
+        _ = yield from multi_context(0)
         return success
 
     assert Failure is type(mix_failure_context())
@@ -70,9 +70,9 @@ def test_try_do():
 
     @Try.do
     def mix_success_context() -> TryDo[int]:
-        one = yield from multi_context(1)()
+        one = yield from multi_context(1)
         two = 2
-        three = yield from multi_context(3)()
+        three = yield from multi_context(3)
         return one + two + three
 
     assert Success is type(mix_success_context())
