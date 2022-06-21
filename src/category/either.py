@@ -17,7 +17,7 @@ class Either(ABC, Generic[L, R]):
     """Either"""
 
     @abstractmethod
-    def __call__(self) -> Generator[Either[L, R], Either[L, R], R]:
+    def __iter__(self) -> Generator[Either[L, R], Either[L, R], R]:
         raise NotImplementedError
 
     @abstractmethod
@@ -98,7 +98,7 @@ class Left(Either[L, R]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(self) -> Generator[Left[L, R], Left[L, R], R]:
+    def __iter__(self) -> Generator[Left[L, R], Left[L, R], R]:
         yield self
         raise GeneratorExit(self)
 
@@ -148,7 +148,7 @@ class Right(Either[L, R]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __call__(self) -> Generator[Either[L, R], Either[L, R], R]:
+    def __iter__(self) -> Generator[Either[L, R], Either[L, R], R]:
         yield self
         return self.value
 
@@ -268,5 +268,4 @@ class RightProjection(Generic[L, R]):
 
 
 SubType = Left[L, R] | Right[L, R]
-EitherDo = Generator[Any | Either[L, Any], Any | Either[L, Any], R]
-ReturnEither = EitherDo
+EitherDo = Generator[Either[L, Any], Either[L, Any], R]

@@ -15,7 +15,7 @@ class Try(ABC, Generic[T]):
     """Try"""
 
     @abstractmethod
-    def __call__(self) -> Generator[Try[T], Try[T], T]:
+    def __iter__(self) -> Generator[Try[T], Try[T], T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -101,7 +101,7 @@ class Failure(Try[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __call__(self) -> Generator[Try[T], Try[T], T]:
+    def __iter__(self) -> Generator[Try[T], Try[T], T]:
         yield self
         raise GeneratorExit(self) from self.exception
 
@@ -150,7 +150,7 @@ class Success(Try[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __call__(self) -> Generator[Try[T], Try[T], T]:
+    def __iter__(self) -> Generator[Try[T], Try[T], T]:
         yield self
         return self.value
 
@@ -189,4 +189,4 @@ class Success(Try[T]):
 
 
 SubType = Failure[T] | Success[T]
-TryDo = Generator[Any | Try[Any], Any | Try[Any], T]
+TryDo = Generator[Try[Any], Try[Any], T]

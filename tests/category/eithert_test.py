@@ -186,11 +186,11 @@ def test_eitherttry_do():
     def failure_context() -> EitherTTryDo[Exception, int]:
         one = yield from EitherTTry[Exception, int](
             Success[Either[Exception, int]](Right[Exception, int](1))
-        )()
+        )
         two = 2
         three = yield from EitherTTry[Exception, int](
             Failure[Either[Exception, int]](Exception())
-        )()
+        )
         return one + two + three
 
     assert EitherTTry is type(failure_context())
@@ -207,11 +207,11 @@ def test_eitherttry_do():
     def success_left_context() -> EitherTTryDo[Exception, int]:
         one = yield from EitherTTry[Exception, int](
             Success[Either[Exception, int]](Right[Exception, int](1))
-        )()
+        )
         two = 2
         three = yield from EitherTTry[Exception, int](
             Success[Either[Exception, int]](Left[Exception, int](Exception()))
-        )()
+        )
         return one + two + three
 
     assert EitherTTry is type(success_left_context())
@@ -229,11 +229,11 @@ def test_eitherttry_do():
     def success_right_context() -> EitherTTryDo[Exception, int]:
         one = yield from EitherTTry[Exception, int](
             Success[Either[Exception, int]](Right[Exception, int](1))
-        )()
+        )
         two = 2
         three = yield from EitherTTry[Exception, int](
             Success[Either[Exception, int]](Right[Exception, int](3))
-        )()
+        )
         return one + two + three
 
     assert EitherTTry is type(success_right_context())
@@ -475,11 +475,11 @@ def test_eithertfuture_do():
     def failure_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](1))
-        )()
+        )
         two = 2
         future = Future[Either[Exception, int]]()
         future.set_exception(exception=Exception())
-        three = yield from EitherTFuture[Exception, int](future)()
+        three = yield from EitherTFuture[Exception, int](future)
         return one + two + three
 
     assert EitherTFuture is type(failure_context())
@@ -497,11 +497,11 @@ def test_eithertfuture_do():
     def success_left_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](1))
-        )()
+        )
         two = 2
         three = yield from EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Left[Exception, int](Exception()))
-        )()
+        )
         return one + two + three
 
     assert EitherTFuture is type(success_left_context())
@@ -519,11 +519,11 @@ def test_eithertfuture_do():
     def success_right_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](1))
-        )()
+        )
         two = 2
         three = yield from EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](3))
-        )()
+        )
         return one + two + three
 
     assert EitherTFuture is type(success_right_context())
