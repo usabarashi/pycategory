@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, Optional, TypeVar
+from typing import Any, Callable, Generic, Literal, TypeVar
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -70,22 +70,19 @@ class Try(ABC, Generic[T]):
         return wrapper
 
     @staticmethod
-    def do(generator_function: Callable[..., TryDo[T]]) -> Callable[..., Try[T]]:
+    def do(context: Callable[..., TryDo[T]], /) -> Callable[..., Try[T]]:
         def wrapper(*args: Any, **kwargs: Any) -> Try[T]:
-            state: Optional[Any] = None
-            context = generator_function(*args, **kwargs)
+            context_ = context(*args, **kwargs)
+            state: Any = None
             while True:
                 try:
-                    result = context.send(state)
+                    match context_.send(state).pattern:
+                        case Failure() as failure:
+                            return Failure[T](failure.exception)
+                        case Success(value):
+                            state = value
                 except StopIteration as return_:
                     return Success[T](return_.value)
-                match result:
-                    case Failure() as failure:
-                        return Failure[T](failure.exception)
-                    case Success(value):
-                        state = value
-                    case _:
-                        raise ValueError(result)
 
         return wrapper
 

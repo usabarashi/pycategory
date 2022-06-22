@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, Optional, TypeVar
+from typing import Any, Callable, Generic, Literal, TypeVar
 
 L = TypeVar("L", covariant=True)
 R = TypeVar("R", covariant=True)
@@ -65,24 +65,19 @@ class Either(ABC, Generic[L, R]):
         raise NotImplementedError
 
     @staticmethod
-    def do(
-        generator_fuction: Callable[..., EitherDo[L, R]]
-    ) -> Callable[..., Either[L, R]]:
+    def do(context: Callable[..., EitherDo[L, R]], /) -> Callable[..., Either[L, R]]:
         def wrapper(*args: Any, **kwargs: Any) -> Either[L, R]:
-            state: Optional[Any] = None
-            context = generator_fuction(*args, **kwargs)
+            context_ = context(*args, **kwargs)
+            state: Any = None
             while True:
                 try:
-                    result = context.send(state)
+                    match context_.send(state).pattern:
+                        case Left(value):
+                            return Left[L, R](value)
+                        case Right(value):
+                            state = value
                 except StopIteration as return_:
                     return Right[L, R](return_.value)
-                match result:
-                    case Left(value):
-                        return Left[L, R](value)
-                    case Right(value):
-                        state = value
-                    case _:
-                        raise ValueError(result)
 
         return wrapper
 

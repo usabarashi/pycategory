@@ -7,7 +7,7 @@ import dataclasses
 from abc import ABC
 from collections.abc import Generator
 from concurrent.futures._base import PENDING
-from typing import Any, Callable, Optional, Type, TypeVar
+from typing import Any, Callable, Type, TypeVar
 
 from category.try_ import Failure, Success, Try
 
@@ -191,24 +191,21 @@ class Future(concurrent.futures.Future[T]):
         return wrapper
 
     @staticmethod
-    def do(generator_function: Callable[..., FutureDo[T]]) -> Callable[..., Future[T]]:
+    def do(context: Callable[..., FutureDo[T]], /) -> Callable[..., Future[T]]:
         def wrapper(*args: Any, **kwargs: Any) -> Future[T]:
-            state: Optional[Any] = None
-            context = generator_function(*args, **kwargs)
+            context_ = context(*args, **kwargs)
+            state: Any = None
             while True:
                 try:
-                    result = context.send(state)
+                    match context_.send(state).pattern:
+                        case Failure() as failure:
+                            future = Future[T]()
+                            future.set_exception(failure.exception)
+                            return future
+                        case Success(value):
+                            state = value
                 except StopIteration as return_:
                     return Future[T].successful(return_.value)
-                match result:
-                    case Failure() as failure:
-                        future = Future[T]()
-                        future.set_exception(failure.exception)
-                        return future
-                    case Success(value):
-                        state = value
-                    case _:
-                        raise ValueError(result)
 
         return wrapper
 

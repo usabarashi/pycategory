@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, Optional, TypeVar
+from typing import Any, Callable, Generic, Literal, TypeVar
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -54,22 +54,19 @@ class Option(ABC, Generic[T]):
         raise NotImplementedError
 
     @staticmethod
-    def do(generator_fuction: Callable[..., OptionDo[T]]) -> Callable[..., Option[T]]:
+    def do(context: Callable[..., OptionDo[T]], /) -> Callable[..., Option[T]]:
         def wrapper(*args: Any, **kwargs: Any) -> Option[T]:
-            state: Optional[Any] = None
-            context = generator_fuction(*args, **kwargs)
+            context_ = context(*args, **kwargs)
+            state: Any = None
             while True:
                 try:
-                    result = context.send(state)
+                    match context_.send(state).pattern:
+                        case Void():
+                            return Void[T]()
+                        case Some(value):
+                            state = value
                 except StopIteration as return_:
                     return Some[T](return_.value)
-                match result:
-                    case Void():
-                        return Void[T]()
-                    case Some(value):
-                        state = value
-                    case _:
-                        raise ValueError(result)
 
         return wrapper
 
