@@ -175,7 +175,7 @@ class Success(Try[T]):
 
 SubType = Failure[T] | Success[T]
 TryDo = Generator[
-    tuple[Try[Any], Callable[[Try[Any]], Any], Callable[[T], Try[T]]],
-    tuple[Try[Any], Callable[[Try[Any]], Any], Callable[[T], Try[T]]],
+    tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]],
+    tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]],
     T,
 ]

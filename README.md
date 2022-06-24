@@ -27,7 +27,7 @@ match context().pattern:
 ### Option
 
 ```python
-from category import VOID, Option, OptionDo, Some, Void, do
+from category import VOID, OptionDo, Some, Void, do
 
 @do
 def context() -> OptionDo[int]:
