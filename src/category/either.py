@@ -1,9 +1,11 @@
 """Either"""
 from __future__ import annotations
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
 from typing import Any, Callable, Generic, Literal, TypeVar
+
+from category.monad import Monad
 
 L = TypeVar("L", covariant=True)
 R = TypeVar("R", covariant=True)
@@ -13,11 +15,11 @@ TT = TypeVar("TT")
 U = TypeVar("U")
 
 
-class Either(ABC, Generic[L, R]):
+class Either(Monad, Generic[L, R]):
     """Either"""
 
     @abstractmethod
-    def __iter__(self) -> Generator[Either[L, R], Either[L, R], R]:
+    def __iter__(self) -> EitherDo[L, R]:
         raise NotImplementedError
 
     @abstractmethod
@@ -64,23 +66,6 @@ class Either(ABC, Generic[L, R]):
     def method(self, functor: Callable[[Either[L, R]], TT]) -> TT:
         raise NotImplementedError
 
-    @staticmethod
-    def do(context: Callable[..., EitherDo[L, R]], /) -> Callable[..., Either[L, R]]:
-        def wrapper(*args: Any, **kwargs: Any) -> Either[L, R]:
-            context_ = context(*args, **kwargs)
-            state: Any = None
-            while True:
-                try:
-                    match context_.send(state).pattern:
-                        case Left(value):
-                            return Left[L, R](value)
-                        case Right(value):
-                            state = value
-                except StopIteration as return_:
-                    return Right[L, R](return_.value)
-
-        return wrapper
-
 
 class Left(Either[L, R]):
     """Left"""
@@ -93,8 +78,9 @@ class Left(Either[L, R]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __iter__(self) -> Generator[Left[L, R], Left[L, R], R]:
-        yield self
+    def __iter__(self) -> EitherDo[L, R]:
+        lift: Callable[[R], Right[L, R]] = lambda right: Right[L, R](right)
+        yield self.flatmap(lift), Left.get, lift
         raise GeneratorExit(self)
 
     def map(self, functor: Callable[[R], RR], /) -> Left[L, RR]:
@@ -143,8 +129,9 @@ class Right(Either[L, R]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __iter__(self) -> Generator[Either[L, R], Either[L, R], R]:
-        yield self
+    def __iter__(self) -> EitherDo[L, R]:
+        lift: Callable[[R], Right[L, R]] = lambda right: Right[L, R](right)
+        yield self.flatmap(lift), Right.get, lift
         return self.value
 
     def map(self, functor: Callable[[R], RR], /) -> Right[L, RR]:
@@ -263,4 +250,8 @@ class RightProjection(Generic[L, R]):
 
 
 SubType = Left[L, R] | Right[L, R]
-EitherDo = Generator[Either[L, Any], Either[L, Any], R]
+EitherDo = Generator[
+    tuple[Either[L, R], Callable[[Either[L, R]], R], Callable[[R], Either[L, R]]],
+    tuple[Either[L, R], Callable[[Either[L, R]], R], Callable[[R], Either[L, R]]],
+    R,
+]

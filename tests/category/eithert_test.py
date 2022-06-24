@@ -179,10 +179,19 @@ def test_eitherttry_get_or_else():
 
 
 def test_eitherttry_do():
-    from category import Either, EitherTTry, EitherTTryDo, Failure, Left, Right, Success
+    from category import (
+        Either,
+        EitherTTry,
+        EitherTTryDo,
+        Failure,
+        Left,
+        Right,
+        Success,
+        do,
+    )
 
     # Failrue case
-    @EitherTTry.do
+    @do
     def failure_context() -> EitherTTryDo[Exception, int]:
         one = yield from EitherTTry[Exception, int](
             Success[Either[Exception, int]](Right[Exception, int](1))
@@ -203,7 +212,7 @@ def test_eitherttry_do():
     assert Exception is type(failure_context()._value.exception)
 
     # Success[Left[L, R]] case
-    @EitherTTry.do
+    @do
     def success_left_context() -> EitherTTryDo[Exception, int]:
         one = yield from EitherTTry[Exception, int](
             Success[Either[Exception, int]](Right[Exception, int](1))
@@ -225,7 +234,7 @@ def test_eitherttry_do():
     assert Exception is type(success_left_context()._value.get().left().get())
 
     # Success[Right[L, R]] case
-    @EitherTTry.do
+    @do
     def success_right_context() -> EitherTTryDo[Exception, int]:
         one = yield from EitherTTry[Exception, int](
             Success[Either[Exception, int]](Right[Exception, int](1))
@@ -297,7 +306,7 @@ def test_eithertfuture_map():
     left = EitherTFuture[Exception, int](
         Future[Either[Exception, int]].successful(Left[Exception, int](Exception()))
     )
-    mapped_left = left.map(lambda right: right + 1)(ec)
+    mapped_left = left.map(ec)(lambda right: right + 1)
     assert left is not mapped_left
     assert EitherTFuture is type(mapped_left)
     assert False is mapped_left.get_or_else(lambda: False)
@@ -308,7 +317,7 @@ def test_eithertfuture_map():
     right = EitherTFuture[Exception, int](
         Future[Either[Exception, int]].successful(Right[Exception, int](1))
     )
-    mapped_right = right.map(lambda right: right + 1)(ec)
+    mapped_right = right.map(ec)(lambda right: right + 1)
     assert right is not mapped_right
     assert EitherTFuture is type(mapped_right)
     assert Right is type(mapped_right._value.result())
@@ -358,11 +367,11 @@ def test_eithertfuture_flatmap():
     right = EitherTFuture[Exception, int](
         Future[Either[Exception, int]].successful(Right[Exception, int](1))
     )
-    flatmapped_right = right.flatmap(
+    flatmapped_right = right.flatmap(ec)(
         lambda right: EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](right + 1))
         )
-    )(ec)
+    )
     assert right is not flatmapped_right
     assert EitherTFuture is type(flatmapped_right)
     assert Right is type(flatmapped_right._value.result())
@@ -468,10 +477,11 @@ def test_eithertfuture_do():
         Future,
         Left,
         Right,
+        do,
     )
 
     # Failrue case
-    @EitherTFuture.do
+    @do
     def failure_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](1))
@@ -493,7 +503,7 @@ def test_eithertfuture_do():
         assert Exception is type(error)
 
     # Success[Left[L, R]] case
-    @EitherTFuture.do
+    @do
     def success_left_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](1))
@@ -515,7 +525,7 @@ def test_eithertfuture_do():
     assert Exception is type(success_left_context()._value.result().left().get())
 
     # Success[Right[L, R]] case
-    @EitherTFuture.do
+    @do
     def success_right_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](1))

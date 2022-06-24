@@ -1,9 +1,11 @@
 """Option"""
 from __future__ import annotations
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
 from typing import Any, Callable, Generic, Literal, TypeVar
+
+from category.monad import Monad
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -11,11 +13,11 @@ EE = TypeVar("EE")
 U = TypeVar("U")
 
 
-class Option(ABC, Generic[T]):
+class Option(Monad, Generic[T]):
     """Option"""
 
     @abstractmethod
-    def __iter__(self) -> Generator[Option[T], Option[T], T]:
+    def __iter__(self) -> OptionDo[T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -53,23 +55,6 @@ class Option(ABC, Generic[T]):
     def method(self, functor: Callable[[Option[T]], TT], /) -> TT:
         raise NotImplementedError
 
-    @staticmethod
-    def do(context: Callable[..., OptionDo[T]], /) -> Callable[..., Option[T]]:
-        def wrapper(*args: Any, **kwargs: Any) -> Option[T]:
-            context_ = context(*args, **kwargs)
-            state: Any = None
-            while True:
-                try:
-                    match context_.send(state).pattern:
-                        case Void():
-                            return Void[T]()
-                        case Some(value):
-                            state = value
-                except StopIteration as return_:
-                    return Some[T](return_.value)
-
-        return wrapper
-
 
 class Void(Option[T]):
     """Void"""
@@ -82,8 +67,9 @@ class Void(Option[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __iter__(self) -> Generator[Void[T], Void[T], T]:
-        yield self
+    def __iter__(self) -> OptionDo[T]:
+        lift: Callable[[T], Option[T]] = lambda value: Some[T](value)
+        yield self.flatmap(lift), Void.get, lift
         raise GeneratorExit(self)
 
     def map(self, functor: Callable[[T], TT], /) -> Void[TT]:
@@ -126,8 +112,9 @@ class Some(Option[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __iter__(self) -> Generator[Some[T], Some[T], T]:
-        yield self
+    def __iter__(self) -> OptionDo[T]:
+        lift: Callable[[T], Option[T]] = lambda value: Some[T](value)
+        yield self.flatmap(lift), Some.get, lift
         return self.value
 
     def map(self, functor: Callable[[T], TT], /) -> Some[TT]:
@@ -160,6 +147,10 @@ class Some(Option[T]):
 
 
 SubType = Void[T] | Some[T]
-OptionDo = Generator[Option[Any], Option[Any], T]
+OptionDo = Generator[
+    tuple[Option[T], Callable[[Option[T]], T], Callable[[T], Option[T]]],
+    tuple[Option[T], Callable[[Option[T]], T], Callable[[T], Option[T]]],
+    T,
+]
 
 SINGLETON_VOID = Void[Any]()

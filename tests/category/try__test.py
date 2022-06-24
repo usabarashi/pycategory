@@ -21,9 +21,9 @@ def test_try_hold():
 
 
 def test_try_do():
-    from category import Failure, Success, Try, TryDo
+    from category import Failure, Success, Try, TryDo, do
 
-    @Try.do
+    @do
     def failure_context() -> TryDo[int]:
         one = yield from Success[int](1)
         two = 2
@@ -37,7 +37,7 @@ def test_try_do():
     except Exception as error:
         assert ValueError is type(error)
 
-    @Try.do
+    @do
     def success_context() -> TryDo[int]:
         one = yield from Success[int](1)
         two = 2
@@ -54,7 +54,7 @@ def test_try_do():
             raise Exception("error")
         return value
 
-    @Try.do
+    @do
     def mix_failure_context() -> TryDo[int]:
         success = yield from multi_context(1)
         _ = yield from multi_context(0)
@@ -68,7 +68,7 @@ def test_try_do():
         assert ValueError is type(error)
     assert None is mix_failure_context().get_or_else(lambda: None)
 
-    @Try.do
+    @do
     def mix_success_context() -> TryDo[int]:
         one = yield from multi_context(1)
         two = 2

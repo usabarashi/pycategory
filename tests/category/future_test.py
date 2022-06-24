@@ -26,7 +26,7 @@ def test_map():
 
     # Success case
     success_future = Future.successful(1)
-    success_mapped_future = success_future.map(lambda success: success + 1)(ec)
+    success_mapped_future = success_future.map(ec)(lambda success: success + 1)
     assert success_future is not success_mapped_future
     assert Future is type(success_mapped_future)
     assert 2 == success_mapped_future.result()
@@ -41,9 +41,9 @@ def test_flatmap():
     # Failure case
     failure_future = Future[int]()
     failure_future.set_exception(exception=Exception())
-    failure_flatmapped_future = failure_future.flatmap(
+    failure_flatmapped_future = failure_future.flatmap(ec)(
         lambda success: Future[int].successful(success + 1)
-    )(ec)
+    )
     assert failure_future is not failure_flatmapped_future
     assert Future is type(failure_flatmapped_future)
     try:
@@ -56,9 +56,9 @@ def test_flatmap():
 
     # Success case
     success_future = Future[int].successful(1)
-    success_flatmapped_future = success_future.flatmap(
+    success_flatmapped_future = success_future.flatmap(ec)(
         lambda success: Future[int].successful(success + 1)
-    )(ec)
+    )
     assert success_future is not success_flatmapped_future
     assert Future is type(success_flatmapped_future)
     assert 2 == success_flatmapped_future.result()
@@ -103,7 +103,7 @@ def test_on_complete():
             return try_.get_or_else(lambda: 0) + 1
 
     true_future = Future.successful(1)
-    true_future.on_complete(functor)(ec)
+    true_future.on_complete(ec)(functor)
     assert 2 == true_future.result()
 
 
@@ -129,13 +129,13 @@ def test_hold():
             raise Exception(value)
 
     # Failure case
-    failure_future = multi_context(0)(ec)
+    failure_future = multi_context(ec)(0)
     assert Future is type(failure_future)
     assert Failure is type(failure_future.value)
     assert Exception is type(failure_future.value.exception)
 
     # Success case
-    success_future = multi_context(1)(ec)
+    success_future = multi_context(ec)(1)
     assert Future is type(success_future)
     assert 1 == success_future.result()
     assert Success is type(success_future.value)
@@ -145,20 +145,21 @@ def test_hold():
 def test_do():
     from category import Failure, Future, FutureDo, Success
     from category import ThreadPoolExecutionContext as ec
+    from category import do
 
     @Future.hold
     def multi_context(value: int, /) -> int:
         if 0 < value:
             return value
         else:
-            raise Exception(value)
+            raise ValueError(value)
 
     # Failure case
-    @Future.do
+    @do
     def failure_context() -> FutureDo[int]:
-        one = yield from multi_context(1)(ec)
+        one = yield from multi_context(ec)(1)
         two = 2
-        three = yield from multi_context(0)(ec)
+        three = yield from multi_context(ec)(0)
         return one + two + three
 
     assert Future is type(failure_context())
@@ -168,14 +169,14 @@ def test_do():
     except Exception:
         assert True
     assert Failure is type(failure_context().value)
-    assert Exception is type(failure_context().value.exception)
+    assert ValueError is type(failure_context().value.exception)
 
     # Success case
-    @Future.do
+    @do
     def success_context() -> FutureDo[int]:
-        one = yield from multi_context(1)(ec)
+        one = yield from multi_context(ec)(1)
         two = 2
-        three = yield from multi_context(3)(ec)
+        three = yield from multi_context(ec)(3)
         return one + two + three
 
     assert Future is type(success_context())
