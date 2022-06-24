@@ -1,7 +1,7 @@
 def test_either_do():
-    from category import Either, EitherDo, Left, Right
+    from category import EitherDo, Left, Right, do
 
-    @Either.do
+    @do
     def left_context() -> EitherDo[Exception, int]:
         one = yield from Right[Exception, int](1)
         two = 2
@@ -17,7 +17,7 @@ def test_either_do():
     )
     assert None is left_context().fold(left=lambda left: None, right=lambda right: None)
 
-    @Either.do
+    @do
     def right_context() -> EitherDo[None, int]:
         one = yield from Right[None, int](1)
         two = 2

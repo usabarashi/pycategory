@@ -1,21 +1,24 @@
 """Try"""
 from __future__ import annotations
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar
+from typing import Any, Callable, Generic, Literal, ParamSpec, TypeVar
+
+from category.monad import Monad
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
 EE = TypeVar("EE")
 U = TypeVar("U")
+P = ParamSpec("P")
 
 
-class Try(ABC, Generic[T]):
+class Try(Monad, Generic[T]):
     """Try"""
 
     @abstractmethod
-    def __iter__(self) -> Generator[Try[T], Try[T], T]:
+    def __iter__(self) -> TryDo[T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -60,29 +63,12 @@ class Try(ABC, Generic[T]):
         raise NotImplementedError
 
     @staticmethod
-    def hold(fuction: Callable[..., T]) -> Callable[..., Try[T]]:
-        def wrapper(*args: Any, **kwargs: Any) -> Try[T]:
+    def hold(fuction: Callable[P, T]) -> Callable[P, Try[T]]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Try[T]:
             try:
                 return Success[T](fuction(*args, **kwargs))
             except Exception as error:
                 return Failure[T](error)
-
-        return wrapper
-
-    @staticmethod
-    def do(context: Callable[..., TryDo[T]], /) -> Callable[..., Try[T]]:
-        def wrapper(*args: Any, **kwargs: Any) -> Try[T]:
-            context_ = context(*args, **kwargs)
-            state: Any = None
-            while True:
-                try:
-                    match context_.send(state).pattern:
-                        case Failure() as failure:
-                            return Failure[T](failure.exception)
-                        case Success(value):
-                            state = value
-                except StopIteration as return_:
-                    return Success[T](return_.value)
 
         return wrapper
 
@@ -98,8 +84,9 @@ class Failure(Try[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __iter__(self) -> Generator[Try[T], Try[T], T]:
-        yield self
+    def __iter__(self) -> TryDo[T]:
+        lift: Callable[[T], Try[T]] = lambda value: Success[T](value)
+        yield self.flatmap(lift), Failure.get, lift
         raise GeneratorExit(self) from self.exception
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
@@ -147,8 +134,9 @@ class Success(Try[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __iter__(self) -> Generator[Try[T], Try[T], T]:
-        yield self
+    def __iter__(self) -> TryDo[T]:
+        lift: Callable[[T], Try[T]] = lambda value: Success[T](value)
+        yield self.flatmap(lift), Success.get, lift
         return self.value
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
@@ -186,4 +174,8 @@ class Success(Try[T]):
 
 
 SubType = Failure[T] | Success[T]
-TryDo = Generator[Try[Any], Try[Any], T]
+TryDo = Generator[
+    tuple[Try[Any], Callable[[Try[Any]], Any], Callable[[T], Try[T]]],
+    tuple[Try[Any], Callable[[Try[Any]], Any], Callable[[T], Try[T]]],
+    T,
+]

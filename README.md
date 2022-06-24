@@ -8,9 +8,9 @@
 ### Either
 
 ```python
-from category import Either, EitherDo, Left, Right
+from category import Either, EitherDo, Left, Right, do
 
-@Either.do
+@do
 def context() -> EitherDo[str, int]:
     one = yield from Left[str, int]("one")
     two = 2
@@ -27,9 +27,9 @@ match context().pattern:
 ### Option
 
 ```python
-from category import VOID, Option, OptionDo, Some, Void
+from category import VOID, Option, OptionDo, Some, Void, do
 
-@Option.do
+@do
 def context() -> OptionDo[int]:
     one = yield from VOID
     two = 2
@@ -46,7 +46,7 @@ match context().pattern:
 ### Try
 
 ```python
-from category import Failure, Success, Try, TryDo
+from category import Failure, Success, Try, TryDo, do
 
 @Try.hold
 def hold_context(value: int, /) -> int:
@@ -54,7 +54,7 @@ def hold_context(value: int, /) -> int:
         raise Exception(value)
     return value
 
-@Try.do
+@do
 def context() -> TryDo[int]:
     one = yield from hold_context(0)
     two = 2
