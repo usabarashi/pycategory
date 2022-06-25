@@ -7,8 +7,8 @@ def test_future():
 
 
 def test_map():
+    from category import ExecutionContext as ec
     from category import Failure, Future, Success
-    from category import ThreadPoolExecutionContext as ec
 
     # Failure case
     failure_future = Future[int]()
@@ -26,7 +26,7 @@ def test_map():
 
     # Success case
     success_future = Future.successful(1)
-    success_mapped_future = success_future.map(ec)(lambda success: success + 1)
+    success_mapped_future = success_future.map(lambda success: success + 1)(ec)
     assert success_future is not success_mapped_future
     assert Future is type(success_mapped_future)
     assert 2 == success_mapped_future.result()
@@ -35,15 +35,15 @@ def test_map():
 
 
 def test_flatmap():
+    from category import ExecutionContext as ec
     from category import Failure, Future, Success
-    from category import ThreadPoolExecutionContext as ec
 
     # Failure case
     failure_future = Future[int]()
     failure_future.set_exception(exception=Exception())
-    failure_flatmapped_future = failure_future.flatmap(ec)(
+    failure_flatmapped_future = failure_future.flatmap(
         lambda success: Future[int].successful(success + 1)
-    )
+    )(ec)
     assert failure_future is not failure_flatmapped_future
     assert Future is type(failure_flatmapped_future)
     try:
@@ -56,9 +56,9 @@ def test_flatmap():
 
     # Success case
     success_future = Future[int].successful(1)
-    success_flatmapped_future = success_future.flatmap(ec)(
+    success_flatmapped_future = success_future.flatmap(
         lambda success: Future[int].successful(success + 1)
-    )
+    )(ec)
     assert success_future is not success_flatmapped_future
     assert Future is type(success_flatmapped_future)
     assert 2 == success_flatmapped_future.result()
@@ -92,18 +92,18 @@ def test_try_complete():
 def test_on_complete():
     from typing import Union
 
-    from category import Failure, Future
-    from category import ThreadPoolExecutionContext as ec
-    from category import Try
+    from category import ExecutionContext as ec
+    from category import Failure, Future, Success, Try
 
     def functor(try_: Try[int], /) -> Union[Exception, int]:
-        if isinstance(try_, Failure):
-            return try_.exception
-        else:
-            return try_.get_or_else(lambda: 0) + 1
+        match try_.pattern:
+            case Failure() as failure:
+                return failure.exception
+            case Success():
+                return try_.get_or_else(lambda: 0) + 1
 
     true_future = Future.successful(1)
-    true_future.on_complete(ec)(functor)
+    true_future.on_complete(functor)(ec)
     assert 2 == true_future.result()
 
 
@@ -118,8 +118,8 @@ def test_successful():
 
 
 def test_hold():
+    from category import ExecutionContext as ec
     from category import Failure, Future, Success
-    from category import ThreadPoolExecutionContext as ec
 
     @Future.hold
     def multi_context(value: int, /) -> int:
@@ -129,13 +129,13 @@ def test_hold():
             raise Exception(value)
 
     # Failure case
-    failure_future = multi_context(ec)(0)
+    failure_future = multi_context(0)(ec)
     assert Future is type(failure_future)
     assert Failure is type(failure_future.value)
     assert Exception is type(failure_future.value.exception)
 
     # Success case
-    success_future = multi_context(ec)(1)
+    success_future = multi_context(1)(ec)
     assert Future is type(success_future)
     assert 1 == success_future.result()
     assert Success is type(success_future.value)
@@ -143,9 +143,8 @@ def test_hold():
 
 
 def test_do():
-    from category import Failure, Future, FutureDo, Success
-    from category import ThreadPoolExecutionContext as ec
-    from category import do
+    from category import ExecutionContext as ec
+    from category import Failure, Future, FutureDo, Success, do
 
     @Future.hold
     def multi_context(value: int, /) -> int:
@@ -157,9 +156,9 @@ def test_do():
     # Failure case
     @do
     def failure_context() -> FutureDo[int]:
-        one = yield from multi_context(ec)(1)
+        one = yield from multi_context(1)(ec)
         two = 2
-        three = yield from multi_context(ec)(0)
+        three = yield from multi_context(0)(ec)
         return one + two + three
 
     assert Future is type(failure_context())
@@ -174,9 +173,9 @@ def test_do():
     # Success case
     @do
     def success_context() -> FutureDo[int]:
-        one = yield from multi_context(ec)(1)
+        one = yield from multi_context(1)(ec)
         two = 2
-        three = yield from multi_context(ec)(3)
+        three = yield from multi_context(3)(ec)
         return one + two + three
 
     assert Future is type(success_context())

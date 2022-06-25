@@ -7,7 +7,7 @@ import dataclasses
 from abc import ABC
 from collections.abc import Generator
 from concurrent.futures._base import PENDING
-from typing import Any, Callable, ParamSpec, Type, TypeVar
+from typing import Callable, ParamSpec, Type, TypeVar
 
 from category.try_ import Failure, Success, Try
 
@@ -51,7 +51,7 @@ class Future(concurrent.futures.Future[T]):
         T,
     ]:
         lift: Callable[[T], Future[T]] = lambda value: Future[T].successful(value)
-        flattened_monad = self.flatmap(ThreadPoolExecutionContext)(lift)
+        flattened_monad = self.flatmap(lift)(ExecutionContext)
         try:
             yield flattened_monad, Future.result, lift
             return flattened_monad.result()
@@ -60,24 +60,24 @@ class Future(concurrent.futures.Future[T]):
             raise GeneratorExit from error
 
     def map(
-        self, ec: Type[ExecutionContext], /
-    ) -> Callable[[Callable[[T], TT]], Future[TT]]:
-        def wrapper(functor: Callable[[T], TT], /) -> Future[TT]:
-            def fold(try_: Try[T]) -> Try[TT]:
+        self, functor: Callable[[T], TT], /
+    ) -> Callable[[Type[ExecutionContext]], Future[TT]]:
+        def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
+            def fold(try_: Try[T], /) -> Try[TT]:
                 match try_.pattern:
                     case Failure() as failure:
                         return Failure[TT](failure.exception)
                     case Success(value):
                         return Success[TT](functor(value))
 
-            return self.transform(ec)(fold)
+            return self.transform(fold)(ec)
 
-        return wrapper
+        return with_context
 
     def flatmap(
-        self, ec: Type[ExecutionContext], /
-    ) -> Callable[[Callable[[T], Future[TT]]], Future[TT]]:
-        def wrapper(functor: Callable[[T], Future[TT]], /) -> Future[TT]:
+        self, functor: Callable[[T], Future[TT]], /
+    ) -> Callable[[Type[ExecutionContext]], Future[TT]]:
+        def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
             def fold(try_: Try[T]) -> Future[TT]:
                 match try_.pattern:
                     case Failure() as failure:
@@ -94,17 +94,17 @@ class Future(concurrent.futures.Future[T]):
 
             return self.transform_with(fold)(ec)
 
-        return wrapper
+        return with_context
 
     def transform(
-        self, ec: Type[ExecutionContext], /
-    ) -> Callable[[Callable[[Try[T]], Try[TT]]], Future[TT]]:
-        def wrapper(functor: Callable[[Try[T]], Try[TT]], /) -> Future[TT]:
+        self, functor: Callable[[Try[T]], Try[TT]], /
+    ) -> Callable[[Type[ExecutionContext]], Future[TT]]:
+        def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
             future = Future[TT]()
-            self.on_complete(ec)(lambda result: future.try_complete(functor(result)))
+            self.on_complete(lambda result: future.try_complete(functor(result)))(ec)
             return future
 
-        return wrapper
+        return with_context
 
     def transform_with(
         self, functor: Callable[[Try[T]], Future[TT]], /
@@ -114,11 +114,11 @@ class Future(concurrent.futures.Future[T]):
 
             def complete(current_result: Try[T]) -> None:
                 current_future = functor(current_result)
-                return current_future.on_complete(ec)(
+                return current_future.on_complete(
                     lambda next_result: next_future.try_complete(next_result),
-                )
+                )(ec)
 
-            self.on_complete(ec)(complete)
+            self.on_complete(complete)(ec)
             return next_future
 
         return with_context
@@ -148,9 +148,9 @@ class Future(concurrent.futures.Future[T]):
             return True
 
     def on_complete(
-        self, ec: Type[ExecutionContext], /
-    ) -> Callable[[Callable[[Try[T]], U]], None]:
-        def wrapper(functor: Callable[[Try[T]], U], /) -> None:
+        self, functor: Callable[[Try[T]], U], /
+    ) -> Callable[[Type[ExecutionContext]], None]:
+        def with_context(ec: Type[ExecutionContext], /) -> None:
             if self.done():
 
                 def callback(self: Future[T]) -> None:
@@ -165,7 +165,7 @@ class Future(concurrent.futures.Future[T]):
 
                 self.add_done_callback(fn=callback)
 
-        return wrapper
+        return with_context
 
     @staticmethod
     def successful(value: T, /) -> Future[T]:
@@ -186,9 +186,11 @@ class Future(concurrent.futures.Future[T]):
     @staticmethod
     def hold(
         functor: Callable[P, T]
-    ) -> Callable[[Type[ExecutionContext]], Callable[P, Future[T]]]:
-        def with_context(ec: Type[ExecutionContext], /) -> Callable[P, Future[T]]:
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> Future[T]:
+    ) -> Callable[P, Callable[[Type[ExecutionContext]], Future[T]]]:
+        def wrapper(
+            *args: P.args, **kwargs: P.kwargs
+        ) -> Callable[[Type[ExecutionContext]], Future[T]]:
+            def with_context(ec: Type[ExecutionContext], /) -> Future[T]:
                 # FIXME: Threaded processing
                 try:
                     result = functor(*args, **kwargs)
@@ -198,9 +200,9 @@ class Future(concurrent.futures.Future[T]):
                     future.set_exception(exception=error)
                     return future
 
-            return wrapper
+            return with_context
 
-        return with_context
+        return wrapper
 
 
 FutureDo = Generator[

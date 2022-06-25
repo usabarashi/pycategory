@@ -145,16 +145,18 @@ def test_failure_method():
     from category import Failure, Success, Try
 
     def to_failure(self: Try[int], /) -> Failure[int]:
-        if isinstance(self.pattern, Failure):
-            return self.pattern
-        else:
-            return Failure[int](Exception())
+        match self.pattern:
+            case Failure():
+                return self.pattern
+            case Success():
+                return Failure[int](Exception())
 
     def to_success(self: Try[int], /) -> Success[int]:
-        if isinstance(self.pattern, Failure):
-            return Success[int](1)
-        else:
-            return self.pattern
+        match self.pattern:
+            case Failure():
+                return Success[int](1)
+            case Success():
+                return self.pattern
 
     assert Failure is type(Failure[int](Exception()).method(to_failure))
     assert Success is type(Failure[int](Exception()).method(to_success))
@@ -223,16 +225,18 @@ def test_success_method():
     from category import Failure, Success, Try
 
     def to_failure(self: Try[int], /) -> Failure[int]:
-        if isinstance(self.pattern, Failure):
-            return self.pattern
-        else:
-            return Failure[int](Exception())
+        match self.pattern:
+            case Failure():
+                return self.pattern
+            case Success():
+                return Failure[int](Exception())
 
     def to_success(self: Try[int], /) -> Success[int]:
-        if isinstance(self.pattern, Failure):
-            return Success[int](1)
-        else:
-            return self.pattern
+        match self.pattern:
+            case Failure():
+                return Success[int](1)
+            case Success():
+                return self.pattern
 
     assert Failure is type(Success[int](1).method(to_failure))
     assert Success is type(Success[int](1).method(to_success))
@@ -263,7 +267,7 @@ def test_pattern_match():
     from category import Failure, Success, Try
 
     match cast(Try[int], Failure[int](Exception(42))):
-        case Failure() as failure if isinstance(failure.exception, Exception):
+        case Failure():
             assert True
         case _:
             assert False

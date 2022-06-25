@@ -94,16 +94,18 @@ def test_void_method():
     from category import VOID, Option, Some, Void
 
     def to_void(self: Option[int], /) -> Void[int]:
-        if isinstance(self.pattern, Void):
-            return self.pattern
-        else:
-            return VOID
+        match self.pattern:
+            case Void():
+                return self.pattern
+            case Some():
+                return VOID
 
     def to_some(self: Option[int], /) -> Some[int]:
-        if isinstance(self.pattern, Void):
-            return Some[int](42)
-        else:
-            return self.pattern
+        match self.pattern:
+            case Void():
+                return Some[int](42)
+            case Some():
+                return self.pattern
 
     assert Void is type(VOID.method(to_void))
     assert Some is type(VOID.method(to_some))
@@ -172,16 +174,18 @@ def test_some_method():
     from category import VOID, Option, Some, Void
 
     def to_void(self: Option[int], /) -> Void[int]:
-        if isinstance(self.pattern, Void):
-            return self.pattern
-        else:
-            return VOID
+        match self.pattern:
+            case Void():
+                return self.pattern
+            case Some():
+                return VOID
 
     def to_some(self: Option[int], /) -> Some[int]:
-        if isinstance(self.pattern, Void):
-            return Some[int](42)
-        else:
-            return self.pattern
+        match self.pattern:
+            case Void():
+                return Some[int](42)
+            case Some():
+                return self.pattern
 
     assert Void is type(Some[int](42).method(to_void))
     assert Some is type(Some[int](42).method(to_some))

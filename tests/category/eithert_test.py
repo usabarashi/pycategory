@@ -317,7 +317,7 @@ def test_eithertfuture_map():
     right = EitherTFuture[Exception, int](
         Future[Either[Exception, int]].successful(Right[Exception, int](1))
     )
-    mapped_right = right.map(ec)(lambda right: right + 1)
+    mapped_right = right.map(lambda right: right + 1)(ec)
     assert right is not mapped_right
     assert EitherTFuture is type(mapped_right)
     assert Right is type(mapped_right._value.result())
@@ -367,11 +367,11 @@ def test_eithertfuture_flatmap():
     right = EitherTFuture[Exception, int](
         Future[Either[Exception, int]].successful(Right[Exception, int](1))
     )
-    flatmapped_right = right.flatmap(ec)(
+    flatmapped_right = right.flatmap(
         lambda right: EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](right + 1))
         )
-    )
+    )(ec)
     assert right is not flatmapped_right
     assert EitherTFuture is type(flatmapped_right)
     assert Right is type(flatmapped_right._value.result())
@@ -388,9 +388,7 @@ def test_eithertfuture_fold():
     future = Future[Either[Exception, int]]()
     future.set_exception(exception=Exception())
     failue = EitherTFuture[Exception, int](future)
-    failure_catamorphism = failue.fold(
-        left=lambda left: False, right=lambda right: True
-    )(ec)
+    failure_catamorphism = failue.fold(left=lambda _: False, right=lambda _: True)(ec)
     assert Future is type(failure_catamorphism)
     try:
         failure_catamorphism.result()
@@ -402,7 +400,7 @@ def test_eithertfuture_fold():
     left = EitherTFuture[Exception, int](
         Future[Either[Exception, int]].successful(Left[Exception, int](Exception()))
     )
-    left_catamorphism = left.fold(left=lambda left: False, right=lambda right: True)(ec)
+    left_catamorphism = left.fold(left=lambda _: False, right=lambda _: True)(ec)
     assert Future is type(left_catamorphism)
     assert False is left_catamorphism.result()
 
@@ -410,9 +408,7 @@ def test_eithertfuture_fold():
     right = EitherTFuture[Exception, int](
         Future[Either[Exception, int]].successful(Right[Exception, int](1))
     )
-    right_catamorphism = right.fold(left=lambda left: False, right=lambda right: True)(
-        ec
-    )
+    right_catamorphism = right.fold(left=lambda _: False, right=lambda _: True)(ec)
     assert Future is type(right_catamorphism)
     assert True is right_catamorphism.result()
 
@@ -553,6 +549,7 @@ def test_method():
         Left,
         Option,
         Right,
+        Some,
         Success,
         Void,
     )
@@ -566,15 +563,16 @@ def test_method():
         report: Callable[[L], E], /
     ) -> Callable[[Either[L, R]], EitherTFuture[E, R]]:
         def convert(self: Either[L, R], /) -> EitherTFuture[E, R]:
-            if isinstance(self.pattern, Left):
-                value = report(self.pattern.left().get())
-                left = Left[E, R](value)
-                future = Future[Either[E, R]].successful(left)
-                return EitherTFuture[E, R](future)
-            else:
-                right = Right[E, R](self.pattern.right().get())
-                future = Future[Either[E, R]].successful(right)
-                return EitherTFuture[E, R](future)
+            match self.pattern:
+                case Left(value):
+                    report_value = report(value)
+                    left = Left[E, R](report_value)
+                    future = Future[Either[E, R]].successful(left)
+                    return EitherTFuture[E, R](future)
+                case Right(value):
+                    right = Right[E, R](value)
+                    future = Future[Either[E, R]].successful(right)
+                    return EitherTFuture[E, R](future)
 
         return convert
 
@@ -617,15 +615,15 @@ def test_method():
     ) -> Callable[[Future[Option[T]]], EitherTFuture[E, T]]:
         def convert(self: Future[Option[T]]) -> EitherTFuture[E, T]:
             try:
-                option = self.result()
-                if isinstance(option.pattern, Void):
-                    left = Left[E, T](report())
-                    failure = Future[Either[E, T]].successful(left)
-                    return EitherTFuture[E, T](failure)
-                else:
-                    right = Right[E, T](option.pattern.get())
-                    failure = Future[Either[E, T]].successful(right)
-                    return EitherTFuture[E, T](failure)
+                match self.result().pattern:
+                    case Void():
+                        left = Left[E, T](report())
+                        failure = Future[Either[E, T]].successful(left)
+                        return EitherTFuture[E, T](failure)
+                    case Some(value):
+                        right = Right[E, T](value)
+                        failure = Future[Either[E, T]].successful(right)
+                        return EitherTFuture[E, T](failure)
             except Exception as error:
                 left = Left[E, T](error)
                 success = Future[Either[E, T]].successful(left)

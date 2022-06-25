@@ -6,8 +6,7 @@ from copy import deepcopy
 from typing import Any, Callable, Generic, Type, TypeVar, cast
 
 from category.either import Either, Left, Right
-from category.future import ExecutionContext as ec
-from category.future import Future
+from category.future import ExecutionContext, Future
 from category.monad import Monad
 from category.try_ import Failure, Success, Try
 
@@ -55,12 +54,11 @@ class EitherTTry(Monad, Generic[L, R]):
         return self._value.get().get()
 
     def get_or_else(self, default: Callable[..., EE], /) -> EE | R:
-        try_ = self._value
-        if isinstance(try_.pattern, Failure):
-            raise try_.pattern.exception
-        else:
-            either = try_.pattern.get()
-            return either.get_or_else(default)
+        match self._value.pattern:
+            case Failure() as failure:
+                raise failure.exception
+            case Success(either):
+                return either.get_or_else(default)
 
     def map(self, functor: Callable[[R], RR], /) -> EitherTTry[L, RR]:
         try_ = self._value
@@ -73,19 +71,20 @@ class EitherTTry(Monad, Generic[L, R]):
         match self._value:
             case Failure():
                 return cast(EitherTTry[L, RR], deepcopy(self))
-            case Success(either) if isinstance(either, Left):
+            case Success(Left()):
                 return cast(EitherTTry[L, RR], deepcopy(self))
-            case Success(either) if isinstance(either, Right):
-                return functor(either.get())
+            case Success(Right(value)):
+                return functor(value)
             case _:
                 raise ValueError(self)
 
     def fold(self, *, left: Callable[[L], U], right: Callable[[R], U]) -> Try[U]:
         def catamorphism(either: Either[L, R]) -> U:
-            if isinstance(either.pattern, Left):
-                return left(either.pattern.left().get())
-            else:
-                return right(either.pattern.right().get())
+            match either.pattern:
+                case Left(value):
+                    return left(value)
+                case Right(value):
+                    return right(value)
 
         return self._value.map(catamorphism)
 
@@ -119,12 +118,11 @@ class EitherTFuture(Monad, Generic[L, R]):
         if not future.done():
             return False
         else:
-            try_ = future.value
-            if isinstance(try_.pattern, Failure):
-                return False
-            else:
-                either = try_.pattern.get()
-                return bool(either)
+            match future.value.pattern:
+                case Failure():
+                    return False
+                case Success(either):
+                    return bool(either)
 
     def __iter__(
         self,
@@ -135,10 +133,10 @@ class EitherTFuture(Monad, Generic[L, R]):
         try:
             match self._value.result().pattern:
                 case Left():
-                    yield self.flatmap(ec)(lift), EitherTFuture.get, lift
+                    yield self.flatmap(lift)(ExecutionContext), EitherTFuture.get, lift
                     raise GeneratorExit(self)
                 case Right(value):
-                    yield self.flatmap(ec)(lift), EitherTFuture.get, lift
+                    yield self.flatmap(lift)(ExecutionContext), EitherTFuture.get, lift
                     return value
         except Exception as error:
             future = Future[Either[L, R]]()
@@ -158,49 +156,48 @@ class EitherTFuture(Monad, Generic[L, R]):
             return default()
 
     def map(
-        self, ec: Type[ec], /
-    ) -> Callable[[Callable[[R], RR]], EitherTFuture[L, RR]]:
-        def wrapper(functor: Callable[[R], RR], /) -> EitherTFuture[L, RR]:
+        self, functor: Callable[[R], RR], /
+    ) -> Callable[[Type[ExecutionContext]], EitherTFuture[L, RR]]:
+        def with_context(ec: Type[ExecutionContext], /) -> EitherTFuture[L, RR]:
             future = self._value
-            mapped_future = future.map(ec)(lambda either: either.map(functor))
+            mapped_future = future.map(lambda either: either.map(functor))(ec)
             return EitherTFuture[L, RR](mapped_future)
 
-        return wrapper
+        return with_context
 
     def flatmap(
-        self, ec: Type[ec] = ec, /
-    ) -> Callable[[Callable[[R], EitherTFuture[L, RR]]], EitherTFuture[L, RR]]:
-        def wrapper(
-            functor: Callable[[R], EitherTFuture[L, RR]], /
-        ) -> EitherTFuture[L, RR]:
+        self, functor: Callable[[R], EitherTFuture[L, RR]], /
+    ) -> Callable[[Type[ExecutionContext]], EitherTFuture[L, RR]]:
+        def with_context(ec: Type[ExecutionContext], /) -> EitherTFuture[L, RR]:
             # FIXME: Threaded processing
             try:
-                either = self._value.result()
-                if isinstance(either.pattern, Left):
-                    left = Left[L, RR](either.pattern.value)
-                    future = Future[Left[L, RR]].successful(left)
-                    return EitherTFuture[L, RR](future)
-                else:
-                    return functor(either.pattern.value)
+                match self._value.result().pattern:
+                    case Left(value):
+                        left = Left[L, RR](value)
+                        future = Future[Left[L, RR]].successful(left)
+                        return EitherTFuture[L, RR](future)
+                    case Right(value):
+                        return functor(value)
             except Exception as error:
                 future = Future[Either[L, RR]]()
                 future.set_exception(exception=error)
                 return EitherTFuture[L, RR](future)
 
-        return wrapper
+        return with_context
 
     def fold(
         self, *, left: Callable[[L], U], right: Callable[[R], U]
-    ) -> Callable[[Type[ec]], Future[U]]:
-        def with_context(ec: Type[ec], /) -> Future[U]:
-            def catamorphism(either: Either[L, R]) -> U:
-                if isinstance(either.pattern, Left):
-                    return left(either.pattern.left().get())
-                else:
-                    return right(either.pattern.right().get())
+    ) -> Callable[[Type[ExecutionContext]], Future[U]]:
+        def with_context(ec: Type[ExecutionContext], /) -> Future[U]:
+            def catamorphism(either: Either[L, R], /) -> U:
+                match either.pattern:
+                    case Left(value):
+                        return left(value)
+                    case Right(value):
+                        return right(value)
 
             future = self._value
-            return future.map(ec)(catamorphism)
+            return future.map(catamorphism)(ec)
 
         return with_context
 
