@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar, Union
+from typing import Any, Callable, Generic, Literal, TypeVar
 
 from category.monad import Monad
 
@@ -19,13 +19,15 @@ class Either(Monad, Generic[L, R]):
     """Either"""
 
     @abstractmethod
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[Either[L, R], Callable[[Either[L, R]], R], Callable[[R], Either[L, R]]],
-        None,
-        R,
-    ]:
+    def __iter__(self) -> Generator[Either[L, R], None, R]:
+        raise NotImplementedError
+
+    @staticmethod
+    def send(monad: Either[L, R], /) -> R:
+        raise NotImplementedError
+
+    @staticmethod
+    def lift(value: R, /) -> Either[L, R]:
         raise NotImplementedError
 
     @abstractmethod
@@ -84,16 +86,17 @@ class Left(Either[L, R]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[Either[L, R], Callable[[Either[L, R]], R], Callable[[R], Either[L, R]]],
-        None,
-        R,
-    ]:
-        lift: Callable[[R], Right[L, R]] = lambda right: Right[L, R](right)
-        yield self.flatmap(lift), Left.get, lift
+    def __iter__(self) -> Generator[Either[L, R], None, R]:
+        yield self.flatmap(lambda right: Right[L, R](right))
         raise GeneratorExit(self)
+
+    @staticmethod
+    def send(monad: Either[L, R], /) -> R:
+        return monad.get()
+
+    @staticmethod
+    def lift(value: R, /) -> Left[L, R]:
+        return Left[L, R](value)
 
     def map(self, functor: Callable[[R], RR], /) -> Left[L, RR]:
         return Left[L, RR](self.value)
@@ -141,16 +144,17 @@ class Right(Either[L, R]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[Either[L, R], Callable[[Either[L, R]], R], Callable[[R], Either[L, R]]],
-        None,
-        R,
-    ]:
-        lift: Callable[[R], Right[L, R]] = lambda right: Right[L, R](right)
-        yield self.flatmap(lift), Right.get, lift
+    def __iter__(self) -> Generator[Either[L, R], None, R]:
+        yield self.flatmap(lambda right: Right[L, R](right))
         return self.value
+
+    @staticmethod
+    def send(monad: Either[L, R], /) -> R:
+        return monad.get()
+
+    @staticmethod
+    def lift(value: R, /) -> Right[L, R]:
+        return Right[L, R](value)
 
     def map(self, functor: Callable[[R], RR], /) -> Right[L, RR]:
         return Right[L, RR](functor(self.value))
@@ -268,12 +272,4 @@ class RightProjection(Generic[L, R]):
 
 
 SubType = Left[L, R] | Right[L, R]
-EitherDo = Generator[
-    tuple[
-        Either[L, R],
-        Callable[[Either[Any, Any]], Any],
-        Callable[[Any | Any], Either[Any, Any]],
-    ],
-    Any | R,
-    R,
-]
+EitherDo = Generator[Either[L, R], Any, R]

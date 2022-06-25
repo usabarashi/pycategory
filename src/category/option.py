@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar, Union
+from typing import Any, Callable, Generic, Literal, TypeVar
 
 from category.monad import Monad
 
@@ -17,11 +17,15 @@ class Option(Monad, Generic[T]):
     """Option"""
 
     @abstractmethod
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[Option[T], Callable[[Option[T]], T], Callable[[T], Option[T]]], None, T
-    ]:
+    def __iter__(self) -> Generator[Option[T], None, T]:
+        raise NotImplementedError
+
+    @staticmethod
+    def send(monad: Option[T], /) -> T:
+        raise NotImplementedError
+
+    @staticmethod
+    def lift(value: T, /) -> Option[T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -71,14 +75,17 @@ class Void(Option[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[Option[T], Callable[[Option[T]], T], Callable[[T], Option[T]]], None, T
-    ]:
-        lift: Callable[[T], Option[T]] = lambda value: Some[T](value)
-        yield self.flatmap(lift), Void.get, lift
+    def __iter__(self) -> Generator[Option[T], None, T]:
+        yield self.flatmap(lambda value: Some[T](value))
         raise GeneratorExit(self)
+
+    @staticmethod
+    def send(monad: Option[T], /) -> T:
+        return monad.get()
+
+    @staticmethod
+    def lift(value: T, /) -> Void[T]:
+        return Void[T]()
 
     def map(self, functor: Callable[[T], TT], /) -> Void[TT]:
         return Void[TT]()
@@ -120,14 +127,17 @@ class Some(Option[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[Option[T], Callable[[Option[T]], T], Callable[[T], Option[T]]], None, T
-    ]:
-        lift: Callable[[T], Option[T]] = lambda value: Some[T](value)
-        yield self.flatmap(lift), Some.get, lift
+    def __iter__(self) -> Generator[Option[T], None, T]:
+        yield self.flatmap(lambda value: Some[T](value))
         return self.value
+
+    @staticmethod
+    def send(monad: Option[T]) -> T:
+        return monad.get()
+
+    @staticmethod
+    def lift(value: T) -> Some[T]:
+        return Some[T](value)
 
     def map(self, functor: Callable[[T], TT], /) -> Some[TT]:
         return Some[TT](functor(self.value))
@@ -159,10 +169,6 @@ class Some(Option[T]):
 
 
 SubType = Void[T] | Some[T]
-OptionDo = Generator[
-    tuple[Option[T], Callable[[Option[Any]], Any], Callable[[Any], Option[Any]]],
-    Any | T,
-    T,
-]
+OptionDo = Generator[Option[T], Any, T]
 
 SINGLETON_VOID = Void[Any]()

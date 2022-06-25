@@ -8,7 +8,7 @@ from abc import ABC
 from collections.abc import Generator
 from concurrent.futures._base import PENDING
 from functools import wraps
-from typing import Any, Callable, ParamSpec, Type, TypeVar, Union
+from typing import Any, Callable, ParamSpec, Type, TypeVar
 
 from category.try_ import Failure, Monad, Success, Try
 
@@ -44,21 +44,26 @@ class Future(Monad, concurrent.futures.Future[T]):
     def __bool__(self) -> bool:
         return self.done() and bool(self.value)
 
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[Future[T], Callable[[Future[T]], T], Callable[[T], Future[T]]],
-        None,
-        T,
-    ]:
-        lift: Callable[[T], Future[T]] = lambda value: Future[T].successful(value)
-        flattened_monad = self.flatmap(lift)(ExecutionContext)
+    def __iter__(self) -> Generator[Future[T], None, T]:
         try:
-            yield flattened_monad, Future.result, lift
+            flattened_monad = self.flatmap(lambda value: Future[T].successful(value))(
+                ExecutionContext
+            )
+            yield flattened_monad
             return flattened_monad.result()
         except Exception as error:
-            yield flattened_monad, Future.result, lift
+            future = Future[T]()
+            future.set_exception(error)
+            yield future
             raise GeneratorExit from error
+
+    @staticmethod
+    def send(monad: Future[T], /) -> T:
+        return monad.result()
+
+    @staticmethod
+    def lift(value: T, /) -> Future[T]:
+        return Future[T].successful(value)
 
     def map(
         self, functor: Callable[[T], TT], /
@@ -207,8 +212,4 @@ class Future(Monad, concurrent.futures.Future[T]):
         return wrapper
 
 
-FutureDo = Generator[
-    tuple[Future[T], Callable[[Future[Any]], Any], Callable[[Any], Future[Any]]],
-    Any | T,
-    T,
-]
+FutureDo = Generator[Future[T], Any, T]

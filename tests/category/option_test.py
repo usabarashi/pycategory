@@ -1,5 +1,5 @@
 def test_option_do():
-    from category import VOID, OptionDo, Some, Void, do
+    from category import VOID, OptionDo, Right, Some, Void, do
 
     @do
     def safe_context() -> OptionDo[int]:
@@ -8,6 +8,15 @@ def test_option_do():
         two = 2
         three = yield from Some[int](3)
         return one + two + three
+
+    @do
+    def outside_context() -> OptionDo[int]:
+        _ = yield from Some[bool](True)
+        one = yield from Some[int](1)
+        two = 2
+        three = yield from Some[int](3)
+        _ = yield from Right[Exception, int](42)  # Outside
+        return str(one + two + three)  # Outside
 
     @do
     def void_context() -> OptionDo[int]:

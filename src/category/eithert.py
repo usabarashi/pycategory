@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from copy import deepcopy
-from typing import Any, Callable, Generic, Type, TypeVar, Union, cast
+from typing import Any, Callable, Generic, Type, TypeVar, cast
 
 from category.either import Either, Left, Right
 from category.future import ExecutionContext, Future
@@ -31,32 +31,30 @@ class EitherTTry(Monad, Generic[L, R]):
             case _:
                 return False
 
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[
-            EitherTTry[L, R],
-            Callable[[EitherTTry[L, R]], R],
-            Callable[[R], EitherTTry[L, R]],
-        ],
-        None,
-        R,
-    ]:
+    def __iter__(self) -> Generator[EitherTTry[L, R], None, R]:
         lift: Callable[[R], EitherTTry[L, R]] = lambda right: EitherTTry[L, R](
             Success[Either[L, R]](Right[L, R](right))
         )
         match self._value:
             case Failure() as failure:
-                yield self, EitherTTry.get, lift
+                yield self.flatmap(lift)
                 raise GeneratorExit(self) from failure.exception
             case Success(Left()):
-                yield self, EitherTTry.get, lift
+                yield self.flatmap(lift)
                 raise GeneratorExit(self)
             case Success(Right(value)):
-                yield self, EitherTTry.get, lift
+                yield self.flatmap(lift)
                 return value
             case _:
                 raise ValueError(self)
+
+    @staticmethod
+    def send(monad: EitherTTry[L, R], /) -> R:
+        return monad.get()
+
+    @staticmethod
+    def lift(value: R) -> EitherTTry[L, R]:
+        return EitherTTry[L, R](Success[Either[L, R]](Right[L, R](value)))
 
     def get(self) -> R:
         return self._value.get().get()
@@ -100,15 +98,7 @@ class EitherTTry(Monad, Generic[L, R]):
         return functor(self)
 
 
-EitherTTryDo = Generator[
-    tuple[
-        EitherTTry[L, R],
-        Callable[[EitherTTry[Any, Any]], Any],
-        Callable[[Any], EitherTTry[Any, Any]],
-    ],
-    Any | R,
-    R,
-]
+EitherTTryDo = Generator[EitherTTry[L, R], Any, R]
 
 
 class EitherTFuture(Monad, Generic[L, R]):
@@ -128,34 +118,32 @@ class EitherTFuture(Monad, Generic[L, R]):
                 case Success(either):
                     return bool(either)
 
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[
-            EitherTFuture[L, R],
-            Callable[[EitherTFuture[L, R]], R],
-            Callable[[R], EitherTFuture[L, R]],
-        ],
-        None,
-        R,
-    ]:
+    def __iter__(self) -> Generator[EitherTFuture[L, R], None, R]:
         lift: Callable[[R], EitherTFuture[L, R]] = lambda right: EitherTFuture[L, R](
             Future[Either[L, R]].successful(Right[L, R](right))
         )
         try:
             match self._value.result().pattern:
                 case Left():
-                    yield self.flatmap(lift)(ExecutionContext), EitherTFuture.get, lift
+                    yield self.flatmap(lift)(ExecutionContext)
                     raise GeneratorExit(self)
                 case Right(value):
-                    yield self.flatmap(lift)(ExecutionContext), EitherTFuture.get, lift
+                    yield self.flatmap(lift)(ExecutionContext)
                     return value
         except Exception as error:
             future = Future[Either[L, R]]()
             future.set_exception(error)
 
-            yield EitherTFuture[L, R](future), EitherTFuture.get, lift
+            yield EitherTFuture[L, R](future)
             raise GeneratorExit from error
+
+    @staticmethod
+    def send(monad: EitherTFuture[L, R]) -> R:
+        return monad.get()
+
+    @staticmethod
+    def lift(value: R) -> EitherTFuture[L, R]:
+        return EitherTFuture[L, R](Future[Either[L, R]].successful(Right[L, R](value)))
 
     def get(self) -> R:
         return self._value.result().get()
@@ -217,12 +205,4 @@ class EitherTFuture(Monad, Generic[L, R]):
         return functor(self)
 
 
-EitherTFutureDo = Generator[
-    tuple[
-        EitherTFuture[L, R],
-        Callable[[EitherTFuture[Any, Any]], Any],
-        Callable[[Any], EitherTFuture[Any, Any]],
-    ],
-    Any | R,
-    R,
-]
+EitherTFutureDo = Generator[EitherTFuture[L, R], Any, R]

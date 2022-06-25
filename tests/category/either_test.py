@@ -21,11 +21,11 @@ def test_either_do():
         three = yield from Right[KeyError, int](3)
         _ = yield from Right[IndexError, bool](False)
         _ = yield from Right[KeyError, bool](False)
-        _ = yield from Right[ValueError, int](42)  # FIXME: CI to build errors.
-        _ = yield from Right[TypeError, int](42)  # FIXME: CI to build errors.
-        _ = yield from Some[int](42)
-        _ = yield from Success[int](42)
-        return one + two + three
+        _ = yield from Some[int](42)  # Outside
+        _ = yield from Success[int](42)  # Outside
+        _ = yield from Right[ValueError, int](42)  # Outside
+        _ = yield from Right[TypeError, int](42)  # Outside
+        return str(one + two + three)  # Outside
 
     try:
         outside_context().get()
