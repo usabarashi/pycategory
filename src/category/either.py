@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar
+from typing import Any, Callable, Generic, Literal, TypeVar, Union
 
 from category.monad import Monad
 
@@ -19,7 +19,13 @@ class Either(Monad, Generic[L, R]):
     """Either"""
 
     @abstractmethod
-    def __iter__(self) -> EitherDo[L, R]:
+    def __iter__(
+        self,
+    ) -> Generator[
+        tuple[Either[L, R], Callable[[Either[L, R]], R], Callable[[R], Either[L, R]]],
+        None,
+        R,
+    ]:
         raise NotImplementedError
 
     @abstractmethod
@@ -78,7 +84,13 @@ class Left(Either[L, R]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __iter__(self) -> EitherDo[L, R]:
+    def __iter__(
+        self,
+    ) -> Generator[
+        tuple[Either[L, R], Callable[[Either[L, R]], R], Callable[[R], Either[L, R]]],
+        None,
+        R,
+    ]:
         lift: Callable[[R], Right[L, R]] = lambda right: Right[L, R](right)
         yield self.flatmap(lift), Left.get, lift
         raise GeneratorExit(self)
@@ -129,7 +141,13 @@ class Right(Either[L, R]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __iter__(self) -> EitherDo[L, R]:
+    def __iter__(
+        self,
+    ) -> Generator[
+        tuple[Either[L, R], Callable[[Either[L, R]], R], Callable[[R], Either[L, R]]],
+        None,
+        R,
+    ]:
         lift: Callable[[R], Right[L, R]] = lambda right: Right[L, R](right)
         yield self.flatmap(lift), Right.get, lift
         return self.value
@@ -251,7 +269,11 @@ class RightProjection(Generic[L, R]):
 
 SubType = Left[L, R] | Right[L, R]
 EitherDo = Generator[
-    tuple[Either[L, R], Callable[[Either[L, R]], R], Callable[[R], Either[L, R]]],
-    tuple[Either[L, R], Callable[[Either[L, R]], R], Callable[[R], Either[L, R]]],
+    tuple[
+        Either[L, R],
+        Callable[[Either[Any, Any]], Any],
+        Callable[[Any | Any], Either[Any, Any]],
+    ],
+    Any | R,
     R,
 ]

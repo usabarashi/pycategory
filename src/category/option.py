@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar
+from typing import Any, Callable, Generic, Literal, TypeVar, Union
 
 from category.monad import Monad
 
@@ -17,7 +17,11 @@ class Option(Monad, Generic[T]):
     """Option"""
 
     @abstractmethod
-    def __iter__(self) -> OptionDo[T]:
+    def __iter__(
+        self,
+    ) -> Generator[
+        tuple[Option[T], Callable[[Option[T]], T], Callable[[T], Option[T]]], None, T
+    ]:
         raise NotImplementedError
 
     @abstractmethod
@@ -67,7 +71,11 @@ class Void(Option[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __iter__(self) -> OptionDo[T]:
+    def __iter__(
+        self,
+    ) -> Generator[
+        tuple[Option[T], Callable[[Option[T]], T], Callable[[T], Option[T]]], None, T
+    ]:
         lift: Callable[[T], Option[T]] = lambda value: Some[T](value)
         yield self.flatmap(lift), Void.get, lift
         raise GeneratorExit(self)
@@ -112,7 +120,11 @@ class Some(Option[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __iter__(self) -> OptionDo[T]:
+    def __iter__(
+        self,
+    ) -> Generator[
+        tuple[Option[T], Callable[[Option[T]], T], Callable[[T], Option[T]]], None, T
+    ]:
         lift: Callable[[T], Option[T]] = lambda value: Some[T](value)
         yield self.flatmap(lift), Some.get, lift
         return self.value
@@ -148,8 +160,8 @@ class Some(Option[T]):
 
 SubType = Void[T] | Some[T]
 OptionDo = Generator[
-    tuple[Option[T], Callable[[Option[T]], T], Callable[[T], Option[T]]],
-    tuple[Option[T], Callable[[Option[T]], T], Callable[[T], Option[T]]],
+    tuple[Option[T], Callable[[Option[Any]], Any], Callable[[Any], Option[Any]]],
+    Any | T,
     T,
 ]
 

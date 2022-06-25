@@ -52,11 +52,13 @@ def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
                         type_, state, lift = type(flattend), send(flattend), lift
                     case True, _ if type(flattend) is type_:
                         state = send(flattend)
+                    case True, _ if type(flattend) is not type:
+                        raise TypeError(flattend)
                     case _:
                         raise ValueError(context)
         except StopIteration as return_:
             if type_ is None:
-                raise ValueError(context)
+                raise TypeError(context)
             return lift(return_.value)
 
     return wrapper
@@ -65,8 +67,7 @@ def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
 MonadDo: TypeAlias = Generator[
     # tuple[M[T], Callable[[M[T]], T], Callable[[T], M[T]]],
     tuple[M, Callable[[M], T], Callable[[T], M]],
-    # tuple[M[T], Callable[[M[T]], T], Callable[[T], M[T]]],
-    tuple[M, Callable[[M], T], Callable[[T], M]],
+    T,
     T,
 ]
 

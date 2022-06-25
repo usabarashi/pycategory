@@ -186,9 +186,64 @@ def test_eitherttry_do():
         Failure,
         Left,
         Right,
+        Some,
         Success,
         do,
     )
+
+    @do
+    def safe_context() -> EitherTTryDo[IndexError | KeyError, int]:
+        _ = yield from EitherTTry[IndexError, bool](
+            Success[Either[IndexError, bool]](Right[IndexError, bool](True))
+        )
+        one = yield from EitherTTry[IndexError, int](
+            Success[Either[IndexError, int]](Right[IndexError, int](1))
+        )
+        two = 2
+        three = yield from EitherTTry[KeyError, int](
+            Failure[Either[KeyError, int]](Exception())
+        )
+        _ = yield from EitherTTry[IndexError, bool](
+            Success[Either[IndexError, bool]](Right[IndexError, bool](True))
+        )
+        _ = yield from EitherTTry[KeyError, bool](
+            Success[Either[KeyError, bool]](Right[KeyError, bool](True))
+        )
+        return one + two + three
+
+    @do
+    def outside_context() -> EitherTTryDo[IndexError | KeyError, int]:
+        _ = yield from EitherTTry[IndexError, bool](
+            Success[Either[IndexError, bool]](Right[IndexError, bool](True))
+        )
+        one = yield from EitherTTry[IndexError, int](
+            Success[Either[IndexError, int]](Right[IndexError, int](1))
+        )
+        two = 2
+        three = yield from EitherTTry[KeyError, int](
+            Success[Either[KeyError, int]](Right[KeyError, int](3))
+        )
+        _ = yield from EitherTTry[IndexError, bool](
+            Success[Either[IndexError, bool]](Right[IndexError, bool](True))
+        )
+        _ = yield from EitherTTry[KeyError, bool](
+            Success[Either[KeyError, bool]](Right[KeyError, bool](True))
+        )
+        _ = yield from EitherTTry[ValueError, bool](
+            Success[Either[ValueError, bool]](Right[ValueError, bool](True))
+        )  # FIXME: CI to build errors.
+        _ = yield from EitherTTry[TypeError, bool](
+            Success[Either[TypeError, bool]](Right[TypeError, bool](True))
+        )  # FIXME: CI to build errors.
+        _ = yield from Some[int](42)
+        _ = yield from Success[int](42)
+        return one + two + three
+
+    try:
+        outside_context().get()
+        assert False
+    except Exception as error:
+        assert TypeError is type(error)
 
     # Failrue case
     @do
@@ -473,8 +528,64 @@ def test_eithertfuture_do():
         Future,
         Left,
         Right,
+        Some,
+        Success,
         do,
     )
+
+    @do
+    def safe_context() -> EitherTFutureDo[IndexError | KeyError, int]:
+        _ = yield from EitherTFuture[IndexError, bool](
+            Future[Either[IndexError, bool]].successful(Right[IndexError, bool](True))
+        )
+        one = yield from EitherTFuture[IndexError, int](
+            Future[Either[IndexError, int]].successful(Right[IndexError, int](1))
+        )
+        two = 2
+        three = yield from EitherTFuture[KeyError, int](
+            Future[Either[KeyError, int]].successful(Right[KeyError, int](3))
+        )
+        _ = yield from EitherTFuture[IndexError, bool](
+            Future[Either[IndexError, bool]].successful(Right[IndexError, bool](True))
+        )
+        _ = yield from EitherTFuture[KeyError, bool](
+            Future[Either[KeyError, bool]].successful(Right[KeyError, bool](True))
+        )
+        return one + two + three
+
+    @do
+    def outside_context() -> EitherTFutureDo[IndexError | KeyError, int]:
+        _ = yield from EitherTFuture[IndexError, bool](
+            Future[Either[IndexError, bool]].successful(Right[IndexError, bool](True))
+        )
+        one = yield from EitherTFuture[IndexError, int](
+            Future[Either[IndexError, int]].successful(Right[IndexError, int](1))
+        )
+        two = 2
+        three = yield from EitherTFuture[KeyError, int](
+            Future[Either[KeyError, int]].successful(Right[KeyError, int](3))
+        )
+        _ = yield from EitherTFuture[IndexError, bool](
+            Future[Either[IndexError, bool]].successful(Right[IndexError, bool](True))
+        )
+        _ = yield from EitherTFuture[KeyError, bool](
+            Future[Either[KeyError, bool]].successful(Right[KeyError, bool](True))
+        )
+        _ = yield from EitherTFuture[ValueError, bool](
+            Future[Either[ValueError, bool]].successful(Right[ValueError, bool](True))
+        )  # FIXME: CI to build errors.
+        _ = yield from EitherTFuture[TypeError, bool](
+            Future[Either[TypeError, bool]].successful(Right[TypeError, bool](True))
+        )  # FIXME: CI to build errors.
+        _ = yield from Some[int](42)
+        _ = yield from Success[int](42)
+        return one + two + three
+
+    try:
+        outside_context().get()
+        assert False
+    except Exception as error:
+        assert TypeError is type(error)
 
     # Failrue case
     @do

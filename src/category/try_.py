@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, ParamSpec, TypeVar
+from functools import wraps
+from typing import Any, Callable, Generic, Literal, ParamSpec, TypeVar, Union
 
 from category.monad import Monad
 
@@ -18,7 +19,11 @@ class Try(Monad, Generic[T]):
     """Try"""
 
     @abstractmethod
-    def __iter__(self) -> TryDo[T]:
+    def __iter__(
+        self,
+    ) -> Generator[
+        tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]], None, T
+    ]:
         raise NotImplementedError
 
     @abstractmethod
@@ -63,10 +68,11 @@ class Try(Monad, Generic[T]):
         raise NotImplementedError
 
     @staticmethod
-    def hold(fuction: Callable[P, T]) -> Callable[P, Try[T]]:
+    def hold(function: Callable[P, T]) -> Callable[P, Try[T]]:
+        @wraps(function)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> Try[T]:
             try:
-                return Success[T](fuction(*args, **kwargs))
+                return Success[T](function(*args, **kwargs))
             except Exception as error:
                 return Failure[T](error)
 
@@ -84,7 +90,11 @@ class Failure(Try[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __iter__(self) -> TryDo[T]:
+    def __iter__(
+        self,
+    ) -> Generator[
+        tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]], None, T
+    ]:
         lift: Callable[[T], Try[T]] = lambda value: Success[T](value)
         yield self.flatmap(lift), Failure.get, lift
         raise GeneratorExit(self) from self.exception
@@ -134,7 +144,11 @@ class Success(Try[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __iter__(self) -> TryDo[T]:
+    def __iter__(
+        self,
+    ) -> Generator[
+        tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]], None, T
+    ]:
         lift: Callable[[T], Try[T]] = lambda value: Success[T](value)
         yield self.flatmap(lift), Success.get, lift
         return self.value
@@ -175,7 +189,10 @@ class Success(Try[T]):
 
 SubType = Failure[T] | Success[T]
 TryDo = Generator[
-    tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]],
-    tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]],
+    Union[
+        tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]],
+        tuple[Try[Any], Callable[[Try[Any]], Any], Callable[[Any], Try[Any]]],
+    ],
+    Union[T, Any],
     T,
 ]

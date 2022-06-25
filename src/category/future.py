@@ -7,9 +7,10 @@ import dataclasses
 from abc import ABC
 from collections.abc import Generator
 from concurrent.futures._base import PENDING
-from typing import Callable, ParamSpec, Type, TypeVar
+from functools import wraps
+from typing import Any, Callable, ParamSpec, Type, TypeVar, Union
 
-from category.try_ import Failure, Success, Try
+from category.try_ import Failure, Monad, Success, Try
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -34,7 +35,7 @@ class ThreadPoolExecutionContext(ExecutionContext):
     ] = concurrent.futures.ThreadPoolExecutor
 
 
-class Future(concurrent.futures.Future[T]):
+class Future(Monad, concurrent.futures.Future[T]):
     """Future"""
 
     def __init__(self) -> None:
@@ -47,7 +48,7 @@ class Future(concurrent.futures.Future[T]):
         self,
     ) -> Generator[
         tuple[Future[T], Callable[[Future[T]], T], Callable[[T], Future[T]]],
-        tuple[Future[T], Callable[[Future[T]], T], Callable[[T], Future[T]]],
+        None,
         T,
     ]:
         lift: Callable[[T], Future[T]] = lambda value: Future[T].successful(value)
@@ -185,15 +186,16 @@ class Future(concurrent.futures.Future[T]):
 
     @staticmethod
     def hold(
-        functor: Callable[P, T]
+        function: Callable[P, T]
     ) -> Callable[P, Callable[[Type[ExecutionContext]], Future[T]]]:
+        @wraps(function)
         def wrapper(
             *args: P.args, **kwargs: P.kwargs
         ) -> Callable[[Type[ExecutionContext]], Future[T]]:
             def with_context(ec: Type[ExecutionContext], /) -> Future[T]:
                 # FIXME: Threaded processing
                 try:
-                    result = functor(*args, **kwargs)
+                    result = function(*args, **kwargs)
                     return Future[T].successful(result)
                 except Exception as error:
                     future = Future[T]()
@@ -206,7 +208,7 @@ class Future(concurrent.futures.Future[T]):
 
 
 FutureDo = Generator[
-    tuple[Future[T], Callable[[Future[T]], T], Callable[[T], Future[T]]],
-    tuple[Future[T], Callable[[Future[T]], T], Callable[[T], Future[T]]],
+    tuple[Future[T], Callable[[Future[Any]], Any], Callable[[Any], Future[Any]]],
+    Any | T,
     T,
 ]
