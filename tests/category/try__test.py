@@ -23,7 +23,7 @@ def test_try_hold():
 
 
 def test_try_do():
-    from category import Failure, Success, Try, TryDo, do
+    from category import Failure, Right, Success, Try, TryDo, do
 
     @do
     def safe_context() -> TryDo[int]:
@@ -32,6 +32,15 @@ def test_try_do():
         two = 2
         three = yield from Success[int](3)
         return one + two + three
+
+    @do
+    def outside_context() -> TryDo[int]:
+        _ = yield from Success[bool](True)
+        one = yield from Success[int](1)
+        two = 2
+        three = yield from Success[int](3)
+        three = yield from Right[Exception, int](42)  # Outside
+        return str(one + two + three)  # Outside
 
     @do
     def failure_context() -> TryDo[int]:

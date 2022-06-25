@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
 from functools import wraps
-from typing import Any, Callable, Generic, Literal, ParamSpec, TypeVar, Union
+from typing import Any, Callable, Generic, Literal, ParamSpec, TypeVar
 
 from category.monad import Monad
 
@@ -19,11 +19,15 @@ class Try(Monad, Generic[T]):
     """Try"""
 
     @abstractmethod
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]], None, T
-    ]:
+    def __iter__(self) -> Generator[Try[T], None, T]:
+        raise NotImplementedError
+
+    @staticmethod
+    def send(monad: Try[T]) -> T:
+        raise NotImplementedError
+
+    @staticmethod
+    def lift(value: T) -> Try[T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -90,14 +94,17 @@ class Failure(Try[T]):
     def __bool__(self) -> Literal[False]:
         return False
 
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]], None, T
-    ]:
-        lift: Callable[[T], Try[T]] = lambda value: Success[T](value)
-        yield self.flatmap(lift), Failure.get, lift
+    def __iter__(self) -> Generator[Try[T], None, T]:
+        yield self.flatmap(lambda value: Success[T](value))
         raise GeneratorExit(self) from self.exception
+
+    @staticmethod
+    def send(monad: Try[T], /) -> T:
+        return monad.get()
+
+    @staticmethod
+    def lift(value: T, /) -> Failure[T]:
+        return Failure[T](value)
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
         return Failure[TT](self.exception)
@@ -144,14 +151,17 @@ class Success(Try[T]):
     def __bool__(self) -> Literal[True]:
         return True
 
-    def __iter__(
-        self,
-    ) -> Generator[
-        tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]], None, T
-    ]:
-        lift: Callable[[T], Try[T]] = lambda value: Success[T](value)
-        yield self.flatmap(lift), Success.get, lift
+    def __iter__(self) -> Generator[Try[T], None, T]:
+        yield self.flatmap(lambda value: Success[T](value))
         return self.value
+
+    @staticmethod
+    def send(monad: Try[T], /) -> T:
+        return monad.get()
+
+    @staticmethod
+    def lift(value: T, /) -> Success[T]:
+        return Success[T](value)
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
         return Success[TT](functor(self.value))
@@ -188,11 +198,4 @@ class Success(Try[T]):
 
 
 SubType = Failure[T] | Success[T]
-TryDo = Generator[
-    Union[
-        tuple[Try[T], Callable[[Try[T]], T], Callable[[T], Try[T]]],
-        tuple[Try[Any], Callable[[Try[Any]], Any], Callable[[Any], Try[Any]]],
-    ],
-    Union[T, Any],
-    T,
-]
+TryDo = Generator[Try[T], Any, T]

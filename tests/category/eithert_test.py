@@ -231,13 +231,13 @@ def test_eitherttry_do():
         )
         _ = yield from EitherTTry[ValueError, bool](
             Success[Either[ValueError, bool]](Right[ValueError, bool](True))
-        )  # FIXME: CI to build errors.
+        )  # Outside
         _ = yield from EitherTTry[TypeError, bool](
             Success[Either[TypeError, bool]](Right[TypeError, bool](True))
-        )  # FIXME: CI to build errors.
-        _ = yield from Some[int](42)
-        _ = yield from Success[int](42)
-        return one + two + three
+        )  # Outside
+        _ = yield from Some[int](42)  # Outside
+        _ = yield from Success[int](42)  # Outside
+        return str(one + two + three)  # Outside
 
     try:
         outside_context().get()
@@ -573,13 +573,13 @@ def test_eithertfuture_do():
         )
         _ = yield from EitherTFuture[ValueError, bool](
             Future[Either[ValueError, bool]].successful(Right[ValueError, bool](True))
-        )  # FIXME: CI to build errors.
+        )  # Outside
         _ = yield from EitherTFuture[TypeError, bool](
             Future[Either[TypeError, bool]].successful(Right[TypeError, bool](True))
-        )  # FIXME: CI to build errors.
-        _ = yield from Some[int](42)
-        _ = yield from Success[int](42)
-        return one + two + three
+        )  # Outside
+        _ = yield from Some[int](42)  # Outside
+        _ = yield from Success[int](42)  # Outside
+        return str(one + two + three)  # Outside
 
     try:
         outside_context().get()
