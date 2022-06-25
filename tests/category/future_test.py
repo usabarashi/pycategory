@@ -128,6 +128,8 @@ def test_hold():
         else:
             raise Exception(value)
 
+    assert "multi_context" == multi_context.__name__
+
     # Failure case
     failure_future = multi_context(0)(ec)
     assert Future is type(failure_future)
@@ -152,6 +154,14 @@ def test_do():
             return value
         else:
             raise ValueError(value)
+
+    @do
+    def safe_context() -> FutureDo[int]:
+        _ = yield from Future[bool].successful(True)
+        one = yield from multi_context(1)(ec)
+        two = 2
+        three = yield from multi_context(0)(ec)
+        return one + two + three
 
     # Failure case
     @do

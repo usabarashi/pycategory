@@ -7,6 +7,8 @@ def test_try_hold():
             raise Exception("error")
         return value
 
+    assert "multi_context" == multi_context.__name__
+
     assert Failure is type(multi_context(0))
     try:
         multi_context(0).get()
@@ -22,6 +24,14 @@ def test_try_hold():
 
 def test_try_do():
     from category import Failure, Success, Try, TryDo, do
+
+    @do
+    def safe_context() -> TryDo[int]:
+        _ = yield from Success[bool](True)
+        one = yield from Success[int](1)
+        two = 2
+        three = yield from Success[int](3)
+        return one + two + three
 
     @do
     def failure_context() -> TryDo[int]:

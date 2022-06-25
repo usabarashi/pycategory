@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from copy import deepcopy
-from typing import Any, Callable, Generic, Type, TypeVar, cast
+from typing import Any, Callable, Generic, Type, TypeVar, Union, cast
 
 from category.either import Either, Left, Right
 from category.future import ExecutionContext, Future
@@ -33,7 +33,15 @@ class EitherTTry(Monad, Generic[L, R]):
 
     def __iter__(
         self,
-    ) -> EitherTTryDo[L, R]:
+    ) -> Generator[
+        tuple[
+            EitherTTry[L, R],
+            Callable[[EitherTTry[L, R]], R],
+            Callable[[R], EitherTTry[L, R]],
+        ],
+        None,
+        R,
+    ]:
         lift: Callable[[R], EitherTTry[L, R]] = lambda right: EitherTTry[L, R](
             Success[Either[L, R]](Right[L, R](right))
         )
@@ -95,14 +103,10 @@ class EitherTTry(Monad, Generic[L, R]):
 EitherTTryDo = Generator[
     tuple[
         EitherTTry[L, R],
-        Callable[[EitherTTry[L, Any]], Any],
-        Callable[[R], EitherTTry[L, R]],
+        Callable[[EitherTTry[Any, Any]], Any],
+        Callable[[Any], EitherTTry[Any, Any]],
     ],
-    tuple[
-        EitherTTry[L, R],
-        Callable[[EitherTTry[L, Any]], Any],
-        Callable[[R], EitherTTry[L, R]],
-    ],
+    Any | R,
     R,
 ]
 
@@ -126,7 +130,15 @@ class EitherTFuture(Monad, Generic[L, R]):
 
     def __iter__(
         self,
-    ) -> EitherTFutureDo[L, R]:
+    ) -> Generator[
+        tuple[
+            EitherTFuture[L, R],
+            Callable[[EitherTFuture[L, R]], R],
+            Callable[[R], EitherTFuture[L, R]],
+        ],
+        None,
+        R,
+    ]:
         lift: Callable[[R], EitherTFuture[L, R]] = lambda right: EitherTFuture[L, R](
             Future[Either[L, R]].successful(Right[L, R](right))
         )
@@ -208,13 +220,9 @@ class EitherTFuture(Monad, Generic[L, R]):
 EitherTFutureDo = Generator[
     tuple[
         EitherTFuture[L, R],
-        Callable[[EitherTFuture[L, R]], R],
-        Callable[[R], EitherTFuture[L, R]],
+        Callable[[EitherTFuture[Any, Any]], Any],
+        Callable[[Any], EitherTFuture[Any, Any]],
     ],
-    tuple[
-        EitherTFuture[L, R],
-        Callable[[EitherTFuture[L, R]], R],
-        Callable[[R], EitherTFuture[L, R]],
-    ],
+    Any | R,
     R,
 ]

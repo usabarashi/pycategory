@@ -1,5 +1,37 @@
 def test_either_do():
-    from category import EitherDo, Left, Right, do
+    from category import EitherDo, Left, Right, Some, Success, do
+
+    @do
+    def safe_context() -> EitherDo[IndexError | KeyError, int]:
+        _ = yield from Right[IndexError, bool](True)
+        one = yield from Right[IndexError, int](1)
+        two = 2
+        three = yield from Right[KeyError, int](3)
+        _ = yield from Right[IndexError, bool](False)
+        _ = yield from Right[KeyError, bool](False)
+        return one + two + three
+
+    assert 6 == safe_context().get()
+
+    @do
+    def outside_context() -> EitherDo[IndexError | KeyError, int]:
+        _ = yield from Right[IndexError, bool](True)
+        one = yield from Right[IndexError, int](1)
+        two = 2
+        three = yield from Right[KeyError, int](3)
+        _ = yield from Right[IndexError, bool](False)
+        _ = yield from Right[KeyError, bool](False)
+        _ = yield from Right[ValueError, int](42)  # FIXME: CI to build errors.
+        _ = yield from Right[TypeError, int](42)  # FIXME: CI to build errors.
+        _ = yield from Some[int](42)
+        _ = yield from Success[int](42)
+        return one + two + three
+
+    try:
+        outside_context().get()
+        assert False
+    except Exception as error:
+        assert TypeError is type(error)
 
     @do
     def left_context() -> EitherDo[Exception, int]:
