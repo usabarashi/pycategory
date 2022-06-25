@@ -22,6 +22,7 @@ __all__ = [
     "ExecutionContext",
     "Future",
     "FutureDo",
+    "ExecutionContext",
     "ThreadPoolExecutionContext",
     "do",
     "Option",

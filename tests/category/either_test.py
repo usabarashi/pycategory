@@ -160,16 +160,18 @@ def test_left_method():
     from category import Either, Left, Right
 
     def to_left(self: Either[Exception, int]) -> Left[Exception, int]:
-        if isinstance(self.pattern, Left):
-            return self.pattern
-        else:
-            return Left[Exception, int](Exception())
+        match self.pattern:
+            case Left():
+                return self.pattern
+            case Right():
+                return Left[Exception, int](Exception())
 
     def to_right(self: Either[Exception, int]) -> Right[Exception, int]:
-        if isinstance(self.pattern, Left):
-            return Right[Exception, int](1)
-        else:
-            return self.pattern
+        match self.pattern:
+            case Left():
+                return Right[Exception, int](1)
+            case Right():
+                return self.pattern
 
     assert Left is type(Left[Exception, int](Exception()).method(to_left))
     assert Right is type(Left[Exception, int](Exception()).method(to_right))
