@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar
+from functools import wraps
+from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar
 
 from category.monad import Monad
 
@@ -11,6 +12,7 @@ T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
 EE = TypeVar("EE")
 U = TypeVar("U")
+P = ParamSpec("P")
 
 
 class Option(Monad, Generic[T]):
@@ -59,6 +61,31 @@ class Option(Monad, Generic[T]):
     @abstractproperty
     def pattern(self) -> SubType[T]:
         raise NotImplementedError
+
+    @staticmethod
+    def do(context: Callable[P, OptionDo[T]], /) -> Callable[P, Option[T]]:
+        """map, flatmap combination syntax sugar.
+
+        Only type checking can determine type violations, and runtime errors may not occur.
+        """
+
+        @wraps(context)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Option[T]:
+            context_ = context(*args, **kwargs)
+            state: Any = None
+            try:
+                while True:
+                    match flatmapped := context_.send(state).pattern:
+                        case Void():
+                            return flatmapped
+                        case Some():
+                            state = Some[Any].send(flatmapped)
+                        case _:
+                            raise TypeError(flatmapped)
+            except StopIteration as return_:
+                return Some[T].lift(return_.value)
+
+        return wrapper
 
     def method(self, functor: Callable[[Option[T]], TT], /) -> TT:
         raise NotImplementedError
@@ -132,11 +159,11 @@ class Some(Option[T]):
         return self.value
 
     @staticmethod
-    def send(monad: Option[T]) -> T:
+    def send(monad: Option[T], /) -> T:
         return monad.get()
 
     @staticmethod
-    def lift(value: T) -> Some[T]:
+    def lift(value: T, /) -> Some[T]:
         return Some[T](value)
 
     def map(self, functor: Callable[[T], TT], /) -> Some[TT]:
@@ -168,7 +195,7 @@ class Some(Option[T]):
         return functor(self)
 
 
-SubType = Void[T] | Some[T]
-OptionDo = Generator[Option[T], Any, T]
+SubType: TypeAlias = Void[T] | Some[T]
+OptionDo: TypeAlias = Generator[Option[Any], Any, T]
 
 SINGLETON_VOID = Void[Any]()

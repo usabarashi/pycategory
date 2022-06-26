@@ -1,7 +1,7 @@
 def test_either_do():
-    from category import EitherDo, Left, Right, Some, Success, do
+    from category import Either, EitherDo, Left, Right, Some, Success
 
-    @do
+    @Either.do
     def safe_context() -> EitherDo[IndexError | KeyError, int]:
         _ = yield from Right[IndexError, bool](True)
         one = yield from Right[IndexError, int](1)
@@ -13,7 +13,7 @@ def test_either_do():
 
     assert 6 == safe_context().get()
 
-    @do
+    @Either.do
     def outside_context() -> EitherDo[IndexError | KeyError, int]:
         _ = yield from Right[IndexError, bool](True)
         one = yield from Right[IndexError, int](1)
@@ -33,7 +33,7 @@ def test_either_do():
     except Exception as error:
         assert TypeError is type(error)
 
-    @do
+    @Either.do
     def left_context() -> EitherDo[Exception, int]:
         one = yield from Right[Exception, int](1)
         two = 2
@@ -49,7 +49,7 @@ def test_either_do():
     )
     assert None is left_context().fold(left=lambda left: None, right=lambda right: None)
 
-    @do
+    @Either.do
     def right_context() -> EitherDo[None, int]:
         one = yield from Right[None, int](1)
         two = 2
@@ -90,7 +90,7 @@ def test_left_map():
         assert False
     except Exception as error:
         assert ValueError is type(error)
-    None is mapped_left.right().get_or_else(lambda: None)
+    assert None is mapped_left.right().get_or_else(lambda: None)
 
 
 def test_left_faltmap():
@@ -138,7 +138,7 @@ def test_left_leftprojection_get():
         Right[int, None](None).left().get()
         assert False
     except Exception as error:
-        ValueError is type(error)
+        assert ValueError is type(error)
     assert 0 == Right[int, None](None).left().get_or_else(lambda: 0)
 
 
@@ -344,6 +344,7 @@ def test_right_method():
 
 def test_dataclass():
     from dataclasses import asdict, dataclass
+    from typing import cast
 
     from category import Left, Right
 
@@ -354,9 +355,9 @@ def test_dataclass():
 
     dict_data = asdict(AsDict(left=Left[None, int](None), right=Right[None, int](42)))
     assert Left is type(dict_data.get("left", None))
-    assert None is dict_data.get("left", None).left().get()
+    assert None is cast(Left[None, int], dict_data.get("left", None)).left().get()
     assert Right is type(dict_data.get("right", None))
-    assert 42 == dict_data.get("right", None).get()
+    assert 42 == cast(Right[None, int], dict_data.get("right", None)).get()
 
 
 def test_pattern_match():
@@ -373,6 +374,19 @@ def test_pattern_match():
     match cast(Either[None, int], Right[None, int](42)):
         case Right(42):
             assert True
+        case _:
+            assert False
+
+    match cast(
+        Either[IndexError | KeyError, int],
+        Left[IndexError | KeyError, int](KeyError()),
+    ):
+        case Left(error) if isinstance(error, IndexError):
+            assert False
+        case Left(error) if isinstance(error, KeyError):
+            assert True
+        case Right():
+            assert False
         case _:
             assert False
 

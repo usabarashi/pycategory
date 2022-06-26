@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
-from typing import Any, Callable, Generic, Literal, TypeVar
+from functools import wraps
+from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar
 
 from category.monad import Monad
 
@@ -13,6 +14,7 @@ LL = TypeVar("LL")
 RR = TypeVar("RR")
 TT = TypeVar("TT")
 U = TypeVar("U")
+P = ParamSpec("P")
 
 
 class Either(Monad, Generic[L, R]):
@@ -70,8 +72,33 @@ class Either(Monad, Generic[L, R]):
     def pattern(self) -> SubType[L, R]:
         raise NotImplementedError
 
+    @staticmethod
+    def do(context: Callable[P, EitherDo[L, R]], /) -> Callable[P, Either[L, R]]:
+        """map, flatmap combination syntax sugar.
+
+        Only type checking can determine type violations, and runtime errors may not occur.
+        """
+
+        @wraps(context)
+        def wrapper(*args: P.args, **kwargs: P.kwargs):
+            context_ = context(*args, **kwargs)
+            state: Any = None
+            try:
+                while True:
+                    match flatmapped := context_.send(state).pattern:
+                        case Left():
+                            return flatmapped
+                        case Right():
+                            state = Right[L, Any].send(flatmapped)
+                        case _:
+                            raise TypeError(flatmapped)
+            except StopIteration as return_:
+                return Right[L, R].lift(return_.value)
+
+        return wrapper
+
     @abstractmethod
-    def method(self, functor: Callable[[Either[L, R]], TT]) -> TT:
+    def method(self, functor: Callable[[Either[L, R]], TT], /) -> TT:
         raise NotImplementedError
 
 
@@ -271,5 +298,5 @@ class RightProjection(Generic[L, R]):
                 return functor(right.get())
 
 
-SubType = Left[L, R] | Right[L, R]
-EitherDo = Generator[Either[L, R], Any, R]
+SubType: TypeAlias = Left[L, R] | Right[L, R]
+EitherDo = Generator[Either[L, Any], Any, R]  # Generator[Either[L, Any], Any, R]

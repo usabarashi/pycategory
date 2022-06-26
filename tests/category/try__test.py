@@ -23,9 +23,9 @@ def test_try_hold():
 
 
 def test_try_do():
-    from category import Failure, Right, Success, Try, TryDo, do
+    from category import Failure, Right, Success, Try, TryDo
 
-    @do
+    @Try.do
     def safe_context() -> TryDo[int]:
         _ = yield from Success[bool](True)
         one = yield from Success[int](1)
@@ -33,7 +33,7 @@ def test_try_do():
         three = yield from Success[int](3)
         return one + two + three
 
-    @do
+    @Try.do
     def outside_context() -> TryDo[int]:
         _ = yield from Success[bool](True)
         one = yield from Success[int](1)
@@ -42,7 +42,7 @@ def test_try_do():
         three = yield from Right[Exception, int](42)  # Outside
         return str(one + two + three)  # Outside
 
-    @do
+    @Try.do
     def failure_context() -> TryDo[int]:
         one = yield from Success[int](1)
         two = 2
@@ -56,7 +56,7 @@ def test_try_do():
     except Exception as error:
         assert ValueError is type(error)
 
-    @do
+    @Try.do
     def success_context() -> TryDo[int]:
         one = yield from Success[int](1)
         two = 2
@@ -73,7 +73,7 @@ def test_try_do():
             raise Exception("error")
         return value
 
-    @do
+    @Try.do
     def mix_failure_context() -> TryDo[int]:
         success = yield from multi_context(1)
         _ = yield from multi_context(0)
@@ -87,7 +87,7 @@ def test_try_do():
         assert ValueError is type(error)
     assert None is mix_failure_context().get_or_else(lambda: None)
 
-    @do
+    @Try.do
     def mix_success_context() -> TryDo[int]:
         one = yield from multi_context(1)
         two = 2
@@ -111,7 +111,7 @@ def test_failure_map():
 
     failure = Failure[int](Exception())
     mapped_failure = failure.map(lambda success: None)
-    failure is not mapped_failure
+    assert failure is not mapped_failure
     assert Failure is type(mapped_failure)
 
 
@@ -263,6 +263,7 @@ def test_success_method():
 
 def test_dataclass():
     from dataclasses import asdict, dataclass
+    from typing import cast
 
     from category import Failure, Success
 
@@ -275,9 +276,11 @@ def test_dataclass():
         AsDict(failure=Failure[int](Exception(42)), success=Success[int](42))
     )
     assert Failure is type(dict_data.get("failure", None))
-    assert Exception is type(dict_data.get("failure", None).exception)
+    assert Exception is type(
+        cast(Failure[int], dict_data.get("failure", None)).exception
+    )
     assert Success is type(dict_data.get("success", None))
-    assert 42 == dict_data.get("success", None).get()
+    assert 42 == cast(Success[int], dict_data.get("success", None)).get()
 
 
 def test_pattern_match():

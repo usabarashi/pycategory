@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC
+from functools import wraps
 from typing import (
     Any,
     Callable,
@@ -52,6 +53,7 @@ def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
     Only type checking can determine type violations, and runtime errors may not occur.
     """
 
+    @wraps(context)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> M:
         context_ = context(*args, **kwargs)
         context_type: Optional[Type[M]] = None
