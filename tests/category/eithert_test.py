@@ -198,10 +198,9 @@ def test_eitherttry_do():
         Right,
         Some,
         Success,
-        do,
     )
 
-    @do
+    @EitherTTry.do
     def safe_context() -> EitherTTryDo[IndexError | KeyError, int]:
         _ = yield from EitherTTry[IndexError, bool](
             Success[Either[IndexError, bool]](Right[IndexError, bool](True))
@@ -221,7 +220,7 @@ def test_eitherttry_do():
         )
         return one + two + three
 
-    @do
+    @EitherTTry.do
     def outside_context() -> EitherTTryDo[IndexError | KeyError, int]:
         _ = yield from EitherTTry[IndexError, bool](
             Success[Either[IndexError, bool]](Right[IndexError, bool](True))
@@ -256,7 +255,7 @@ def test_eitherttry_do():
         assert TypeError is type(error)
 
     # Failrue case
-    @do
+    @EitherTTry.do
     def failure_context() -> EitherTTryDo[Exception, int]:
         one = yield from EitherTTry[Exception, int](
             Success[Either[Exception, int]](Right[Exception, int](1))
@@ -279,7 +278,7 @@ def test_eitherttry_do():
     )
 
     # Success[Left[L, R]] case
-    @do
+    @EitherTTry.do
     def success_left_context() -> EitherTTryDo[Exception, int]:
         one = yield from EitherTTry[Exception, int](
             Success[Either[Exception, int]](Right[Exception, int](1))
@@ -301,7 +300,7 @@ def test_eitherttry_do():
     assert Exception is type(success_left_context()._value.get().left().get())
 
     # Success[Right[L, R]] case
-    @do
+    @EitherTTry.do
     def success_right_context() -> EitherTTryDo[Exception, int]:
         one = yield from EitherTTry[Exception, int](
             Success[Either[Exception, int]](Right[Exception, int](1))
@@ -544,10 +543,9 @@ def test_eithertfuture_do():
         Right,
         Some,
         Success,
-        do,
     )
 
-    @do
+    @EitherTFuture.do
     def safe_context() -> EitherTFutureDo[IndexError | KeyError, int]:
         _ = yield from EitherTFuture[IndexError, bool](
             Future[Either[IndexError, bool]].successful(Right[IndexError, bool](True))
@@ -567,7 +565,7 @@ def test_eithertfuture_do():
         )
         return one + two + three
 
-    @do
+    @EitherTFuture.do
     def outside_context() -> EitherTFutureDo[IndexError | KeyError, int]:
         _ = yield from EitherTFuture[IndexError, bool](
             Future[Either[IndexError, bool]].successful(Right[IndexError, bool](True))
@@ -602,7 +600,7 @@ def test_eithertfuture_do():
         assert TypeError is type(error)
 
     # Failrue case
-    @do
+    @EitherTFuture.do
     def failure_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](1))
@@ -626,7 +624,7 @@ def test_eithertfuture_do():
         assert Exception is type(error)
 
     # Success[Left[L, R]] case
-    @do
+    @EitherTFuture.do
     def success_left_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](1))
@@ -648,7 +646,7 @@ def test_eithertfuture_do():
     assert Exception is type(success_left_context()._value.result().left().get())
 
     # Success[Right[L, R]] case
-    @do
+    @EitherTFuture.do
     def success_right_context() -> EitherTFutureDo[Exception, int]:
         one = yield from EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](1))
