@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
 from functools import wraps
-from typing import Any, Callable, Generic, Literal, ParamSpec, TypeVar
+from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar
 
 from category.monad import Monad
 
@@ -66,6 +66,31 @@ class Try(Monad, Generic[T]):
     @abstractproperty
     def pattern(self) -> SubType[T]:
         raise NotImplementedError
+
+    @staticmethod
+    def do(context: Callable[P, TryDo[T]], /) -> Callable[P, Try[T]]:
+        """map, flatmap combination syntax sugar.
+
+        Only type checking can determine type violations, and runtime errors may not occur.
+        """
+
+        @wraps(context)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Try[T]:
+            context_ = context(*args, **kwargs)
+            state: Any = None
+            try:
+                while True:
+                    match flatmapped := context_.send(state).pattern:
+                        case Failure():
+                            return flatmapped
+                        case Success():
+                            state = Success[Any].send(flatmapped)
+                        case _:
+                            raise TypeError(flatmapped)
+            except StopIteration as return_:
+                return Success[T].lift(return_.value)
+
+        return wrapper
 
     @abstractmethod
     def method(self, functor: Callable[[Try[T]], TT], /) -> TT:
@@ -197,5 +222,5 @@ class Success(Try[T]):
         return functor(self)
 
 
-SubType = Failure[T] | Success[T]
-TryDo = Generator[Try[T], Any, T]
+SubType: TypeAlias = Failure[T] | Success[T]
+TryDo: TypeAlias = Generator[Try[Any], Any, T]

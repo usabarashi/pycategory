@@ -7,6 +7,8 @@ def test_future():
 
 
 def test_map():
+    from typing import cast
+
     from category import ExecutionContext as ec
     from category import Failure, Future, Success
 
@@ -22,7 +24,7 @@ def test_map():
     except Exception as error:
         assert Exception is type(error)
     assert Failure is type(failure_mapped_future.value)
-    assert Exception is type(failure_mapped_future.value.exception)
+    assert Exception is type(cast(Failure[int], failure_mapped_future.value).exception)
 
     # Success case
     success_future = Future.successful(1)
@@ -35,6 +37,8 @@ def test_map():
 
 
 def test_flatmap():
+    from typing import cast
+
     from category import ExecutionContext as ec
     from category import Failure, Future, Success
 
@@ -52,7 +56,9 @@ def test_flatmap():
     except Exception as error:
         assert Exception is type(error)
     assert Failure is type(failure_flatmapped_future.value)
-    assert Exception is type(failure_flatmapped_future.value.exception)
+    assert Exception is type(
+        cast(Failure[int], failure_flatmapped_future.value).exception
+    )
 
     # Success case
     success_future = Future[int].successful(1)
@@ -67,6 +73,8 @@ def test_flatmap():
 
 
 def test_try_complete():
+    from typing import cast
+
     from category import Failure, Future, Success
 
     # Failure case
@@ -79,7 +87,7 @@ def test_try_complete():
     except Exception as error:
         assert Exception is type(error)
     assert Failure is type(failure_future.value)
-    assert Exception is type(failure_future.value.exception)
+    assert Exception is type(cast(Failure[int], failure_future.value).exception)
 
     # Success case
     success_future = Future[int].successful(1)
@@ -118,6 +126,8 @@ def test_successful():
 
 
 def test_hold():
+    from typing import cast
+
     from category import ExecutionContext as ec
     from category import Failure, Future, Success
 
@@ -134,7 +144,7 @@ def test_hold():
     failure_future = multi_context(0)(ec)
     assert Future is type(failure_future)
     assert Failure is type(failure_future.value)
-    assert Exception is type(failure_future.value.exception)
+    assert Exception is type(cast(Failure[int], failure_future.value).exception)
 
     # Success case
     success_future = multi_context(1)(ec)
@@ -145,8 +155,10 @@ def test_hold():
 
 
 def test_do():
+    from typing import cast
+
     from category import ExecutionContext as ec
-    from category import Failure, Future, FutureDo, Success, do
+    from category import Failure, Future, FutureDo, Success
 
     @Future.hold
     def multi_context(value: int, /) -> int:
@@ -155,7 +167,7 @@ def test_do():
         else:
             raise ValueError(value)
 
-    @do
+    @Future.do
     def safe_context() -> FutureDo[int]:
         _ = yield from Future[bool].successful(True)
         one = yield from multi_context(1)(ec)
@@ -164,7 +176,7 @@ def test_do():
         return one + two + three
 
     # Failure case
-    @do
+    @Future.do
     def failure_context() -> FutureDo[int]:
         one = yield from multi_context(1)(ec)
         two = 2
@@ -178,10 +190,10 @@ def test_do():
     except Exception:
         assert True
     assert Failure is type(failure_context().value)
-    assert ValueError is type(failure_context().value.exception)
+    assert ValueError is type(cast(Failure[int], failure_context().value).exception)
 
     # Success case
-    @do
+    @Future.do
     def success_context() -> FutureDo[int]:
         one = yield from multi_context(1)(ec)
         two = 2

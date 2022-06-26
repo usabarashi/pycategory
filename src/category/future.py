@@ -8,7 +8,7 @@ from abc import ABC
 from collections.abc import Generator
 from concurrent.futures._base import PENDING
 from functools import wraps
-from typing import Any, Callable, ParamSpec, Type, TypeVar
+from typing import Any, Callable, ParamSpec, Type, TypeAlias, TypeVar
 
 from category.try_ import Failure, Monad, Success, Try
 
@@ -186,6 +186,32 @@ class Future(Monad, concurrent.futures.Future[T]):
         except Exception as failure:
             return Failure[T](failure)
 
+    @staticmethod
+    def do(context: Callable[P, FutureDo[T]], /) -> Callable[P, Future[T]]:
+        """map, flatmap combination syntax sugar.
+
+        Only type checking can determine type violations, and runtime errors may not occur.
+        """
+
+        @wraps(context)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Future[T]:
+            context_ = context(*args, **kwargs)
+            state: Any = None
+            try:
+                while True:
+                    flatmapped = context_.send(state)
+                    match flatmapped.value.pattern:
+                        case Failure():
+                            return flatmapped
+                        case Success():
+                            state = Future[Any].send(flatmapped)
+                        case _:
+                            raise TypeError(flatmapped)
+            except StopIteration as return_:
+                return Future[T].lift(return_.value)
+
+        return wrapper
+
     def method(self, functor: Callable[[Future[T]], TT], /) -> TT:
         return functor(self)
 
@@ -212,4 +238,4 @@ class Future(Monad, concurrent.futures.Future[T]):
         return wrapper
 
 
-FutureDo = Generator[Future[T], Any, T]
+FutureDo: TypeAlias = Generator[Future[Any], Any, T]

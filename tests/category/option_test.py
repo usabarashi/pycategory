@@ -1,7 +1,7 @@
 def test_option_do():
-    from category import VOID, OptionDo, Right, Some, Void, do
+    from category import VOID, Option, OptionDo, Right, Some, Void
 
-    @do
+    @Option.do
     def safe_context() -> OptionDo[int]:
         _ = yield from Some[bool](True)
         one = yield from Some[int](1)
@@ -9,7 +9,7 @@ def test_option_do():
         three = yield from Some[int](3)
         return one + two + three
 
-    @do
+    @Option.do
     def outside_context() -> OptionDo[int]:
         _ = yield from Some[bool](True)
         one = yield from Some[int](1)
@@ -18,7 +18,7 @@ def test_option_do():
         _ = yield from Right[Exception, int](42)  # Outside
         return str(one + two + three)  # Outside
 
-    @do
+    @Option.do
     def void_context() -> OptionDo[int]:
         one = yield from Some[int](1)
         two = 2
@@ -31,7 +31,7 @@ def test_option_do():
     assert False is void_context().not_empty()
     assert None is void_context().fold(void=lambda: None, some=lambda some: None)
 
-    @do
+    @Option.do
     def some_context() -> OptionDo[int]:
         one = yield from Some[int](1)
         two = 2
@@ -210,6 +210,7 @@ def test_some_method():
 
 def test_dataclass():
     from dataclasses import asdict, dataclass
+    from typing import cast
 
     from category import VOID, Some, Void
 
@@ -221,7 +222,7 @@ def test_dataclass():
     dict_data = asdict(AsDict(void=VOID, some=Some(42)))
     assert VOID is dict_data.get("void", None)
     assert Some is type(dict_data.get("some", None))
-    assert 42 == dict_data.get("some", None).get()
+    assert 42 == cast(Some[int], dict_data.get("some", None)).get()
 
 
 def test_pattern_match():

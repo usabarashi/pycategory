@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from copy import deepcopy
-from typing import Any, Callable, Generic, Type, TypeVar, cast
+from functools import wraps
+from typing import Any, Callable, Generic, ParamSpec, Type, TypeAlias, TypeVar, cast
 
 from category.either import Either, Left, Right
 from category.future import ExecutionContext, Future
@@ -16,6 +17,8 @@ RR = TypeVar("RR")
 EE = TypeVar("EE")
 TT = TypeVar("TT")
 U = TypeVar("U")
+M = TypeVar("M")
+P = ParamSpec("P")
 
 
 class EitherTTry(Monad, Generic[L, R]):
@@ -94,11 +97,43 @@ class EitherTTry(Monad, Generic[L, R]):
 
         return self._value.map(catamorphism)
 
+    @staticmethod
+    def do(
+        context: Callable[P, EitherTTryDo[L, R]], /
+    ) -> Callable[P, EitherTTry[L, R]]:
+        """map, flatmap combination syntax sugar.
+
+        Only type checking can determine type violations, and runtime errors may not occur.
+        """
+
+        @wraps(context)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> EitherTTry[L, R]:
+            context_ = context(*args, **kwargs)
+            state: Any = None
+            try:
+                while True:
+                    flatmapped = context_.send(state)
+                    if not isinstance(flatmapped, EitherTTry):
+                        raise TypeError(flatmapped)
+                    match flatmapped._value.pattern:
+                        case Failure():
+                            return flatmapped
+                        case Success(either) if isinstance(either, Left):
+                            return flatmapped
+                        case Success(either) if isinstance(either, Right):
+                            state = EitherTTry[L, Any].send(flatmapped)
+                        case _:
+                            raise TypeError(flatmapped)
+            except StopIteration as return_:
+                return EitherTTry[L, R].lift(return_.value)
+
+        return wrapper
+
     def method(self, functor: Callable[[EitherTTry[L, R]], TT], /) -> TT:
         return functor(self)
 
 
-EitherTTryDo = Generator[EitherTTry[L, R], Any, R]
+EitherTTryDo: TypeAlias = Generator[EitherTTry[L, R], Any, R]
 
 
 class EitherTFuture(Monad, Generic[L, R]):
@@ -201,8 +236,40 @@ class EitherTFuture(Monad, Generic[L, R]):
 
         return with_context
 
+    @staticmethod
+    def do(
+        context: Callable[P, EitherTFutureDo[L, R]], /
+    ) -> Callable[P, EitherTFuture[L, R]]:
+        """map, flatmap combination syntax sugar.
+
+        Only type checking can determine type violations, and runtime errors may not occur.
+        """
+
+        @wraps(context)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> EitherTFuture[L, R]:
+            context_ = context(*args, **kwargs)
+            state: Any = None
+            try:
+                while True:
+                    flatmapped = context_.send(state)
+                    if not isinstance(flatmapped, EitherTFuture):
+                        raise TypeError(flatmapped)
+                    match flatmapped._value.value.pattern:
+                        case Failure():
+                            return flatmapped
+                        case Success(either) if isinstance(either, Left):
+                            return flatmapped
+                        case Success(either) if isinstance(either, Right):
+                            state = EitherTFuture[L, Any].send(flatmapped)
+                        case _:
+                            raise TypeError(flatmapped)
+            except StopIteration as return_:
+                return EitherTFuture[L, R].lift(return_.value)
+
+        return wrapper
+
     def method(self, functor: Callable[[EitherTFuture[L, R]], TT], /) -> TT:
         return functor(self)
 
 
-EitherTFutureDo = Generator[EitherTFuture[L, R], Any, R]
+EitherTFutureDo: TypeAlias = Generator[EitherTFuture[L, R], Any, R]
