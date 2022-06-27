@@ -22,14 +22,6 @@ class Try(Monad, Generic[T]):
     def __iter__(self) -> Generator[Try[T], None, T]:
         raise NotImplementedError
 
-    @staticmethod
-    def send(monad: Try[T]) -> T:
-        raise NotImplementedError
-
-    @staticmethod
-    def lift(value: T) -> Try[T]:
-        raise NotImplementedError
-
     @abstractmethod
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
         raise NotImplementedError
@@ -84,7 +76,7 @@ class Try(Monad, Generic[T]):
                         case Failure():
                             return flatmapped
                         case Success():
-                            state = Success[Any].send(flatmapped)
+                            state = flatmapped.unapply()
                         case _:
                             raise TypeError(flatmapped)
             except StopIteration as return_:
@@ -122,14 +114,6 @@ class Failure(Try[T]):
     def __iter__(self) -> Generator[Try[T], None, T]:
         yield self.flatmap(lambda value: Success[T](value))
         raise GeneratorExit(self) from self.exception
-
-    @staticmethod
-    def send(monad: Try[T], /) -> T:
-        return monad.get()
-
-    @staticmethod
-    def lift(value: T, /) -> Failure[T]:
-        return Failure[T](value)
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
         return Failure[TT](self.exception)
@@ -179,14 +163,6 @@ class Success(Try[T]):
     def __iter__(self) -> Generator[Try[T], None, T]:
         yield self.flatmap(lambda value: Success[T](value))
         return self.value
-
-    @staticmethod
-    def send(monad: Try[T], /) -> T:
-        return monad.get()
-
-    @staticmethod
-    def lift(value: T, /) -> Success[T]:
-        return Success[T](value)
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
         return Success[TT](functor(self.value))
