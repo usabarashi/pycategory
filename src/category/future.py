@@ -195,17 +195,17 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
         @wraps(context)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> Future[T]:
             context_ = context(*args, **kwargs)
-            state: Any = None
             try:
                 while True:
-                    yield_state = context_.send(state)
+                    yield_state = next(context_)
                     if not isinstance(yield_state, Future):
                         raise TypeError(yield_state)
                     match yield_state.composability():
                         case monad.Composability.IMPOSSIBLE:
                             return yield_state
                         case monad.Composability.POSSIBLE:
-                            state = yield_state.unapply()
+                            # Priority is given to the value of the sub-generator's monad.
+                            ...
                         case _:
                             raise TypeError(yield_state)
             except StopIteration as return_:
@@ -239,4 +239,4 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
         return wrapper
 
 
-FutureDo: TypeAlias = Generator[Future[Any], Any, T]
+FutureDo: TypeAlias = Generator[Future[Any], None, T]
