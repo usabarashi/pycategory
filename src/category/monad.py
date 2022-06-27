@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC
+from enum import Enum, auto
 from functools import wraps
 from typing import (
     Any,
@@ -21,10 +22,18 @@ M = TypeVar("M", covariant=True)
 P = ParamSpec("P")
 
 
+class Composability(Enum):
+    POSSIBLE = auto()
+    IMPOSSIBLE = auto()
+
+
 class Monad(ABC):
     """Monad"""
 
     __match_args__: tuple[()] | tuple[str] = ()
+
+    def __bool__(self) -> bool:
+        raise NotImplementedError
 
     @classmethod
     def lift(cls, *args: ..., **kwargs: ...):
@@ -42,14 +51,21 @@ class Monad(ABC):
                 value for key, value in vars(self).items() if key in self.__match_args__
             )
 
+    def composability(self) -> Composability:
+        match self.__bool__():
+            case False:
+                return Composability.IMPOSSIBLE
+            case True:
+                return Composability.POSSIBLE
+
     def get(self) -> Any:
-        ...
+        raise NotImplementedError
 
     def map(self, functor: Any, /) -> Any:
-        ...
+        raise NotImplementedError
 
     def flatmap(self, functor: Any, /) -> Any:
-        ...
+        raise NotImplementedError
 
 
 def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
@@ -68,19 +84,24 @@ def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
         state: Any = None
         try:
             while True:
-                flatmapped = context_.send(state)
-                match isinstance(flatmapped, Monad), bool(flatmapped), context_type:
-                    case True, False, _:
-                        return flatmapped
-                    case True, True, None:
-                        context_type = type(flatmapped)
-                    case True, True, _ if type(flatmapped) is not context_type:
+                yield_state = context_.send(state)
+                if not isinstance(yield_state, Monad):
+                    raise TypeError(yield_state)
+                match yield_state.composability(), context_type:
+                    case Composability.IMPOSSIBLE, _:
+                        return yield_state
+                    case Composability.POSSIBLE, None:
+                        context_type = type(yield_state)
+                        state = yield_state.unapply()
+                    case Composability.POSSIBLE, _ if type(
+                        yield_state
+                    ) is not context_type:
                         raise TypeError(
-                            flatmapped,
-                            f"A different type ${type(flatmapped)} from the context ${context_} is specified.",
+                            yield_state,
+                            f"A different type ${type(yield_state)} from the context ${context_} is specified.",
                         )
-                    case True, True, _ if type(flatmapped) is context_type:
-                        state = flatmapped.unapply()
+                    case Composability.POSSIBLE, _ if type(yield_state) is context_type:
+                        state = yield_state.unapply()
                     case _:
                         raise ValueError(context)
         except StopIteration as return_:

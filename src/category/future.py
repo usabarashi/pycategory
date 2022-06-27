@@ -10,7 +10,7 @@ from concurrent.futures._base import PENDING
 from functools import wraps
 from typing import Any, Callable, ParamSpec, Type, TypeAlias, TypeVar
 
-from category.try_ import Failure, Monad, Success, Try
+from category import monad, try_
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -35,11 +35,14 @@ class ThreadPoolExecutionContext(ExecutionContext):
     ] = concurrent.futures.ThreadPoolExecutor
 
 
-class Future(Monad, concurrent.futures.Future[T]):
+class Future(monad.Monad, concurrent.futures.Future[T]):
     """Future"""
 
     def __init__(self) -> None:
         super().__init__()
+
+    def unapply(self) -> tuple[()] | tuple[Any]:
+        return (self.result(),)
 
     def __bool__(self) -> bool:
         return self.done() and bool(self.value)
@@ -65,12 +68,12 @@ class Future(Monad, concurrent.futures.Future[T]):
         self, functor: Callable[[T], TT], /
     ) -> Callable[[Type[ExecutionContext]], Future[TT]]:
         def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
-            def fold(try_: Try[T], /) -> Try[TT]:
-                match try_.pattern:
-                    case Failure() as failure:
-                        return Failure[TT](failure.exception)
-                    case Success(value):
-                        return Success[TT](functor(value))
+            def fold(try__: try_.Try[T], /) -> try_.Try[TT]:
+                match try__.pattern:
+                    case try_.Failure() as failure:
+                        return try_.Failure[TT](failure.exception)
+                    case try_.Success(value):
+                        return try_.Success[TT](functor(value))
 
             return self.transform(fold)(ec)
 
@@ -80,13 +83,13 @@ class Future(Monad, concurrent.futures.Future[T]):
         self, functor: Callable[[T], Future[TT]], /
     ) -> Callable[[Type[ExecutionContext]], Future[TT]]:
         def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
-            def fold(try_: Try[T]) -> Future[TT]:
-                match try_.pattern:
-                    case Failure() as failure:
+            def fold(try__: try_.Try[T]) -> Future[TT]:
+                match try__.pattern:
+                    case try_.Failure() as failure:
                         future = Future[TT]()
                         future.set_exception(exception=failure.exception)
                         return future
-                    case Success(value):
+                    case try_.Success(value):
                         try:
                             return functor(value)
                         except Exception as error:
@@ -99,7 +102,7 @@ class Future(Monad, concurrent.futures.Future[T]):
         return with_context
 
     def transform(
-        self, functor: Callable[[Try[T]], Try[TT]], /
+        self, functor: Callable[[try_.Try[T]], try_.Try[TT]], /
     ) -> Callable[[Type[ExecutionContext]], Future[TT]]:
         def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
             future = Future[TT]()
@@ -109,12 +112,12 @@ class Future(Monad, concurrent.futures.Future[T]):
         return with_context
 
     def transform_with(
-        self, functor: Callable[[Try[T]], Future[TT]], /
+        self, functor: Callable[[try_.Try[T]], Future[TT]], /
     ) -> Callable[[Type[ExecutionContext]], Future[TT]]:
         def with_context(ec: Type[ExecutionContext], /) -> Future[TT]:
             next_future = Future[TT]()
 
-            def complete(current_result: Try[T]) -> None:
+            def complete(current_result: try_.Try[T]) -> None:
                 current_future = functor(current_result)
                 return current_future.on_complete(
                     lambda next_result: next_future.try_complete(next_result),
@@ -125,24 +128,24 @@ class Future(Monad, concurrent.futures.Future[T]):
 
         return with_context
 
-    def try_complete(self, result: Try[T], /) -> bool:
+    def try_complete(self, result: try_.Try[T], /) -> bool:
         if self.done():
             return False
         elif self._state is PENDING:
             match result.pattern:
-                case Failure() as failure:
+                case try_.Failure() as failure:
                     self.set_exception(exception=failure.exception)
-                case Success(value):
+                case try_.Success(value):
                     self.set_result(result=value)
             return True
         else:
 
             def callback(self: Future[T]):
                 match result.pattern:
-                    case Failure() as failure:
+                    case try_.Failure() as failure:
                         self._result = None
                         self._exception = failure.exception
-                    case Success(value):
+                    case try_.Success(value):
                         self._result = value
                         self._exceptoin = None
 
@@ -150,7 +153,7 @@ class Future(Monad, concurrent.futures.Future[T]):
             return True
 
     def on_complete(
-        self, functor: Callable[[Try[T]], U], /
+        self, functor: Callable[[try_.Try[T]], U], /
     ) -> Callable[[Type[ExecutionContext]], None]:
         def with_context(ec: Type[ExecutionContext], /) -> None:
             if self.done():
@@ -159,10 +162,10 @@ class Future(Monad, concurrent.futures.Future[T]):
                     try:
                         # FIXME: Threaded processing
                         result = self.result()
-                        self._result = functor(Success(result))
+                        self._result = functor(try_.Success(result))
                         self._exception = None
                     except Exception as error:
-                        self._result = functor(Failure(error))
+                        self._result = functor(try_.Failure(error))
                         self._exception = None
 
                 self.add_done_callback(fn=callback)
@@ -176,11 +179,11 @@ class Future(Monad, concurrent.futures.Future[T]):
         return future
 
     @property
-    def value(self) -> Try[T]:
+    def value(self) -> try_.Try[T]:
         try:
-            return Success[T](self.result())
+            return try_.Success[T](self.result())
         except Exception as failure:
-            return Failure[T](failure)
+            return try_.Failure[T](failure)
 
     @staticmethod
     def do(context: Callable[P, FutureDo[T]], /) -> Callable[P, Future[T]]:
@@ -195,14 +198,16 @@ class Future(Monad, concurrent.futures.Future[T]):
             state: Any = None
             try:
                 while True:
-                    flatmapped = context_.send(state)
-                    match flatmapped.value.pattern:
-                        case Failure():
-                            return flatmapped
-                        case Success():
-                            state = flatmapped.unapply()
+                    yield_state = context_.send(state)
+                    if not isinstance(yield_state, Future):
+                        raise TypeError(yield_state)
+                    match yield_state.composability():
+                        case monad.Composability.IMPOSSIBLE:
+                            return yield_state
+                        case monad.Composability.POSSIBLE:
+                            state = yield_state.unapply()
                         case _:
-                            raise TypeError(flatmapped)
+                            raise TypeError(yield_state)
             except StopIteration as return_:
                 return Future[T].lift(return_.value)
 
