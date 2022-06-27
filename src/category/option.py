@@ -6,7 +6,7 @@ from collections.abc import Generator
 from functools import wraps
 from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar
 
-from category.monad import Monad
+from category import monad
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -15,7 +15,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Option(Monad, Generic[T]):
+class Option(monad.Monad, Generic[T]):
     """Option"""
 
     @abstractmethod
@@ -67,13 +67,14 @@ class Option(Monad, Generic[T]):
             state: Any = None
             try:
                 while True:
-                    match flatmapped := context_.send(state).pattern:
-                        case Void():
-                            return flatmapped
-                        case Some():
-                            state = flatmapped.unapply()
-                        case _:
-                            raise TypeError(flatmapped)
+                    yield_state = context_.send(state)
+                    if not isinstance(yield_state, Option):
+                        raise TypeError(yield_state)
+                    match yield_state.composability():
+                        case monad.Composability.IMPOSSIBLE:
+                            return yield_state
+                        case monad.Composability.POSSIBLE:
+                            state = yield_state.unapply()
             except StopIteration as return_:
                 return Some[T].lift(return_.value)
 
