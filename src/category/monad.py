@@ -81,10 +81,9 @@ def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> M:
         context_ = context(*args, **kwargs)
         context_type: Optional[Type[M]] = None
-        state: Any = None
         try:
             while True:
-                yield_state = context_.send(state)
+                yield_state = next(context_)
                 if not isinstance(yield_state, Monad):
                     raise TypeError(yield_state)
                 match yield_state.composability(), context_type:
@@ -92,7 +91,6 @@ def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
                         return yield_state
                     case Composability.POSSIBLE, None:
                         context_type = type(yield_state)
-                        state = yield_state.unapply()
                     case Composability.POSSIBLE, _ if type(
                         yield_state
                     ) is not context_type:
@@ -101,7 +99,8 @@ def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
                             f"A different type ${type(yield_state)} from the context ${context_} is specified.",
                         )
                     case Composability.POSSIBLE, _ if type(yield_state) is context_type:
-                        state = yield_state.unapply()
+                        # Priority is given to the value of the subgenerator's return monad.
+                        ...
                     case _:
                         raise ValueError(context)
         except StopIteration as return_:
@@ -112,7 +111,7 @@ def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
     return wrapper
 
 
-MonadDo: TypeAlias = Generator[M, Any, T]
+MonadDo: TypeAlias = Generator[M, None, T]
 
 
 class Frame:

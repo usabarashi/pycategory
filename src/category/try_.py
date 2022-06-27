@@ -69,17 +69,17 @@ class Try(monad.Monad, Generic[T]):
         @wraps(context)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> Try[T]:
             context_ = context(*args, **kwargs)
-            state: Any = None
             try:
                 while True:
-                    yield_state = context_.send(state)
+                    yield_state = next(context_)
                     if not isinstance(yield_state, Try):
                         raise TypeError(yield_state)
                     match yield_state.composability():
                         case monad.Composability.IMPOSSIBLE:
                             return yield_state
                         case monad.Composability.POSSIBLE:
-                            state = yield_state.unapply()
+                            # Priority is given to the value of the sub-generator's monad.
+                            ...
             except StopIteration as return_:
                 return Success[T].lift(return_.value)
 
@@ -200,4 +200,4 @@ class Success(Try[T]):
 
 
 SubType: TypeAlias = Failure[T] | Success[T]
-TryDo: TypeAlias = Generator[Try[Any], Any, T]
+TryDo: TypeAlias = Generator[Try[Any], None, T]

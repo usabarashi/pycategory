@@ -103,17 +103,17 @@ class EitherTTry(monad.Monad, Generic[L, R]):
         @wraps(context)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> EitherTTry[L, R]:
             context_ = context(*args, **kwargs)
-            state: Any = None
             try:
                 while True:
-                    yield_state = context_.send(state)
+                    yield_state = next(context_)
                     if not isinstance(yield_state, EitherTTry):
                         raise TypeError(yield_state)
                     match yield_state.composability():
                         case monad.Composability.IMPOSSIBLE:
                             return yield_state
                         case monad.Composability.POSSIBLE:
-                            state = yield_state.unapply()
+                            # Priority is given to the value of the sub-generator's monad.
+                            ...
             except StopIteration as return_:
                 return EitherTTry[L, R].lift(return_.value)
 
@@ -236,17 +236,17 @@ class EitherTFuture(monad.Monad, Generic[L, R]):
         @wraps(context)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> EitherTFuture[L, R]:
             context_ = context(*args, **kwargs)
-            state: Any = None
             try:
                 while True:
-                    yield_state = context_.send(state)
+                    yield_state = next(context_)
                     if not isinstance(yield_state, EitherTFuture):
                         raise TypeError(yield_state)
                     match yield_state.composability():
                         case monad.Composability.IMPOSSIBLE:
                             return yield_state
                         case monad.Composability.POSSIBLE:
-                            state = yield_state.unapply()
+                            # Priority is given to the value of the sub-generator's monad.
+                            ...
                         case _:
                             raise TypeError(yield_state)
             except StopIteration as return_:

@@ -64,17 +64,17 @@ class Option(monad.Monad, Generic[T]):
         @wraps(context)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> Option[T]:
             context_ = context(*args, **kwargs)
-            state: Any = None
             try:
                 while True:
-                    yield_state = context_.send(state)
+                    yield_state = next(context_)
                     if not isinstance(yield_state, Option):
                         raise TypeError(yield_state)
                     match yield_state.composability():
                         case monad.Composability.IMPOSSIBLE:
                             return yield_state
                         case monad.Composability.POSSIBLE:
-                            state = yield_state.unapply()
+                            # Priority is given to the value of the sub-generator's monad.
+                            ...
             except StopIteration as return_:
                 return Some[T].lift(return_.value)
 
@@ -173,6 +173,6 @@ class Some(Option[T]):
 
 
 SubType: TypeAlias = Void[T] | Some[T]
-OptionDo: TypeAlias = Generator[Option[Any], Any, T]
+OptionDo: TypeAlias = Generator[Option[Any], None, T]
 
 SINGLETON_VOID = Void[Any]()

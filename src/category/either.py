@@ -74,17 +74,17 @@ class Either(monad.Monad, Generic[L, R]):
         @wraps(context)
         def wrapper(*args: P.args, **kwargs: P.kwargs):
             context_ = context(*args, **kwargs)
-            state: Any = None
             try:
                 while True:
-                    yield_state = context_.send(state)
+                    yield_state = next(context_)
                     if not isinstance(yield_state, Either):
                         raise TypeError(yield_state)
                     match yield_state.composability():
                         case monad.Composability.IMPOSSIBLE:
                             return yield_state
                         case monad.Composability.POSSIBLE:
-                            state = yield_state.unapply()
+                            # Priority is given to the value of the sub-generator's monad.
+                            ...
             except StopIteration as return_:
                 return Right[L, R].lift(return_.value)
 
@@ -276,4 +276,4 @@ class RightProjection(Generic[L, R]):
 
 
 SubType: TypeAlias = Left[L, R] | Right[L, R]
-EitherDo = Generator[Either[L, Any], Any, R]
+EitherDo = Generator[Either[L, Any], None, R]
