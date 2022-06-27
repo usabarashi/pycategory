@@ -17,7 +17,6 @@ RR = TypeVar("RR")
 EE = TypeVar("EE")
 TT = TypeVar("TT")
 U = TypeVar("U")
-M = TypeVar("M")
 P = ParamSpec("P")
 
 
@@ -50,10 +49,6 @@ class EitherTTry(Monad, Generic[L, R]):
                 return value
             case _:
                 raise ValueError(self)
-
-    @staticmethod
-    def send(monad: EitherTTry[L, R], /) -> R:
-        return monad.get()
 
     @staticmethod
     def lift(value: R) -> EitherTTry[L, R]:
@@ -118,10 +113,10 @@ class EitherTTry(Monad, Generic[L, R]):
                     match flatmapped._value.pattern:
                         case Failure():
                             return flatmapped
-                        case Success(either) if isinstance(either, Left):
+                        case Success(Left()):
                             return flatmapped
-                        case Success(either) if isinstance(either, Right):
-                            state = EitherTTry[L, Any].send(flatmapped)
+                        case Success(Right()):
+                            state = flatmapped.unapply()
                         case _:
                             raise TypeError(flatmapped)
             except StopIteration as return_:
@@ -171,10 +166,6 @@ class EitherTFuture(Monad, Generic[L, R]):
 
             yield EitherTFuture[L, R](future)
             raise GeneratorExit from error
-
-    @staticmethod
-    def send(monad: EitherTFuture[L, R]) -> R:
-        return monad.get()
 
     @staticmethod
     def lift(value: R) -> EitherTFuture[L, R]:
@@ -257,10 +248,10 @@ class EitherTFuture(Monad, Generic[L, R]):
                     match flatmapped._value.value.pattern:
                         case Failure():
                             return flatmapped
-                        case Success(either) if isinstance(either, Left):
+                        case Success(Left()):
                             return flatmapped
-                        case Success(either) if isinstance(either, Right):
-                            state = EitherTFuture[L, Any].send(flatmapped)
+                        case Success(Right()):
+                            state = flatmapped.unapply()
                         case _:
                             raise TypeError(flatmapped)
             except StopIteration as return_:

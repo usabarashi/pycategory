@@ -24,17 +24,23 @@ P = ParamSpec("P")
 class Monad(ABC):
     """Monad"""
 
-    @staticmethod
-    def send(monad: Any, /) -> Any:
+    __match_args__: tuple[()] | tuple[str] = ()
+
+    @classmethod
+    def lift(cls, *args: ..., **kwargs: ...):
+        return cls(*args, **kwargs)
+
+    def unapply(self) -> tuple[()] | tuple[Any]:
         """
 
-        send a flatmap context.
+        Return match attributes as tuples
         """
-        ...
-
-    @staticmethod
-    def lift(value: Any, /) -> Monad:
-        ...
+        if len(self.__match_args__) <= 0:
+            return ()
+        else:
+            return tuple(
+                value for key, value in vars(self).items() if key in self.__match_args__
+            )
 
     def get(self) -> Any:
         ...
@@ -48,6 +54,8 @@ class Monad(ABC):
 
 def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
     """map, flatmap combination syntax sugar.
+
+    Deprecated.
 
     Type Hint does not support Higher Kind Type, so get a warning.
     Only type checking can determine type violations, and runtime errors may not occur.
@@ -72,7 +80,7 @@ def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
                             f"A different type ${type(flatmapped)} from the context ${context_} is specified.",
                         )
                     case True, True, _ if type(flatmapped) is context_type:
-                        state = cast(Monad, context_type).send(flatmapped)
+                        state = flatmapped.unapply()
                     case _:
                         raise ValueError(context)
         except StopIteration as return_:

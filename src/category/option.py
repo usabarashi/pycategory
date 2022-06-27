@@ -22,14 +22,6 @@ class Option(Monad, Generic[T]):
     def __iter__(self) -> Generator[Option[T], None, T]:
         raise NotImplementedError
 
-    @staticmethod
-    def send(monad: Option[T], /) -> T:
-        raise NotImplementedError
-
-    @staticmethod
-    def lift(value: T, /) -> Option[T]:
-        raise NotImplementedError
-
     @abstractmethod
     def map(self, functor: Callable[[T], TT], /) -> Option[TT]:
         raise NotImplementedError
@@ -79,7 +71,7 @@ class Option(Monad, Generic[T]):
                         case Void():
                             return flatmapped
                         case Some():
-                            state = Some[Any].send(flatmapped)
+                            state = flatmapped.unapply()
                         case _:
                             raise TypeError(flatmapped)
             except StopIteration as return_:
@@ -105,14 +97,6 @@ class Void(Option[T]):
     def __iter__(self) -> Generator[Option[T], None, T]:
         yield self.flatmap(lambda value: Some[T](value))
         raise GeneratorExit(self)
-
-    @staticmethod
-    def send(monad: Option[T], /) -> T:
-        return monad.get()
-
-    @staticmethod
-    def lift(value: T, /) -> Void[T]:
-        return Void[T]()
 
     def map(self, functor: Callable[[T], TT], /) -> Void[TT]:
         return Void[TT]()
@@ -157,14 +141,6 @@ class Some(Option[T]):
     def __iter__(self) -> Generator[Option[T], None, T]:
         yield self.flatmap(lambda value: Some[T](value))
         return self.value
-
-    @staticmethod
-    def send(monad: Option[T], /) -> T:
-        return monad.get()
-
-    @staticmethod
-    def lift(value: T, /) -> Some[T]:
-        return Some[T](value)
 
     def map(self, functor: Callable[[T], TT], /) -> Some[TT]:
         return Some[TT](functor(self.value))

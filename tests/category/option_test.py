@@ -251,7 +251,13 @@ def test_pattern_match():
     match cast(Option[int], Some(41)), cast(Option[int], Some(42)), cast(
         Option[int], Some(43)
     ):
-        case Some(x), Some(y), Some(z) if x < y < z:
+        case Some(value=x), Some(value=y), Some(value=z) if x < y < z:
+            assert True
+        case _:
+            assert False
+
+    match cast(Option[Option[int]], Some(Some(42))):
+        case Some(value=Some(value=x)) if x == 42:
             assert True
         case _:
             assert False

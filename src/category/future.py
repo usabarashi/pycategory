@@ -58,12 +58,8 @@ class Future(Monad, concurrent.futures.Future[T]):
             raise GeneratorExit from error
 
     @staticmethod
-    def send(monad: Future[T], /) -> T:
-        return monad.result()
-
-    @staticmethod
-    def lift(value: T, /) -> Future[T]:
-        return Future[T].successful(value)
+    def lift(*args: ..., **kwargs: ...) -> Future[T]:
+        return Future.successful(*args, **kwargs)
 
     def map(
         self, functor: Callable[[T], TT], /
@@ -204,7 +200,7 @@ class Future(Monad, concurrent.futures.Future[T]):
                         case Failure():
                             return flatmapped
                         case Success():
-                            state = Future[Any].send(flatmapped)
+                            state = flatmapped.unapply()
                         case _:
                             raise TypeError(flatmapped)
             except StopIteration as return_:

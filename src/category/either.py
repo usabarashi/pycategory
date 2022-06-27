@@ -24,14 +24,6 @@ class Either(Monad, Generic[L, R]):
     def __iter__(self) -> Generator[Either[L, R], None, R]:
         raise NotImplementedError
 
-    @staticmethod
-    def send(monad: Either[L, R], /) -> R:
-        raise NotImplementedError
-
-    @staticmethod
-    def lift(value: R, /) -> Either[L, R]:
-        raise NotImplementedError
-
     @abstractmethod
     def map(self, functor: Callable[[R], RR], /) -> Either[L, RR]:
         raise NotImplementedError
@@ -89,7 +81,7 @@ class Either(Monad, Generic[L, R]):
                         case Left():
                             return flatmapped
                         case Right():
-                            state = Right[L, Any].send(flatmapped)
+                            state = flatmapped.unapply()
                         case _:
                             raise TypeError(flatmapped)
             except StopIteration as return_:
@@ -116,14 +108,6 @@ class Left(Either[L, R]):
     def __iter__(self) -> Generator[Either[L, R], None, R]:
         yield self.flatmap(lambda right: Right[L, R](right))
         raise GeneratorExit(self)
-
-    @staticmethod
-    def send(monad: Either[L, R], /) -> R:
-        return monad.get()
-
-    @staticmethod
-    def lift(value: R, /) -> Left[L, R]:
-        return Left[L, R](value)
 
     def map(self, functor: Callable[[R], RR], /) -> Left[L, RR]:
         return Left[L, RR](self.value)
@@ -174,14 +158,6 @@ class Right(Either[L, R]):
     def __iter__(self) -> Generator[Either[L, R], None, R]:
         yield self.flatmap(lambda right: Right[L, R](right))
         return self.value
-
-    @staticmethod
-    def send(monad: Either[L, R], /) -> R:
-        return monad.get()
-
-    @staticmethod
-    def lift(value: R, /) -> Right[L, R]:
-        return Right[L, R](value)
 
     def map(self, functor: Callable[[R], RR], /) -> Right[L, RR]:
         return Right[L, RR](functor(self.value))
@@ -299,4 +275,4 @@ class RightProjection(Generic[L, R]):
 
 
 SubType: TypeAlias = Left[L, R] | Right[L, R]
-EitherDo = Generator[Either[L, Any], Any, R]  # Generator[Either[L, Any], Any, R]
+EitherDo = Generator[Either[L, Any], Any, R]
