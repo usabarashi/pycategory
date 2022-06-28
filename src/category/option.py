@@ -70,9 +70,9 @@ class Option(monad.Monad, Generic[T]):
                     if not isinstance(yield_state, Option):
                         raise TypeError(yield_state)
                     match yield_state.composability():
-                        case monad.Composability.IMPOSSIBLE:
+                        case monad.Composability.Immutable:
                             return yield_state
-                        case monad.Composability.POSSIBLE:
+                        case monad.Composability.Variable:
                             # Priority is given to the value of the sub-generator's monad.
                             ...
             except StopIteration as return_:

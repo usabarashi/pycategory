@@ -23,8 +23,8 @@ P = ParamSpec("P")
 
 
 class Composability(Enum):
-    POSSIBLE = auto()
-    IMPOSSIBLE = auto()
+    Immutable = auto()
+    Variable = auto()
 
 
 class Monad(ABC):
@@ -33,6 +33,9 @@ class Monad(ABC):
     __match_args__: tuple[()] | tuple[str] = ()
 
     def __bool__(self) -> bool:
+        raise NotImplementedError
+
+    def __iter__(self) -> Generator[Monad, None, Any]:
         raise NotImplementedError
 
     @classmethod
@@ -54,9 +57,9 @@ class Monad(ABC):
     def composability(self) -> Composability:
         match self.__bool__():
             case False:
-                return Composability.IMPOSSIBLE
+                return Composability.Immutable
             case True:
-                return Composability.POSSIBLE
+                return Composability.Variable
 
     def get(self) -> Any:
         raise NotImplementedError
@@ -87,18 +90,18 @@ def do(context: Callable[P, MonadDo[M, T]], /) -> Callable[P, M]:
                 if not isinstance(yield_state, Monad):
                     raise TypeError(yield_state)
                 match yield_state.composability(), context_type:
-                    case Composability.IMPOSSIBLE, _:
+                    case Composability.Immutable, _:
                         return yield_state
-                    case Composability.POSSIBLE, None:
+                    case Composability.Variable, None:
                         context_type = type(yield_state)
-                    case Composability.POSSIBLE, _ if type(
+                    case Composability.Variable, _ if type(
                         yield_state
                     ) is not context_type:
                         raise TypeError(
                             yield_state,
                             f"A different type ${type(yield_state)} from the context ${context_} is specified.",
                         )
-                    case Composability.POSSIBLE, _ if type(yield_state) is context_type:
+                    case Composability.Variable, _ if type(yield_state) is context_type:
                         # Priority is given to the value of the subgenerator's return monad.
                         ...
                     case _:
