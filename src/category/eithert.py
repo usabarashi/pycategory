@@ -109,9 +109,9 @@ class EitherTTry(monad.Monad, Generic[L, R]):
                     if not isinstance(yield_state, EitherTTry):
                         raise TypeError(yield_state)
                     match yield_state.composability():
-                        case monad.Composability.IMPOSSIBLE:
+                        case monad.Composability.Immutable:
                             return yield_state
-                        case monad.Composability.POSSIBLE:
+                        case monad.Composability.Variable:
                             # Priority is given to the value of the sub-generator's monad.
                             ...
             except StopIteration as return_:
@@ -242,9 +242,9 @@ class EitherTFuture(monad.Monad, Generic[L, R]):
                     if not isinstance(yield_state, EitherTFuture):
                         raise TypeError(yield_state)
                     match yield_state.composability():
-                        case monad.Composability.IMPOSSIBLE:
+                        case monad.Composability.Immutable:
                             return yield_state
-                        case monad.Composability.POSSIBLE:
+                        case monad.Composability.Variable:
                             # Priority is given to the value of the sub-generator's monad.
                             ...
                         case _:
