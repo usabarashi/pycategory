@@ -124,6 +124,26 @@ def test_failure_flatmap():
     assert Failure is type(flatmapped_failure)
 
 
+def test_failure_recover():
+    from category import Failure, Success
+
+    failure = Failure[int](Exception())
+    recover_failure = failure.recover(lambda exception: 42)
+    assert failure is not recover_failure
+    assert Success is type(recover_failure)
+    assert 42 == recover_failure.get()
+
+
+def test_failure_recover_with():
+    from category import Failure, Success
+
+    failure = Failure[int](Exception())
+    recover_with_failure = failure.recover_with(lambda exception: Success[int](42))
+    assert failure is not recover_with_failure
+    assert Success is type(recover_with_failure)
+    assert 42 == recover_with_failure.get()
+
+
 def test_failure_fold():
     from category import Failure
 
@@ -206,6 +226,28 @@ def test_success_flatmap():
     assert success is not flatmapped_failure
     assert Failure is type(flatmapped_failure)
     assert Success is type(Success[int](0).flatmap(lambda success: Success[None](None)))
+
+
+def test_success_recover():
+    from category import Success
+
+    success = Success[int](42)
+    recover_success = success.recover(lambda success: None)
+    assert success is recover_success
+    assert Success is type(recover_success)
+    assert 42 == recover_success.get()
+
+
+def test_success_recover_with():
+    from category import Failure, Success
+
+    success = Success[int](42)
+    recover_with_failure = success.recover_with(
+        lambda success: Failure[None](Exception())
+    )
+    assert success is recover_with_failure
+    assert Success is type(recover_with_failure)
+    assert 42 == recover_with_failure.get()
 
 
 def test_success_fold():
