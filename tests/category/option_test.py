@@ -261,3 +261,39 @@ def test_pattern_match():
             assert True
         case _:
             assert False
+
+
+def test_json_encode():
+    import json
+    from dataclasses import asdict, dataclass
+    from typing import Any, cast
+
+    from category import VOID, Some, Void
+
+    class OptionEncoder(json.JSONEncoder):
+        def default(self, o: Any):
+            match o:
+                case Void():
+                    return None
+                case Some(value):
+                    return value
+                case _:
+                    return json.JSONEncoder.default(self, o)
+
+    @dataclass(frozen=True)
+    class Entity:
+        void: Void[int]
+        some: Some[int]
+
+    dict_entity = asdict(Entity(void=VOID, some=Some(1)))
+    assert VOID is dict_entity.get("void")
+    assert Some is type(dict_entity.get("some"))
+    assert 1 == cast(Some[int], dict_entity.get("some")).get()
+
+    json_entity = json.dumps(dict_entity, cls=OptionEncoder)
+    assert 0 <= json_entity.find('"void": null')
+    assert 0 <= json_entity.find('"some": 1')
+
+    re_dict_entity = cast(dict[str, Any], json.loads(json_entity))
+    assert None is re_dict_entity.get("void")
+    assert 1 == re_dict_entity.get("some")
