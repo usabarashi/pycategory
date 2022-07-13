@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
 from functools import wraps
-from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar
+from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
 from category import monad
 
@@ -28,6 +28,14 @@ class Try(monad.Monad, Generic[T]):
 
     @abstractmethod
     def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def recover(self, functor: Callable[[Exception], TT]) -> Try[TT]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def recover_with(self, functor: Callable[[Exception], Try[TT]]) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
@@ -122,6 +130,12 @@ class Failure(Try[T]):
     def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
         return Failure[TT](self.exception)
 
+    def recover(self, functor: Callable[[Exception], TT]) -> Try[TT]:
+        return Success[TT](functor(self.exception))
+
+    def recover_with(self, functor: Callable[[Exception], Try[TT]]) -> Try[TT]:
+        return functor(self.exception)
+
     def fold(
         self,
         *,
@@ -170,6 +184,12 @@ class Success(Try[T]):
 
     def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
         return functor(self.value)
+
+    def recover(self, functor: Callable[[Exception], TT]) -> Try[TT]:
+        return cast(Try[TT], self)
+
+    def recover_with(self, functor: Callable[[Exception], Try[TT]]) -> Try[TT]:
+        return cast(Try[TT], self)
 
     def fold(
         self,
