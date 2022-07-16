@@ -79,7 +79,7 @@ def test_left_map():
 
     left = Left[int, None](0)
     mapped_left = left.map(lambda right: right)
-    assert left is not mapped_left
+    assert left is mapped_left
     assert Left is type(mapped_left)
     assert LeftProjection is type(mapped_left.left())
     assert 0 == mapped_left.left().get()
@@ -93,12 +93,12 @@ def test_left_map():
     assert None is mapped_left.right().get_or_else(lambda: None)
 
 
-def test_left_faltmap():
+def test_left_flatmap():
     from category import Left, LeftProjection, RightProjection
 
     left = Left[int, None](0)
     flatmapped_left = left.flatmap(lambda right: Left[int, None](0))
-    assert left is not flatmapped_left
+    assert left is flatmapped_left
     assert Left is type(flatmapped_left)
     assert LeftProjection is type(flatmapped_left.left())
     assert 0 == flatmapped_left.left().get()

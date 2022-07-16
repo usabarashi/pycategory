@@ -67,7 +67,7 @@ def test_eitherttry_flatmap():
     flatmapped_failure = failure.flatmap(
         lambda right: EitherTTry[Exception, int](Failure(Exception()))
     )
-    assert failure is not flatmapped_failure
+    assert failure is flatmapped_failure
     assert EitherTTry is type(flatmapped_failure)
     assert Failure is type(flatmapped_failure._value)
     assert Exception is type(
@@ -83,7 +83,7 @@ def test_eitherttry_flatmap():
             Success(Left[Exception, int](Exception()))
         )
     )
-    assert success_left is not flatmapped_success_left
+    assert success_left is flatmapped_success_left
     assert EitherTTry is type(flatmapped_success_left)
     assert Success is type(flatmapped_success_left._value)
     assert Left is type(flatmapped_success_left._value.get())

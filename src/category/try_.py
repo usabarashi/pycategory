@@ -125,10 +125,10 @@ class Failure(Try[T]):
         raise GeneratorExit(self) from self.exception
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
-        return Failure[TT](self.exception)
+        return cast(Failure[TT], self)
 
     def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
-        return Failure[TT](self.exception)
+        return cast(Failure[TT], self)
 
     def recover(self, functor: Callable[[Exception], TT]) -> Try[TT]:
         return Success[TT](functor(self.exception))

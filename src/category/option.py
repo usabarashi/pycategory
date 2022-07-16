@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
 from functools import wraps
-from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar
+from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
 from category import monad
 
@@ -100,10 +100,10 @@ class Void(Option[T]):
         raise GeneratorExit(self)
 
     def map(self, functor: Callable[[T], TT], /) -> Void[TT]:
-        return Void[TT]()
+        return cast(Void[TT], self)
 
     def flatmap(self, functor: Callable[[T], Option[TT]], /) -> Void[TT]:
-        return Void[TT]()
+        return cast(Void[TT], self)
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
         return void()

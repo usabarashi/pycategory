@@ -111,7 +111,7 @@ def test_failure_map():
 
     failure = Failure[int](Exception())
     mapped_failure = failure.map(lambda success: None)
-    assert failure is not mapped_failure
+    assert failure is mapped_failure
     assert Failure is type(mapped_failure)
 
 
@@ -120,7 +120,7 @@ def test_failure_flatmap():
 
     failure = Failure[int](Exception())
     flatmapped_failure = failure.flatmap(lambda success: Success[bool](True))
-    assert failure is not flatmapped_failure
+    assert failure is flatmapped_failure
     assert Failure is type(flatmapped_failure)
 
 

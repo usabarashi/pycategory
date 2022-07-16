@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from copy import deepcopy
 from functools import wraps
 from typing import Any, Callable, Generic, ParamSpec, Type, TypeAlias, TypeVar, cast
 
@@ -73,9 +72,9 @@ class EitherTTry(monad.Monad, Generic[L, R]):
     ) -> EitherTTry[L, RR]:
         match self._value:
             case try_.Failure():
-                return cast(EitherTTry[L, RR], deepcopy(self))
+                return cast(EitherTTry[L, RR], self)
             case try_.Success(either.Left()):
-                return cast(EitherTTry[L, RR], deepcopy(self))
+                return cast(EitherTTry[L, RR], self)
             case try_.Success(either.Right(value)):
                 return functor(value)
             case _:
