@@ -8,7 +8,7 @@ from abc import ABC
 from collections.abc import Generator
 from concurrent.futures._base import PENDING
 from functools import wraps
-from typing import Any, Callable, ParamSpec, Type, TypeAlias, TypeVar
+from typing import Any, Callable, ParamSpec, Type, TypeAlias, TypeVar, cast
 
 from category import monad, try_
 
@@ -71,7 +71,7 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
             def fold(try__: try_.Try[T], /) -> try_.Try[TT]:
                 match try__.pattern:
                     case try_.Failure() as failure:
-                        return try_.Failure[TT](failure.exception)
+                        return cast(try_.Failure[TT], failure)
                     case try_.Success(value):
                         return try_.Success[TT](functor(value))
 

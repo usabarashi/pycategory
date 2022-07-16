@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
 from functools import wraps
-from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar
+from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
 from category import monad
 
@@ -111,10 +111,10 @@ class Left(Either[L, R]):
         raise GeneratorExit(self)
 
     def map(self, functor: Callable[[R], RR], /) -> Left[L, RR]:
-        return Left[L, RR](self.value)
+        return cast(Left[L, RR], self)
 
     def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
-        return Left[L, RR](self.value)
+        return cast(Left[L, RR], self)
 
     def fold(self, *, left: Callable[[L], U], right: Callable[[R], U]) -> U:
         return left(self.value)
@@ -225,14 +225,14 @@ class LeftProjection(Generic[L, R]):
             case Left() as left:
                 return Left[LL, R](functor(left.value))
             case Right() as right:
-                return Right[LL, R](right.get())
+                return cast(Right[LL, R], right)
 
     def flatmap(self, functor: Callable[[L], Either[LL, R]], /) -> Either[LL, R]:
         match self._either:
             case Left() as left:
                 return functor(left.value)
             case Right() as right:
-                return Right[LL, R](right.get())
+                return cast(Right[LL, R], right)
 
 
 class RightProjection(Generic[L, R]):
@@ -263,14 +263,14 @@ class RightProjection(Generic[L, R]):
     def map(self, functor: Callable[[R], RR], /) -> Either[L, RR]:
         match self._either:
             case Left() as left:
-                return Left[L, RR](left.value)
+                return cast(Left[L, RR], left)
             case Right() as right:
                 return Right[L, RR](functor(right.get()))
 
     def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         match self._either:
             case Left() as left:
-                return Left[L, RR](left.value)
+                return cast(Left[L, RR], left)
             case Right() as right:
                 return functor(right.get())
 
