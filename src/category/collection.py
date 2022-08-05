@@ -18,6 +18,9 @@ class Vector(list[T], Generic[T]):
             items = list()
         list[T].__init__(self, items)
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({[element for element in self]})"
+
     def __add__(self, other: list[T]) -> Vector[T]:
         sequence = list(self)
         return self.__class__(sequence.__add__(other))

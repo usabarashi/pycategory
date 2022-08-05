@@ -5,7 +5,7 @@ from collections.abc import Generator
 from functools import wraps
 from typing import Any, Callable, Generic, ParamSpec, Type, TypeAlias, TypeVar, cast
 
-from category import either, future, monad, try_
+from . import either, future, monad, try_
 
 L = TypeVar("L", covariant=True)
 R = TypeVar("R", covariant=True)
