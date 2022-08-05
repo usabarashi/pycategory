@@ -51,6 +51,8 @@ def test_void():
 
     assert Void is type(VOID)
     assert False is bool(VOID)
+    assert Void is type(eval(f"{repr(VOID)}"))
+    assert False is bool(eval(f"{repr(VOID)}"))
 
 
 def test_void_map():
@@ -133,6 +135,8 @@ def test_some():
 
     assert Some is type(Some[int](42))
     assert True is bool(Some[int](42))
+    assert Some is type(eval(f"{repr(Some[int](42))}"))
+    assert True is bool(eval(f"{repr(Some[int](42))}"))
 
 
 def test_some_map():

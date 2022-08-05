@@ -6,7 +6,7 @@ from collections.abc import Generator
 from functools import wraps
 from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
-from category import monad
+from . import monad
 
 L = TypeVar("L", covariant=True)
 R = TypeVar("R", covariant=True)
@@ -103,6 +103,9 @@ class Left(Either[L, R]):
     def __init__(self, value: L, /):
         self.value = value
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.value})"
+
     def __bool__(self) -> Literal[False]:
         return False
 
@@ -152,6 +155,9 @@ class Right(Either[L, R]):
 
     def __init__(self, value: R, /):
         self.value = value
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.value})"
 
     def __bool__(self) -> Literal[True]:
         return True
@@ -203,6 +209,9 @@ class LeftProjection(Generic[L, R]):
     def __init__(self, either: SubType[L, R]):
         self._either = either
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._either})"
+
     def __bool__(self) -> bool:
         return bool(self._either)
 
@@ -243,6 +252,9 @@ class RightProjection(Generic[L, R]):
     def __init__(self, either: SubType[L, R]):
         self._either = either
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._either})"
+
     def __bool__(self) -> bool:
         return bool(self._either)
 
@@ -276,4 +288,4 @@ class RightProjection(Generic[L, R]):
 
 
 SubType: TypeAlias = Left[L, R] | Right[L, R]
-EitherDo = Generator[Either[L, Any], None, R]
+EitherDo: TypeAlias = Generator[Either[L, Any], None, R]

@@ -70,8 +70,10 @@ def test_either_do():
 def test_left():
     from category import Left
 
-    assert Left is type(Left[int, None](0))
-    assert False is bool(Left[int, None](0))
+    assert Left is type(Left[int, None](42))
+    assert False is bool(Left[int, None](42))
+    assert Left is type(eval(f"{Left[int, None](42)}"))
+    assert False is bool(eval(f"{Left[int, None](42)}"))
 
 
 def test_left_map():
@@ -125,8 +127,10 @@ def test_left_fold():
 def test_left_leftprojecton():
     from category import Left, LeftProjection
 
-    assert LeftProjection is type(Left[int, None](0).left())
-    assert False is bool(Left[int, None](0).left())
+    assert LeftProjection is type(eval(f"{Left[int, None](42).left()}"))
+    assert False is bool(eval(f"{Left[int, None](42).left()}"))
+    assert LeftProjection is type(eval(f"{Left[int, None](42).left()}"))
+    assert False is bool(eval(f"{Left[int, None](42).left()}"))
 
 
 def test_left_leftprojection_get():
@@ -212,8 +216,10 @@ def test_left_method():
 def test_right():
     from category import Right
 
-    assert Right is type(Right[None, int](0))
-    assert True is bool(Right[None, int](0))
+    assert Right is type(Right[None, int](42))
+    assert True is bool(Right[None, int](42))
+    assert Right is type(eval(f"{Right[None, int](42)}"))
+    assert True is bool(eval(f"{Right[None, int](42)}"))
 
 
 def test_right_map():
@@ -267,8 +273,10 @@ def test_right_fold():
 def test_right_rightprojecton():
     from category import Right, RightProjection
 
-    assert RightProjection is type(Right[None, int](0).right())
-    assert True is bool(Right[None, int](0).right())
+    assert RightProjection is type(Right[None, int](42).right())
+    assert True is bool(Right[None, int](42).right())
+    assert RightProjection is type(eval(f"{Right[None, int](42).right()}"))
+    assert True is bool(eval(f"{Right[None, int](42).right()}"))
 
 
 def test_right_rightprojection_get():

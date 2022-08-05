@@ -10,7 +10,7 @@ from concurrent.futures._base import PENDING
 from functools import wraps
 from typing import Any, Callable, ParamSpec, Type, TypeAlias, TypeVar, cast
 
-from category import monad, try_
+from . import monad, try_
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")

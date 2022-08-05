@@ -13,6 +13,9 @@ def test_vector_init():
     # assert [] == Vector({}) == [] # Syntax Error
     vector = Vector([0, 1, 2])
     assert Vector is type(vector)
+    assert Vector is type(eval(f"{Vector()}"))
+    assert Vector is type(eval(f"{Vector([0, 1, 2])}"))
+    assert Vector is type(eval(f"{Vector((0, 1, 2))}"))
     assert 0 == vector[0] == 0
     assert [0, 1, 2] == vector == [0, 1, 2]
     assert (0, 1, 2) != vector != (0, 1, 2)

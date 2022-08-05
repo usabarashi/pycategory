@@ -6,7 +6,7 @@ from collections.abc import Generator
 from functools import wraps
 from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
-from category import monad
+from . import monad
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -117,6 +117,9 @@ class Failure(Try[T]):
     def __init__(self, exception: Exception, /):
         self.exception = exception
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({repr(self.exception)})"
+
     def __bool__(self) -> Literal[False]:
         return False
 
@@ -171,6 +174,9 @@ class Success(Try[T]):
 
     def __init__(self, value: T, /):
         self.value = value
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.value})"
 
     def __bool__(self) -> Literal[True]:
         return True
