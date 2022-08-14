@@ -1,7 +1,13 @@
 from .collection import Vector
 from .either import Either, EitherDo, Left, LeftProjection, Right, RightProjection
 from .eithert import EitherTFuture, EitherTFutureDo, EitherTTry, EitherTTryDo
-from .future import ExecutionContext, Future, FutureDo, ThreadPoolExecutionContext
+from .future import (
+    ExecutionContext,
+    Future,
+    FutureDo,
+    ProcessPoolExecutionContext,
+    ThreadPoolExecutionContext,
+)
 from .monad import do
 from .option import SINGLETON_VOID as VOID
 from .option import Option, OptionDo, Some, Void
@@ -22,7 +28,7 @@ __all__ = [
     "ExecutionContext",
     "Future",
     "FutureDo",
-    "ExecutionContext",
+    "ProcessPoolExecutionContext",
     "ThreadPoolExecutionContext",
     "do",
     "Option",
