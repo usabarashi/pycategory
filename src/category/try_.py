@@ -31,11 +31,13 @@ class Try(monad.Monad, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def recover(self, functor: Callable[[Exception], TT]) -> Try[TT]:
+    def recover(self, partial_function: Callable[[Exception], TT], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
-    def recover_with(self, functor: Callable[[Exception], Try[TT]]) -> Try[TT]:
+    def recover_with(
+        self, partial_function: Callable[[Exception], Try[TT]], /
+    ) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
@@ -133,11 +135,25 @@ class Failure(Try[T]):
     def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
         return cast(Failure[TT], self)
 
-    def recover(self, functor: Callable[[Exception], TT]) -> Try[TT]:
-        return Success[TT](functor(self.exception))
+    def recover(self, partial_function: Callable[[Exception], TT], /) -> Try[TT]:
+        try:
+            if (result := partial_function(self.exception)) is None:
+                return cast(Failure[TT], self)
+            else:
+                return Success[TT](result)
+        except Exception as exception:
+            return Failure[TT](exception)
 
-    def recover_with(self, functor: Callable[[Exception], Try[TT]]) -> Try[TT]:
-        return functor(self.exception)
+    def recover_with(
+        self, partial_function: Callable[[Exception], Try[TT]], /
+    ) -> Try[TT]:
+        try:
+            if (result := partial_function(self.exception)) is None:
+                return cast(Failure[TT], self)
+            else:
+                return result
+        except Exception as exception:
+            return Failure[TT](exception)
 
     def fold(
         self,
@@ -191,10 +207,12 @@ class Success(Try[T]):
     def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
         return functor(self.value)
 
-    def recover(self, functor: Callable[[Exception], TT]) -> Try[TT]:
+    def recover(self, partial_function: Callable[[Exception], TT], /) -> Try[TT]:
         return cast(Try[TT], self)
 
-    def recover_with(self, functor: Callable[[Exception], Try[TT]]) -> Try[TT]:
+    def recover_with(
+        self, partial_function: Callable[[Exception], Try[TT]], /
+    ) -> Try[TT]:
         return cast(Try[TT], self)
 
     def fold(

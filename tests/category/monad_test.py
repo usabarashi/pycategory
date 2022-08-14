@@ -13,8 +13,8 @@ def test_do():
         Some,
         Success,
         TryDo,
-        do,
     )
+    from category.monad import do
 
     @do
     def either_context() -> EitherDo[IndexError | KeyError, int]:

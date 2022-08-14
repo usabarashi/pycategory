@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 from functools import reduce
-from typing import Any, Callable, Generic, Iterable, NoReturn, Optional, TypeVar
+from typing import Any, Callable, Iterable, NoReturn, Optional, TypeVar
 
-T = TypeVar("T")
+T = TypeVar("T", covariant=True)
 A = TypeVar("A")
 
 
-class Vector(list[T], Generic[T]):
+class Vector(list[T]):
     """Immutable Collection
 
     see: https://docs.python.org/3.9/library/collections.abc.html#collections.abc.Sequence
     """
 
-    def __init__(self, items: Optional[list[T] | tuple[T] | tuple[()]] = None):
+    def __init__(self, items: Optional[list[T] | tuple[T, ...] | tuple[()]] = None):
         if items is None:
             items = list()
         list[T].__init__(self, items)
@@ -21,7 +21,7 @@ class Vector(list[T], Generic[T]):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({[element for element in self]})"
 
-    def __add__(self, other: list[T]) -> Vector[T]:
+    def __add__(self, other: list[T], /) -> Vector[T]:
         sequence = list(self)
         return self.__class__(sequence.__add__(other))
 
@@ -31,27 +31,27 @@ class Vector(list[T], Generic[T]):
     def __delitem__(self, slice_: slice) -> NoReturn:
         raise TypeError("Does not support the __delitem__ method")
 
-    def append(self, obj: T) -> Vector[T]:
+    def append(self, obj: T, /) -> Vector[T]:
         sequence = list(self)
         sequence.append(obj)
         return self.__class__(sequence)
 
-    def extend(self, items: Iterable[T]):
+    def extend(self, items: Iterable[T], /) -> Vector[T]:
         sequence = list(self)
         sequence.extend(items)
         return self.__class__(sequence)
 
-    def insert(self, index: int, obj: T) -> Vector[T]:
+    def insert(self, *, index: int, obj: T) -> Vector[T]:
         sequence = list(self)
         sequence.insert(index, obj)
         return self.__class__(sequence)
 
-    def remove(self, obj: Any) -> Vector[T]:
+    def remove(self, obj: Any, /) -> Vector[T]:
         sequence = list(self)
         sequence.remove(obj)
         return self.__class__(sequence)
 
-    def pop(self, index: int) -> Vector[T]:
+    def pop(self, index: int, /) -> Vector[T]:
         sequence = list(self)
         sequence.pop(index)
         return self.__class__(sequence)
@@ -59,16 +59,16 @@ class Vector(list[T], Generic[T]):
     def clear(self) -> None:
         raise TypeError("Does not support the clear method")
 
-    def index(self, obj: T, start: int, end: int) -> int:
+    def index(self, *, obj: T, start: int, end: int) -> int:
         return list[T].index(self, obj, start, end)
 
-    def count(self, obj: T) -> int:
+    def count(self, obj: T, /) -> int:
         return list[T].count(self, obj)
 
     def sort(
         self,
         *,
-        key: None = None,
+        key: Optional[T] = None,
         reverse: bool = False,
     ) -> Vector[T]:
         sequence = list(self)
@@ -100,7 +100,7 @@ class Vector(list[T], Generic[T]):
     def map(self, function: Callable[[T], A], /) -> Vector[A]:
         return self.__class__([function(element) for element in self])
 
-    def reduce(self, function: Callable[[T, T], T], /):
+    def reduce(self, function: Callable[[T, T], T], /) -> T:
         return reduce(function, self)
 
     def filter(self, function: Callable[[T], bool], /) -> Vector[T]:
