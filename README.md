@@ -68,3 +68,44 @@ match context().pattern:
         print(f"Success case {value}")
 
 ```
+
+### Future
+
+
+```python
+from category import (
+    Failure,
+    Future,
+    FutureDo,
+    ProcessPoolExecutionContext,
+    Success,
+    ThreadPoolExecutionContext,
+)
+
+pe = ProcessPoolExecutionContext(max_workers=5)
+te = ThreadPoolExecutionContext(max_workers=5)
+
+def toplevel_process_function(value: int) -> int:
+    if not value:
+        raise ValueError("error")
+    return value
+
+@Future.hold
+def thread_function(value: int) -> int:
+    if not value:
+        raise ValueError("error")
+    return value
+
+@Future.do
+def context() -> FutureDo[int]:
+    one = yield from Future.hold(toplevel_process_function)(0)(pe)
+    two = 2
+    three = yield from thread_function(3)(te)
+    return one + two + three
+
+match context()(pe).pattern:
+    case Failure() as failure:
+        print(f"Failure case {failure.exception}")
+    case Success(value):
+        print(f"Success case {value}")
+```
