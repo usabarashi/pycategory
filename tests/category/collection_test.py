@@ -101,7 +101,7 @@ def test_vector_extend():
 
 def test_vector_insert():
     vector = Vector([0, 1, 2])
-    inserted_vector = vector.insert(1, 9)
+    inserted_vector = vector.insert(index=1, obj=9)
     assert inserted_vector is not vector
     assert Vector is type(vector)
     assert Vector is type(inserted_vector)
@@ -131,7 +131,7 @@ def test_vector_pop():
 
 def test_vector_index():
     vector = Vector([0, 1, 2])
-    index = vector.index(1, 0, 2)
+    index = vector.index(obj=1, start=0, end=2)
     assert Vector is type(vector)
     assert 1 == index
     assert [0, 1, 2] == vector == [0, 1, 2]

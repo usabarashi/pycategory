@@ -179,19 +179,18 @@ class EitherTFuture(monad.Monad, Generic[L, R]):
 
     def map(
         self, functor: Callable[[R], RR], /
-    ) -> Callable[[Type[future.ExecutionContext]], EitherTFuture[L, RR]]:
-        def with_context(ec: Type[future.ExecutionContext], /) -> EitherTFuture[L, RR]:
+    ) -> Callable[[future.ExecutionContext], EitherTFuture[L, RR]]:
+        def with_context(executor: future.ExecutionContext, /) -> EitherTFuture[L, RR]:
             future_ = self._value
-            mapped_future = future_.map(lambda either_: either_.map(functor))(ec)
+            mapped_future = future_.map(lambda either_: either_.map(functor))(executor)
             return EitherTFuture[L, RR](mapped_future)
 
         return with_context
 
     def flatmap(
         self, functor: Callable[[R], EitherTFuture[L, RR]], /
-    ) -> Callable[[Type[future.ExecutionContext]], EitherTFuture[L, RR]]:
-        def with_context(ec: Type[future.ExecutionContext], /) -> EitherTFuture[L, RR]:
-            # FIXME: Threaded processing
+    ) -> Callable[[future.ExecutionContext], EitherTFuture[L, RR]]:
+        def with_context(executor: future.ExecutionContext, /) -> EitherTFuture[L, RR]:
             try:
                 match self._value.result().pattern:
                     case either.Left(value):
@@ -209,8 +208,8 @@ class EitherTFuture(monad.Monad, Generic[L, R]):
 
     def fold(
         self, *, left: Callable[[L], U], right: Callable[[R], U]
-    ) -> Callable[[Type[future.ExecutionContext]], future.Future[U]]:
-        def with_context(ec: Type[future.ExecutionContext], /) -> future.Future[U]:
+    ) -> Callable[[future.ExecutionContext], future.Future[U]]:
+        def with_context(executor: future.ExecutionContext, /) -> future.Future[U]:
             def catamorphism(either_: either.Either[L, R], /) -> U:
                 match either_.pattern:
                     case either.Left(value):
@@ -219,7 +218,7 @@ class EitherTFuture(monad.Monad, Generic[L, R]):
                         return right(value)
 
             future_ = self._value
-            return future_.map(catamorphism)(ec)
+            return future_.map(catamorphism)(executor)
 
         return with_context
 
@@ -246,8 +245,6 @@ class EitherTFuture(monad.Monad, Generic[L, R]):
                         case monad.Composability.Variable:
                             # Priority is given to the value of the sub-generator's monad.
                             ...
-                        case _:
-                            raise TypeError(yield_state)
             except StopIteration as return_:
                 return EitherTFuture[L, R].lift(return_.value)
 

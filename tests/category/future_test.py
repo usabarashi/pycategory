@@ -47,10 +47,9 @@ def test_map():
     tc = ThreadPoolExecutionContext(max_workers=5)
 
     # Failure finished case
-    failure_future = Future[int]()
-    failure_future.set_exception(exception=Exception("Failure"))
+    failure_future = Future[int].failed(Exception("Failure"))
     failure_mapped_future = failure_future.map(lambda success: success + 1)(pc)
-    assert failure_future is failure_mapped_future
+    assert failure_future is not failure_mapped_future
     assert Future is type(failure_mapped_future)
     try:
         failure_mapped_future.result()
@@ -63,7 +62,7 @@ def test_map():
     # Failure process running case
     failure_process = Future.hold(process_multi_context)(0)(pc)
     failure_mapped_process = failure_process.map(lambda success: success + 1)(pc)
-    assert failure_process is failure_mapped_process
+    assert failure_process is not failure_mapped_process
     assert Future is type(failure_mapped_process)
     try:
         failure_mapped_process.result()
@@ -78,7 +77,7 @@ def test_map():
     # Failure thread running case
     failure_thread = thread_multi_context(0)(tc)
     failure_mapped_thread = failure_thread.map(lambda success: success + 1)(tc)
-    assert failure_thread is failure_mapped_thread
+    assert failure_thread is not failure_mapped_thread
     assert Future is type(failure_mapped_thread)
     try:
         failure_mapped_thread.result()
@@ -131,12 +130,11 @@ def test_flatmap():
     tc = ThreadPoolExecutionContext(max_workers=5)
 
     # Failure finished case
-    failure_future = Future[int]()
-    failure_future.set_exception(exception=Exception())
+    failure_future = Future[int].failed(Exception())
     failure_flatmapped_future = failure_future.flatmap(
         lambda success: Future[int].successful(success + 1)
     )(pc)
-    assert failure_future is failure_flatmapped_future
+    assert failure_future is not failure_flatmapped_future
     assert Future is type(failure_flatmapped_future)
     try:
         failure_flatmapped_future.result()
@@ -153,7 +151,7 @@ def test_flatmap():
     failure_flatmapped_process = failure_process.flatmap(
         lambda success: Future[int].successful(success + 1)
     )(pc)
-    assert failure_process is failure_flatmapped_process
+    assert failure_process is not failure_flatmapped_process
     assert Future is type(failure_flatmapped_process)
     try:
         failure_flatmapped_process.result()
@@ -170,7 +168,7 @@ def test_flatmap():
     failure_flatmapped_thread = failure_thread.flatmap(
         lambda success: Future[int].successful(success + 1)
     )(tc)
-    assert failure_thread is failure_flatmapped_thread
+    assert failure_thread is not failure_flatmapped_thread
     assert Future is type(failure_flatmapped_thread)
     try:
         failure_flatmapped_thread.result()
@@ -216,6 +214,87 @@ def test_flatmap():
     assert 43 == success_flatmapped_thread.value.get()
 
 
+def test_recover():
+    from category import (
+        Failure,
+        Future,
+        ProcessPoolExecutionContext,
+        Success,
+        ThreadPoolExecutionContext,
+    )
+
+    pe = ProcessPoolExecutionContext(max_workers=5)
+    te = ThreadPoolExecutionContext(max_workers=5)
+
+    failure_process = Future.hold(process_multi_context)(0)(pe)
+    failure_recover_process = failure_process.recover(lambda exception: 42)(pe)
+    assert failure_process is not failure_recover_process
+    assert Success is type(failure_recover_process.value)
+    assert 42 == failure_recover_process.result()
+
+    failure_unrecover_process = failure_process.recover(lambda exception: None)(pe)
+    assert failure_process is not failure_unrecover_process
+    assert Failure is type(failure_unrecover_process.value)
+
+    failure_thread = thread_multi_context(0)(te)
+    failure_recover_thread = failure_thread.recover(lambda exception: 42)(te)
+    assert failure_thread is not failure_recover_thread
+    assert Success is type(failure_recover_thread.value)
+    assert 42 == failure_recover_thread.result()
+
+    failure_unrecover_thread = failure_thread.recover(lambda exception: None)(te)
+    assert failure_thread is not failure_unrecover_thread
+    assert Failure is type(failure_unrecover_thread.value)
+
+
+def test_recover_with():
+    from category import (
+        Failure,
+        Future,
+        ProcessPoolExecutionContext,
+        Success,
+        ThreadPoolExecutionContext,
+    )
+
+    pe = ProcessPoolExecutionContext(max_workers=5)
+    te = ThreadPoolExecutionContext(max_workers=5)
+
+    failure_process = Future.hold(process_multi_context)(0)(pe)
+    failure_recover_process = failure_process.recover_with(
+        lambda exception: Future[int].successful(42)
+    )(pe)
+    assert failure_process is not failure_recover_process
+    assert Success is type(failure_recover_process.value)
+    assert 42 == failure_recover_process.result()
+
+    failure_unrecover_process = failure_process.recover_with(lambda exception: None)(pe)
+    assert failure_process is not failure_unrecover_process
+    assert Failure is type(failure_unrecover_process.value)
+
+    failure_thread = thread_multi_context(0)(te)
+    failure_recover_thread = failure_thread.recover_with(
+        lambda exception: Future[int].successful(42)
+    )(te)
+    assert failure_thread is not failure_recover_thread
+    assert Success is type(failure_recover_thread.value)
+    assert 42 == failure_recover_thread.result()
+
+    failure_unrecover_thread = failure_thread.recover_with(lambda exception: None)(te)
+    assert failure_thread is not failure_unrecover_thread
+    assert Failure is type(failure_unrecover_thread.value)
+
+
+def test_from_try():
+    from category import Failure, Future, Success
+
+    failure_future = Future[int].from_try(Failure[int](Exception("Error")))
+    assert Failure is type(failure_future.value)
+
+    success_future = Future[int].from_try(Success[int](42))
+    assert Success is type(success_future.value)
+    assert 42 == success_future.result()
+
+
 def test_try_complete():
     import time
     from typing import cast
@@ -232,8 +311,7 @@ def test_try_complete():
     tc = ThreadPoolExecutionContext(max_workers=5)
 
     # Failure case
-    failure_future = Future[int]()
-    failure_future.set_exception(exception=Exception())
+    failure_future = Future[int].failed(Exception())
     assert False is failure_future.try_complete(Success(1))
     try:
         failure_future.result()
@@ -319,8 +397,7 @@ def test_on_complete():
     time.sleep(SLEEP_TIME)
     assert 42 == success_process.result()
 
-    failure_process = Future[int]()
-    failure_process.set_exception(Exception("Failure"))
+    failure_process = Future[int].failed(Exception("Failure"))
     failure_process.on_complete(on_complete)(pe)
     time.sleep(SLEEP_TIME)
     try:
@@ -335,8 +412,7 @@ def test_on_complete():
     time.sleep(SLEEP_TIME)
     assert 42 == success_thread.result()
 
-    failure_thread = Future[int]()
-    failure_thread.set_exception(Exception("Failure"))
+    failure_thread = Future[int].failed(Exception("Failure"))
     failure_thread.on_complete(on_complete)(te)
     time.sleep(SLEEP_TIME)
     try:
@@ -349,11 +425,29 @@ def test_on_complete():
 def test_successful():
     from category import Future, Success
 
-    success_future = Future[bool].successful(True)
+    success_future = Future[int].successful(42)
     assert Future is type(success_future)
-    assert True is success_future.result()
+    assert 42 == success_future.result()
     assert Success is type(success_future.value)
-    assert True is success_future.value.get()
+    assert 42 == success_future.value.get()
+
+
+def test_failed():
+    from category import Failure, Future
+
+    failure_future = Future[int].failed(Exception("Error"))
+    assert Future is type(failure_future)
+    try:
+        failure_future.result()
+        assert False
+    except Exception:
+        assert True
+    assert Failure is type(failure_future.value)
+    try:
+        failure_future.value.get()
+        assert False
+    except Exception:
+        assert True
 
 
 def test_hold():
@@ -457,13 +551,9 @@ def test_method():
     def to_failure(self: Future[int], /) -> Future[int]:
         try:
             self.result()
-            failure = Future[int]()
-            failure.set_exception(exception=Exception())
-            return failure
+            return Future[int].failed(Exception())
         except Exception as error:
-            failure = Future[int]()
-            failure.set_exception(exception=error)
-            return failure
+            return Future[int].failed(error)
 
     def to_success(self: Future[int], /) -> Future[int]:
         try:
@@ -472,8 +562,7 @@ def test_method():
         except Exception:
             return Future[int].successful(42)
 
-    failure = Future[int]()
-    failure.set_exception(exception=Exception())
+    failure = Future[int].failed(Exception())
     success = Future[int].successful(42)
     assert Future is type(failure.method(to_failure))
     assert Failure is type(failure.method(to_failure).value)

@@ -76,7 +76,7 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
 
     def __iter__(self) -> Generator[Future[T], None, T]:
         try:
-            match self.value:
+            match self.pattern:
                 case try_.Failure():
                     yield self
                     raise GeneratorExit(self)
@@ -88,7 +88,7 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
 
     @staticmethod
     def lift(*args: ..., **kwargs: ...) -> Future[T]:
-        return Future.successful(*args, **kwargs)
+        return Future[T].successful(*args, **kwargs)
 
     def map(
         self, functor: Callable[[T], TT], /
@@ -116,12 +116,38 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
                     case try_.Success(value):
                         try:
                             return functor(value)
-                        except Exception as error:
-                            future = Future[TT]()
-                            future.set_exception(exception=error)
-                            return future
+                        except Exception as exception:
+                            return Future[TT].failed(exception)
 
             return self.transform_with(fold)(executor)
+
+        return with_context
+
+    def recover(
+        self, partial_function: Callable[[Exception], TT], /
+    ) -> Callable[[ExecutionContext], Future[TT]]:
+        def with_context(executor: ExecutionContext, /) -> Future[TT]:
+            return self.transform(lambda try__: try__.recover(partial_function))(
+                executor
+            )
+
+        return with_context
+
+    def recover_with(
+        self, partial_function: Callable[[Exception], Future[TT]], /
+    ) -> Callable[[ExecutionContext], Future[TT]]:
+        def with_context(executor: ExecutionContext, /) -> Future[TT]:
+            def complete(try__: try_.Try[T]) -> Future[TT]:
+                match try__.pattern:
+                    case try_.Failure() as failure:
+                        if (result := partial_function(failure.exception)) is None:
+                            return Future[TT].failed(failure.exception)
+                        else:
+                            return result
+                    case try_.Success():
+                        return cast(Future[TT], self)
+
+            return self.transform_with(complete)(executor)
 
         return with_context
 
@@ -133,11 +159,7 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
             self.on_complete(
                 lambda result: current_future.try_complete(try_functor(result))
             )(executor)
-            match self.value:
-                case try_.Failure():
-                    return cast(Future[TT], self)
-                case try_.Success():
-                    return current_future
+            return current_future
 
         return with_context
 
@@ -145,20 +167,16 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
         self, functor: Callable[[try_.Try[T]], Future[TT]], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
-            next_future = Future[TT]()
+            current_future = Future[TT]()
 
             def complete(previous_result: try_.Try[T]) -> None:
-                current_future = functor(previous_result)
-                current_future.on_complete(
-                    lambda current_result: next_future.try_complete(current_result),
+                previous_future = functor(previous_result)
+                previous_future.on_complete(
+                    lambda current_result: current_future.try_complete(current_result),
                 )(executor)
 
             self.on_complete(complete)(executor)
-            match self.value:
-                case try_.Failure():
-                    return cast(Future[TT], self)
-                case try_.Success():
-                    return next_future
+            return current_future
 
         return with_context
 
@@ -207,6 +225,20 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
         future.set_result(result=value)
         return future
 
+    @staticmethod
+    def failed(exception: Exception, /) -> Future[T]:
+        future = Future[T]()
+        future.set_exception(exception=exception)
+        return future
+
+    @staticmethod
+    def from_try(try_value: try_.Try[T], /) -> Future[T]:
+        match try_value.pattern:
+            case try_.Failure() as failure:
+                return Future[T].failed(failure.exception)
+            case try_.Success(value):
+                return Future[T].successful(value)
+
     @property
     def value(self) -> SubType[T]:
         try:
@@ -236,16 +268,14 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
                 try:
                     while True:
                         yield_state = next(context_)
-                        flatmapped_state = yield_state.flatmap(
-                            lambda value: Future[T].successful(value)
-                        )(executor)
                         if not isinstance(yield_state, Future):
                             raise TypeError(yield_state)
-                        elif yield_state is flatmapped_state:
-                            return yield_state
-                        else:
-                            # Priority is given to the value of the sub-generator's monad.
-                            ...
+                        match yield_state.composability():
+                            case monad.Composability.Immutable:
+                                return yield_state
+                            case monad.Composability.Variable:
+                                # Priority is given to the value of the sub-generator's monad.
+                                ...
                 except StopIteration as return_:
                     return Future[T].lift(return_.value)
 

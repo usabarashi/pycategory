@@ -8,7 +8,6 @@ from .future import (
     ProcessPoolExecutionContext,
     ThreadPoolExecutionContext,
 )
-from .monad import do
 from .option import SINGLETON_VOID as VOID
 from .option import Option, OptionDo, Some, Void
 from .try_ import Failure, Success, Try, TryDo
@@ -30,7 +29,6 @@ __all__ = [
     "FutureDo",
     "ProcessPoolExecutionContext",
     "ThreadPoolExecutionContext",
-    "do",
     "Option",
     "OptionDo",
     "Some",
