@@ -6,7 +6,7 @@ from collections.abc import Generator
 from functools import wraps
 from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
-from . import monad
+from . import either, monad, option
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -38,6 +38,14 @@ class Try(monad.Monad, Generic[T]):
     def recover_with(
         self, partial_function: Callable[[Exception], Try[TT]], /
     ) -> Try[TT]:
+        raise NotImplementedError
+
+    @abstractproperty
+    def to_either(self) -> either.Either[Exception, T]:
+        raise NotImplementedError
+
+    @abstractproperty
+    def to_option(self) -> option.Option[T]:
         raise NotImplementedError
 
     @abstractmethod
@@ -155,6 +163,14 @@ class Failure(Try[T]):
         except Exception as exception:
             return Failure[TT](exception)
 
+    @property
+    def to_either(self) -> either.Either[Exception, T]:
+        return either.Left(self.exception)
+
+    @property
+    def to_option(self) -> option.Option[T]:
+        return option.Void[T]()
+
     def fold(
         self,
         *,
@@ -214,6 +230,14 @@ class Success(Try[T]):
         self, partial_function: Callable[[Exception], Try[TT]], /
     ) -> Try[TT]:
         return cast(Try[TT], self)
+
+    @property
+    def to_either(self) -> either.Either[Exception, T]:
+        return either.Right(self.value)
+
+    @property
+    def to_option(self) -> option.Option[T]:
+        return option.Some[T](self.value)
 
     def fold(
         self,

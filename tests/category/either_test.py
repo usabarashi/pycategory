@@ -116,6 +116,22 @@ def test_left_flatmap():
     assert None is flatmapped_left.right().get_or_else(lambda: None)
 
 
+def test_left_to_option():
+    from category import Left, Void
+
+    assert Void() is Left[None, int](None).to_option
+
+
+def test_left_to_try():
+    from category import Failure, Left, SubtypeConstraints
+
+    assert Failure is type(
+        Left[TypeError, int](TypeError()).to_try(
+            SubtypeConstraints(TypeError, Exception)
+        )
+    )
+
+
 def test_left_fold():
     from category import Left
 
@@ -257,6 +273,24 @@ def test_right_flatmap():
     except Exception as error:
         assert ValueError is type(error)
     assert None is flatmapped_right.left().get_or_else(lambda: None)
+
+
+def test_right_to_option():
+    from category import Right, Some
+
+    assert Some is type(Right[None, int](42).to_option)
+    assert 42 == Right[None, int](42).to_option.get_or_else(lambda: 0)
+
+
+def test_right_to_try():
+    from category import Right, SubtypeConstraints, Success
+
+    assert Success is type(
+        Right[TypeError, int](42).to_try(SubtypeConstraints(TypeError, Exception))
+    )
+    assert 42 == Right[TypeError, int](42).to_try(
+        SubtypeConstraints(TypeError, Exception)
+    ).get_or_else(lambda: 0)
 
 
 def test_right_fold():

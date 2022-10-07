@@ -30,7 +30,7 @@
 			},
 		},
 		"terminal.integrated.shell.linux": "/bin/bash",
-		"python.pythonPath": "/usr/local/bin/python",
+		"python.pythonPath": "${workspaceFolder}/.venv/bin/python",
 		"python.analysis.typeCheckingMode": "strict",
 		"python.analysis.extraPaths": [
 			"${workspaceFolder}/src"
