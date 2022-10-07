@@ -130,6 +130,11 @@ def test_left_to_try():
             SubtypeConstraints(TypeError, Exception)
         )
     )
+    try:
+        Left[bool, int](False).to_try(SubtypeConstraints(bool, Exception))
+        assert False
+    except TypeError:
+        assert True
 
 
 def test_left_fold():
