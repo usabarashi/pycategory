@@ -6,7 +6,7 @@ from collections.abc import Generator
 from functools import wraps
 from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
-from . import monad
+from . import constraints, monad, option, try_
 
 L = TypeVar("L", covariant=True)
 R = TypeVar("R", covariant=True)
@@ -30,6 +30,16 @@ class Either(monad.Monad, Generic[L, R]):
 
     @abstractmethod
     def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
+        raise NotImplementedError
+
+    @abstractproperty
+    def to_option(self) -> option.Option[R]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def to_try(
+        self, evidence: constraints.SubtypeConstraints[L, Exception], /
+    ) -> try_.Try[R]:
         raise NotImplementedError
 
     @abstractmethod
@@ -119,6 +129,15 @@ class Left(Either[L, R]):
     def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         return cast(Left[L, RR], self)
 
+    @property
+    def to_option(self) -> option.Option[R]:
+        return option.Void[R]()
+
+    def to_try(
+        self, evidence: constraints.SubtypeConstraints[L, Exception], /
+    ) -> try_.Try[R]:
+        return try_.Failure[R](cast(Exception, self.value))
+
     def fold(self, *, left: Callable[[L], U], right: Callable[[R], U]) -> U:
         return left(self.value)
 
@@ -171,6 +190,15 @@ class Right(Either[L, R]):
 
     def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         return functor(self.value)
+
+    @property
+    def to_option(self) -> option.Option[R]:
+        return option.Some[R](self.value)
+
+    def to_try(
+        self, evidence: constraints.SubtypeConstraints[L, Exception], /
+    ) -> try_.Try[R]:
+        return try_.Success[R](self.value)
 
     def fold(self, *, left: Callable[[L], U], right: Callable[[R], U]) -> U:
         return right(self.value)

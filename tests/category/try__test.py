@@ -146,6 +146,19 @@ def test_failure_recover_with():
     assert 42 == recover_with_failure.get()
 
 
+def test_failure_to_either():
+    from category import Failure, Left
+
+    assert Left is type(Failure[int](Exception()).to_either)
+    assert None is Failure[int](Exception()).to_either.get_or_else(lambda: None)
+
+
+def test_failure_to_option():
+    from category import Failure, Void
+
+    assert Void is type(Failure[int](Exception()).to_option)
+
+
 def test_failure_fold():
     from category import Failure
 
@@ -252,6 +265,20 @@ def test_success_recover_with():
     assert success is recover_with_failure
     assert Success is type(recover_with_failure)
     assert 42 == recover_with_failure.get()
+
+
+def test_success_to_either():
+    from category import Right, Success
+
+    assert Right is type(Success[int](42).to_either)
+    assert 42 == Success[int](42).to_either.get_or_else(lambda: None)
+
+
+def test_success_to_option():
+    from category import Some, Success
+
+    assert Some is type(Success[int](42).to_option)
+    assert 42 == Success[int](42).to_option.get_or_else(lambda: None)
 
 
 def test_success_fold():
