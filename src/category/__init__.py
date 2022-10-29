@@ -11,6 +11,7 @@ from .future import (
 )
 from .option import SINGLETON_VOID as VOID
 from .option import Option, OptionDo, Some, Void
+from .processor import Frame
 from .try_ import Failure, Success, Try, TryDo
 
 __all__ = [
@@ -36,6 +37,7 @@ __all__ = [
     "Some",
     "Void",
     "VOID",
+    "Frame",
     "Failure",
     "Success",
     "Try",

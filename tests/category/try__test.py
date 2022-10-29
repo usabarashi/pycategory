@@ -1,4 +1,6 @@
 def test_try_hold():
+    from typing import cast
+
     from category import Failure, Success, Try
 
     @Try.hold
@@ -20,6 +22,19 @@ def test_try_hold():
     assert Success is type(multi_context(1))
     assert 1 == multi_context(1).get()
     assert 1 == multi_context(1).get_or_else(lambda: None)
+
+    @Try.hold(unmask=("unmask",))
+    def unmask_context(mask: int, unmask: str) -> str:
+        if not mask:
+            raise Exception("error")
+        return unmask
+
+    result = unmask_context(0, unmask="John Doe.")
+    assert Failure is type(result)
+    assert "****" == cast(Failure[int], result).exception.args[-1].get("mask", None)
+    assert "John Doe." == cast(Failure[int], result).exception.args[-1].get(
+        "unmask", None
+    )
 
 
 def test_try_do():
