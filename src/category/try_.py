@@ -4,9 +4,20 @@ from __future__ import annotations
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
 from functools import wraps
-from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Literal,
+    Optional,
+    ParamSpec,
+    TypeAlias,
+    TypeVar,
+    cast,
+    overload,
+)
 
-from . import either, monad, option
+from . import collection, either, monad, option, processor
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -107,16 +118,51 @@ class Try(monad.Monad, Generic[T]):
     def method(self, functor: Callable[[Try[T]], TT], /) -> TT:
         raise NotImplementedError
 
+    @overload
     @staticmethod
-    def hold(function: Callable[P, T]) -> Callable[P, Try[T]]:
-        @wraps(function)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Try[T]:
-            try:
-                return Success[T](function(*args, **kwargs))
-            except Exception as error:
-                return Failure[T](error)
+    def hold(function: Callable[P, T], /) -> Callable[P, Try[T]]:
+        ...
 
-        return wrapper
+    @overload
+    @staticmethod
+    def hold(
+        *, unmask: Optional[tuple[str, ...]]
+    ) -> Callable[[Callable[P, T]], Callable[P, Try[T]]]:
+        ...
+
+    @staticmethod
+    def hold(
+        function: Optional[Callable[P, T]] = None,
+        /,
+        *,
+        unmask: Optional[tuple[str, ...]] = None,
+    ) -> Callable[P, Try[T]] | Callable[[Callable[P, T]], Callable[P, Try[T]]]:
+        def wrap(function_: Callable[P, T], /) -> Callable[P, Try[T]]:
+            return _hold(function=function_, unmask=unmask)
+
+        if function is None:
+            return wrap
+        else:
+            return wrap(function)
+
+
+def _hold(
+    function: Callable[P, T],
+    unmask: Optional[tuple[str, ...]] = None,
+) -> Callable[P, Try[T]]:
+    @wraps(function)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> Try[T]:
+        try:
+            return Success[T](function(*args, **kwargs))
+        except Exception as exception:
+            arguments = processor.arguments(function, *args, **kwargs)
+            masked_arguments = processor.masking(arguments=arguments, unmask=unmask)
+            exception.args = tuple(
+                collection.Vector(exception.args).append(masked_arguments)
+            )
+            return Failure[T](exception)
+
+    return wrapper
 
 
 class Failure(Try[T]):
