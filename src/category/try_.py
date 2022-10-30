@@ -126,7 +126,9 @@ class Try(monad.Monad, Generic[T]):
     @overload
     @staticmethod
     def hold(
-        *, unmask: Optional[tuple[str, ...]]
+        *,
+        unmask: Optional[tuple[str, ...]] = None,
+        debugger: Optional[Callable[[processor.Arguments], Any]] = None,
     ) -> Callable[[Callable[P, T]], Callable[P, Try[T]]]:
         """
 
@@ -139,9 +141,10 @@ class Try(monad.Monad, Generic[T]):
         /,
         *,
         unmask: Optional[tuple[str, ...]] = None,
+        debugger: Optional[Callable[[processor.Arguments], Any]] = None,
     ) -> Callable[P, Try[T]] | Callable[[Callable[P, T]], Callable[P, Try[T]]]:
         def wrap(function_: Callable[P, T], /) -> Callable[P, Try[T]]:
-            return _hold(function=function_, unmask=unmask)
+            return _hold(function=function_, unmask=unmask, debugger=debugger)
 
         if function is None:
             return wrap
@@ -150,8 +153,10 @@ class Try(monad.Monad, Generic[T]):
 
 
 def _hold(
+    *,
     function: Callable[P, T],
     unmask: Optional[tuple[str, ...]] = None,
+    debugger: Optional[Callable[[processor.Arguments], Any]] = None,
 ) -> Callable[P, Try[T]]:
     @wraps(function)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> Try[T]:
@@ -161,9 +166,12 @@ def _hold(
             arguments = processor.arguments(function, *args, **kwargs)
             masked_arguments = processor.masking(arguments=arguments, unmask=unmask)
             parsed_arguments = processor.parse(masked_arguments)
-            exception.args = tuple(
-                collection.Vector(exception.args).append(parsed_arguments)
+            debug = processor.execute_debugger(debugger=debugger, arguments=arguments)
+            report = processor.RuntimeErrorReport(
+                arguments=parsed_arguments,
+                debug=debug,
             )
+            exception.args = tuple(collection.Vector(exception.args).append(report))
             return Failure[T](exception)
 
     return wrapper
