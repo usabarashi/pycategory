@@ -1,7 +1,7 @@
 def test_try_hold():
     from typing import cast
 
-    from category import Failure, Success, Try
+    from category import Failure, Success, Try, processor
 
     @Try.hold
     def multi_context(value: int, /) -> int:
@@ -31,7 +31,9 @@ def test_try_hold():
 
     result = unmask_context(0, unmask="John Doe.")
     assert Failure is type(result)
-    assert "****" == cast(Failure[int], result).exception.args[-1].get("mask", None)
+    assert processor.MASK == cast(Failure[int], result).exception.args[-1].get(
+        "mask", None
+    )
     assert "John Doe." == cast(Failure[int], result).exception.args[-1].get(
         "unmask", None
     )
