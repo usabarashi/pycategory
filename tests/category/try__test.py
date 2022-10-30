@@ -23,13 +23,20 @@ def test_try_hold():
     assert 1 == multi_context(1).get()
     assert 1 == multi_context(1).get_or_else(lambda: None)
 
-    @Try.hold(unmask=("unmask",))
-    def unmask_context(mask: int, unmask: str) -> str:
+    class Class_:
+        def __init__(self, public_value: int, private_value: int):
+            self.public_value = public_value
+            self._private_value = private_value
+
+    @Try.hold(unmask=("unmask", "class_"))
+    def unmask_context(mask: int, unmask: str, class_: Class_) -> str:
         if not mask:
             raise Exception("error")
         return unmask
 
-    result = unmask_context(0, unmask="John Doe.")
+    result = unmask_context(
+        0, unmask="John Doe.", class_=Class_(public_value=42, private_value=42)
+    )
     assert Failure is type(result)
     assert processor.MASK == cast(Failure[int], result).exception.args[-1].get(
         "mask", None
@@ -37,6 +44,9 @@ def test_try_hold():
     assert "John Doe." == cast(Failure[int], result).exception.args[-1].get(
         "unmask", None
     )
+    assert {"public_value": 42, "_private_value": processor.MASK} == cast(
+        Failure[int], result
+    ).exception.args[-1].get("class_", None)
 
 
 def test_try_do():

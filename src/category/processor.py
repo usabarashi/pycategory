@@ -1,8 +1,9 @@
 import inspect
 from copy import deepcopy
-from typing import Any, Callable, Optional, ParamSpec
+from typing import Any, Callable, Optional, ParamSpec, TypeAlias, cast
 
 P = ParamSpec("P")
+Arguments: TypeAlias = dict[str, Any]
 
 MASK = "****"
 
@@ -18,7 +19,7 @@ def masking(
 
 def arguments(
     function: Callable[P, Any], /, *args: P.args, **kwargs: P.kwargs
-) -> dict[str, Any]:
+) -> Arguments:
     """Derive function arguments
 
     If there is no TypeHint in the function signature, {} is returned.
@@ -45,6 +46,41 @@ def arguments(
     for key, value in kwargs.items():
         arguments[key] = value
     return arguments
+
+
+def is_private_attribute(attribute: str) -> bool:
+    return attribute.startswith("_")
+
+
+def parse(object_: Any) -> Any:
+    """Recursively decompose object structure"""
+
+    def recursive(parse_object: Any, /) -> Any:
+        # Class case
+        if hasattr(parse_object, "__dict__"):
+            return {
+                recursive(key): MASK if is_private_attribute(key) else recursive(value)
+                for key, value in dict(
+                    cast(dict[str, Any], parse_object.__dict__)
+                ).items()
+            }
+        elif isinstance(parse_object, list):
+            return [recursive(item) for item in cast(list[Any], parse_object)]
+        elif isinstance(parse_object, tuple):
+            return tuple(
+                recursive(item) for item in cast(tuple[Any, ...], parse_object)
+            )
+        elif isinstance(parse_object, set):
+            return {recursive(item) for item in cast(set[Any], parse_object)}
+        elif isinstance(parse_object, dict):
+            return {
+                recursive(key): recursive(value)
+                for key, value in cast(dict[Any, Any], parse_object.items())
+            }
+        else:
+            return parse_object
+
+    return recursive(object_)
 
 
 class Frame:
