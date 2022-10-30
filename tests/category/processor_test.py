@@ -219,3 +219,21 @@ def test_frame():
     assert Error is type(result.left().get())
     assert "****" == result.left().get().variables.get("mask", None)
     assert 42 == result.left().get().variables.get("unmask", None)
+
+
+def test_execute_debugger():
+    from category import processor
+
+    assert None is processor.execute_debugger(debugger=None, arguments={"value": 42})
+    assert None is processor.execute_debugger(
+        debugger=lambda arguments: None, arguments={}
+    )
+    assert isinstance(
+        processor.execute_debugger(
+            debugger=lambda arguments: arguments["John Doe."], arguments={"value": 42}
+        ),
+        Exception,
+    )
+    assert 42 == processor.execute_debugger(
+        debugger=lambda arguments: arguments.get("value"), arguments={"value": 42}
+    )

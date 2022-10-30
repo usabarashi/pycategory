@@ -1,6 +1,6 @@
 import inspect
 from copy import deepcopy
-from typing import Any, Callable, Optional, ParamSpec, TypeAlias, cast
+from typing import Any, Callable, NamedTuple, Optional, ParamSpec, TypeAlias, cast
 
 P = ParamSpec("P")
 Arguments: TypeAlias = dict[str, Any]
@@ -98,3 +98,20 @@ class Frame:
             unmask=unmask,
         )
         self.stack: list[inspect.FrameInfo] = inspect.stack()
+
+
+class RuntimeErrorReport(NamedTuple):
+    arguments: Arguments
+    debug: Optional[Exception | Any]
+
+
+def execute_debugger(
+    debugger: Optional[Callable[[Arguments], Any]],
+    arguments: Arguments,
+) -> Optional[Exception | Any]:
+    if (debugger is None) or (arguments == {}):
+        return None
+    try:
+        return debugger(arguments)
+    except Exception as exception:
+        return exception

@@ -28,7 +28,10 @@ def test_try_hold():
             self.public_value = public_value
             self._private_value = private_value
 
-    @Try.hold(unmask=("unmask", "class_"))
+    @Try.hold(
+        unmask=("unmask", "class_"),
+        debugger=lambda arguments: arguments.get("mask"),
+    )
     def unmask_context(mask: int, unmask: str, class_: Class_) -> str:
         if not mask:
             raise Exception("error")
@@ -38,15 +41,17 @@ def test_try_hold():
         0, unmask="John Doe.", class_=Class_(public_value=42, private_value=42)
     )
     assert Failure is type(result)
-    assert processor.MASK == cast(Failure[int], result).exception.args[-1].get(
-        "mask", None
+    failure = cast(Failure[str], result)
+    assert processor.RuntimeErrorReport is type(failure.exception.args[-1])
+    runtime_error_report = cast(
+        processor.RuntimeErrorReport, failure.exception.args[-1]
     )
-    assert "John Doe." == cast(Failure[int], result).exception.args[-1].get(
-        "unmask", None
-    )
-    assert {"public_value": 42, "_private_value": processor.MASK} == cast(
-        Failure[int], result
-    ).exception.args[-1].get("class_", None)
+    assert {
+        "mask": processor.MASK,
+        "unmask": "John Doe.",
+        "class_": {"public_value": 42, "_private_value": processor.MASK},
+    } == runtime_error_report.arguments
+    assert 0 == runtime_error_report.debug
 
 
 def test_try_do():
