@@ -128,7 +128,10 @@ class Try(monad.Monad, Generic[T]):
     def hold(
         *, unmask: Optional[tuple[str, ...]]
     ) -> Callable[[Callable[P, T]], Callable[P, Try[T]]]:
-        ...
+        """
+
+        Unmask and record arguments in case of Failure.
+        """
 
     @staticmethod
     def hold(
