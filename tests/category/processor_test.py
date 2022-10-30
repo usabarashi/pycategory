@@ -90,6 +90,103 @@ def test_arguments():
     assert 0 == len(arguments)
 
 
+def test_is_private():
+    from category import processor
+
+    assert False is processor.is_private_attribute("public")
+    assert True is processor.is_private_attribute("_private")
+
+
+def test_parse():
+    from typing import Any
+
+    from category import processor
+
+    class Sample:
+        def __init__(
+            self,
+            int_: int,
+            str_: str,
+            bool_: bool,
+            list_: list[Any],
+            tuple_: tuple[Any, ...],
+            set_: set[Any],
+            dict_: dict[Any, Any],
+        ):
+            self.int_ = int_
+            self.str_ = str_
+            self.bool_ = bool_
+            self.list_ = list_
+            self.tuple_ = tuple_
+            self.set_ = set_
+            self.dict_ = dict_
+
+    sample = Sample(
+        int_=42,
+        str_="42",
+        bool_=False,
+        list_=[
+            42,
+            "42",
+            False,
+            [42, "42", [42, "42"], (42, "42"), {42, "42"}, {42: 42, "42": "42"}],
+        ],
+        tuple_=(
+            42,
+            "42",
+            False,
+            [42, "42", [42, "42"], (42, "42"), {42, "42"}, {42: 42, "42": "42"}],
+        ),
+        set_={42, "42", False, (42, "42", (42, "42"))},
+        dict_={
+            42: 42,
+            "42": "42",
+            False: False,
+            (42, "42", (42, "42")): [
+                42,
+                "42",
+                [42, "42"],
+                (42, "42"),
+                {42, "42"},
+                {42: 42, "42": "42"},
+            ],
+        },
+    )
+    parsed_sample = processor.parse(sample)
+    assert parsed_sample is not sample
+    assert {
+        "int_": 42,
+        "str_": "42",
+        "bool_": False,
+        "list_": [
+            42,
+            "42",
+            False,
+            [42, "42", [42, "42"], (42, "42"), {42, "42"}, {42: 42, "42": "42"}],
+        ],
+        "tuple_": (
+            42,
+            "42",
+            False,
+            [42, "42", [42, "42"], (42, "42"), {42, "42"}, {42: 42, "42": "42"}],
+        ),
+        "set_": {42, "42", False, (42, "42", (42, "42"))},
+        "dict_": {
+            42: 42,
+            "42": "42",
+            False: False,
+            (42, "42", (42, "42")): [
+                42,
+                "42",
+                [42, "42"],
+                (42, "42"),
+                {42, "42"},
+                {42: 42, "42": "42"},
+            ],
+        },
+    } == parsed_sample
+
+
 def test_frame():
     from category import Either, EitherDo, Frame, Left, Right, processor
 

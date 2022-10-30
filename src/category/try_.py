@@ -160,8 +160,9 @@ def _hold(
         except Exception as exception:
             arguments = processor.arguments(function, *args, **kwargs)
             masked_arguments = processor.masking(arguments=arguments, unmask=unmask)
+            parsed_arguments = processor.parse(masked_arguments)
             exception.args = tuple(
-                collection.Vector(exception.args).append(masked_arguments)
+                collection.Vector(exception.args).append(parsed_arguments)
             )
             return Failure[T](exception)
 
