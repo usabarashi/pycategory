@@ -15,79 +15,360 @@ def test_masking():
 
 
 def test_arguments():
-    from typing import Any, Optional
+    from typing import Optional
 
     from category import processor
 
-    def annotations_arguments(
-        position1: int,
-        position2: int,
-        name1: str,
-        name2: Optional[list[str]] = None,
-        name3: Optional[dict[str, Any]] = None,
+    def position_only_no_default(position: int, /) -> None:
+        ...
+
+    assert {"position": 42} == processor.arguments(
+        position_only_no_default, *(42,), **{}
+    )
+
+    def position_only_has_default(position: Optional[int] = None, /) -> None:
+        ...
+
+    assert {"position": None} == processor.arguments(
+        position_only_has_default, *(), **{}
+    )
+    assert {"position": 42} == processor.arguments(
+        position_only_has_default, *(42,), **{}
+    )
+
+    def position_or_keyword_no_default(position_or_keyword: int) -> None:
+        ...
+
+    assert {"position_or_keyword": 42} == processor.arguments(
+        position_or_keyword_no_default, *(42,), **{}
+    )
+    assert {"position_or_keyword": 42} == processor.arguments(
+        position_or_keyword_no_default, *(), **{"position_or_keyword": 42}
+    )
+
+    def position_or_keyword_has_default(
+        position_or_keyword: Optional[int] = None,
     ) -> None:
         ...
 
-    args = (0, 1, "1")
-    kwargs = {"name2": ["2"], "name3": {3: 3}}
+    assert {"position_or_keyword": None} == processor.arguments(
+        position_or_keyword_has_default, *(), **{}
+    )
+    assert {"position_or_keyword": 42} == processor.arguments(
+        position_or_keyword_has_default, *(42,), **{}
+    )
+    assert {"position_or_keyword": 42} == processor.arguments(
+        position_or_keyword_has_default, *(), **{"position_or_keyword": 42}
+    )
 
-    arguments = processor.arguments(annotations_arguments, *args, **kwargs)
-    assert {
-        "position1": 0,
-        "position2": 1,
-        "name1": "1",
-        "name2": ["2"],
-        "name3": {3: 3},
-    } == arguments
-
-    def no_return_annotations(
-        position1: int,
-        position2: int,
-        name1: str,
-        name2: Optional[list[str]] = None,
-        name3: Optional[dict[str, Any]] = None,
-    ):
+    def keyword_only_no_default(*, keyword: int) -> None:
         ...
 
-    arguments = processor.arguments(no_return_annotations, *args, **kwargs)
-    assert {
-        "position1": 0,
-        "position2": 1,
-        "name1": "1",
-        "name2": ["2"],
-        "name3": {3: 3},
-    } == arguments
+    assert {"keyword": 42} == processor.arguments(
+        keyword_only_no_default, *(), **{"keyword": 42}
+    )
 
-    def no_default_annotations(
+    def keyword_only_has_default(keyword: Optional[int] = None, /) -> None:
+        ...
+
+    assert {"keyword": None} == processor.arguments(keyword_only_has_default, *(), **{})
+    assert {"keyword": 42} == processor.arguments(
+        keyword_only_has_default, *(), **{"keyword": 42}
+    )
+
+    def complex_no_default(
         position1: int,
         position2: int,
-        name1: str,
-        name2: Optional[list[str]],
-        name3: Optional[dict[str, Any]],
+        /,
+        position_or_keyword_1: int,
+        position_or_keyword_2: int,
+        *,
+        keyword1: int,
+        keyword2: int,
     ) -> None:
         ...
 
-    arguments = processor.arguments(no_default_annotations, *args, **kwargs)
     assert {
         "position1": 0,
         "position2": 1,
-        "name1": "1",
-        "name2": ["2"],
-        "name3": {3: 3},
-    } == arguments
+        "position_or_keyword_1": 2,
+        "position_or_keyword_2": 3,
+        "keyword1": 4,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_no_default,
+        *(0, 1),
+        **{
+            "position_or_keyword_1": 2,
+            "position_or_keyword_2": 3,
+            "keyword1": 4,
+            "keyword2": 5,
+        },
+    )
+    assert {
+        "position1": 0,
+        "position2": 1,
+        "position_or_keyword_1": 2,
+        "position_or_keyword_2": 3,
+        "keyword1": 4,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_no_default,
+        *(0, 1, 2),
+        **{
+            "position_or_keyword_2": 3,
+            "keyword1": 4,
+            "keyword2": 5,
+        },
+    )
+    assert {
+        "position1": 0,
+        "position2": 1,
+        "position_or_keyword_1": 2,
+        "position_or_keyword_2": 3,
+        "keyword1": 4,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_no_default,
+        *(0, 1, 2, 3),
+        **{
+            "keyword1": 4,
+            "keyword2": 5,
+        },
+    )
 
-    def plane_arguments(
-        position1,
-        position2,
-        name1,
-        name2=None,
-        name3=None,
+    def complex_position_has_default(
+        position1: int,
+        position2: Optional[int] = None,
+        /,
+        position_or_keyword_1: Optional[int] = None,
+        position_or_keyword_2: Optional[int] = None,
+        *,
+        keyword1: Optional[int] = None,
+        keyword2: Optional[int] = None,
     ) -> None:
         ...
 
-    arguments = processor.arguments(plane_arguments, *args, **kwargs)
+    assert {
+        "position1": 0,
+        "position2": 1,
+        "position_or_keyword_1": 2,
+        "position_or_keyword_2": 3,
+        "keyword1": 4,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_position_has_default,
+        *(0, 1),
+        **{
+            "position_or_keyword_1": 2,
+            "position_or_keyword_2": 3,
+            "keyword1": 4,
+            "keyword2": 5,
+        },
+    )
 
-    assert 0 == len(arguments)
+    assert {
+        "position1": 0,
+        "position2": None,
+        "position_or_keyword_1": 2,
+        "position_or_keyword_2": 3,
+        "keyword1": 4,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_position_has_default,
+        *(0,),
+        **{
+            "position_or_keyword_1": 2,
+            "position_or_keyword_2": 3,
+            "keyword1": 4,
+            "keyword2": 5,
+        },
+    )
+
+    assert {
+        "position1": 0,
+        "position2": None,
+        "position_or_keyword_1": None,
+        "position_or_keyword_2": 3,
+        "keyword1": 4,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_position_has_default,
+        *(0,),
+        **{
+            "position_or_keyword_2": 3,
+            "keyword1": 4,
+            "keyword2": 5,
+        },
+    )
+
+    assert {
+        "position1": 0,
+        "position2": None,
+        "position_or_keyword_1": None,
+        "position_or_keyword_2": None,
+        "keyword1": 4,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_position_has_default,
+        *(0,),
+        **{
+            "keyword1": 4,
+            "keyword2": 5,
+        },
+    )
+
+    assert {
+        "position1": 0,
+        "position2": None,
+        "position_or_keyword_1": None,
+        "position_or_keyword_2": None,
+        "keyword1": None,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_position_has_default,
+        *(0,),
+        **{
+            "keyword2": 5,
+        },
+    )
+
+    assert {
+        "position1": 0,
+        "position2": None,
+        "position_or_keyword_1": None,
+        "position_or_keyword_2": None,
+        "keyword1": None,
+        "keyword2": None,
+    } == processor.arguments(
+        complex_position_has_default,
+        *(0,),
+        **{},
+    )
+
+    def complex_position_or_keyword_has_default(
+        position1: int,
+        position2: int,
+        /,
+        position_or_keyword_1: int,
+        position_or_keyword_2: Optional[int] = None,
+        *,
+        keyword1: Optional[int] = None,
+        keyword2: Optional[int] = None,
+    ) -> None:
+        ...
+
+    assert {
+        "position1": 0,
+        "position2": 1,
+        "position_or_keyword_1": 2,
+        "position_or_keyword_2": 3,
+        "keyword1": 4,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_position_or_keyword_has_default,
+        *(0, 1),
+        **{
+            "position_or_keyword_1": 2,
+            "position_or_keyword_2": 3,
+            "keyword1": 4,
+            "keyword2": 5,
+        },
+    )
+
+    assert {
+        "position1": 0,
+        "position2": 1,
+        "position_or_keyword_1": 2,
+        "position_or_keyword_2": None,
+        "keyword1": 4,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_position_or_keyword_has_default,
+        *(0, 1),
+        **{
+            "position_or_keyword_1": 2,
+            "keyword1": 4,
+            "keyword2": 5,
+        },
+    )
+
+    assert {
+        "position1": 0,
+        "position2": 1,
+        "position_or_keyword_1": 2,
+        "position_or_keyword_2": None,
+        "keyword1": None,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_position_or_keyword_has_default,
+        *(0, 1),
+        **{
+            "position_or_keyword_1": 2,
+            "keyword2": 5,
+        },
+    )
+
+    assert {
+        "position1": 0,
+        "position2": 1,
+        "position_or_keyword_1": 2,
+        "position_or_keyword_2": None,
+        "keyword1": None,
+        "keyword2": None,
+    } == processor.arguments(
+        complex_position_or_keyword_has_default,
+        *(0, 1),
+        **{
+            "position_or_keyword_1": 2,
+        },
+    )
+
+    def complex_keyword_has_default(
+        position1: int,
+        position2: int,
+        /,
+        position_or_keyword_1: int,
+        position_or_keyword_2: int,
+        *,
+        keyword1: int,
+        keyword2: Optional[int] = None,
+    ) -> None:
+        ...
+
+    assert {
+        "position1": 0,
+        "position2": 1,
+        "position_or_keyword_1": 2,
+        "position_or_keyword_2": 3,
+        "keyword1": 4,
+        "keyword2": 5,
+    } == processor.arguments(
+        complex_keyword_has_default,
+        *(0, 1),
+        **{
+            "position_or_keyword_1": 2,
+            "position_or_keyword_2": 3,
+            "keyword1": 4,
+            "keyword2": 5,
+        },
+    )
+    assert {
+        "position1": 0,
+        "position2": 1,
+        "position_or_keyword_1": 2,
+        "position_or_keyword_2": 3,
+        "keyword1": 4,
+        "keyword2": None,
+    } == processor.arguments(
+        complex_keyword_has_default,
+        *(0, 1),
+        **{
+            "position_or_keyword_1": 2,
+            "position_or_keyword_2": 3,
+            "keyword1": 4,
+        },
+    )
 
 
 def test_is_private():

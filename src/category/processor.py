@@ -20,31 +20,48 @@ def masking(
 def arguments(
     function: Callable[P, Any], /, *args: P.args, **kwargs: P.kwargs
 ) -> Arguments:
-    """Derive function arguments
-
-    If there is no TypeHint in the function signature, {} is returned.
-    """
-    arguments = deepcopy(function.__annotations__)
-    if "return" in arguments:
-        del arguments["return"]
+    """Derive function arguments"""
+    arguments = deepcopy(inspect.signature(function).parameters.copy())
     if len(arguments) == 0:
         return arguments
-    # Apply default arguments
-    if function.__defaults__ is not None:
-        for index, key in enumerate(reversed(arguments)):
-            if len(function.__defaults__) <= index:
-                break
-            else:
-                arguments[key] = function.__defaults__[index]
-    # Apply positional parameters
-    for index, key in enumerate(arguments):
-        if len(args) <= index:
-            break
-        else:
-            arguments[key] = args[index]
-    # Applying named parameters
-    for key, value in kwargs.items():
-        arguments[key] = value
+
+    position_or_keyword_defaults = (
+        []
+        if function.__defaults__ is None
+        else [(None, value) for value in function.__defaults__]
+    )
+    keyword_defaults = (
+        []
+        if function.__kwdefaults__ is None
+        else [(key, value) for key, value in function.__kwdefaults__.items()]
+    )
+    for key, (default_key, default_value) in zip(
+        reversed(arguments),
+        reversed(position_or_keyword_defaults + keyword_defaults),
+    ):
+        match default_key:
+            case None:
+                # Apply position or keyword default arguments
+                arguments[key] = default_value
+            case str():
+                # Apply keyword default arguments
+                arguments[default_key] = default_value
+
+    position_parameters = [(None, value) for value in cast(tuple[Any, ...], args)]
+    keyword_parameters = [
+        (key, value) for key, value in cast(dict[str, Any], kwargs.items())
+    ]
+    for key, (parameter_key, parameter_value) in zip(
+        arguments, position_parameters + keyword_parameters
+    ):
+        match parameter_key:
+            case None:
+                # Apply position parameters
+                arguments[key] = parameter_value
+            case str():
+                # Applying keyword parameters
+                arguments[parameter_key] = parameter_value
+
     return arguments
 
 
