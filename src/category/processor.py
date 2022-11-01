@@ -73,29 +73,31 @@ def parse(object_: Any) -> Any:
     """Recursively decompose object structure"""
 
     def recursive(parse_object: Any, /) -> Any:
-        # Class case
-        if hasattr(parse_object, "__dict__"):
-            return {
-                recursive(key): MASK if is_private_attribute(key) else recursive(value)
-                for key, value in dict(
-                    cast(dict[str, Any], parse_object.__dict__)
-                ).items()
-            }
-        elif isinstance(parse_object, list):
-            return [recursive(item) for item in cast(list[Any], parse_object)]
-        elif isinstance(parse_object, tuple):
-            return tuple(
-                recursive(item) for item in cast(tuple[Any, ...], parse_object)
-            )
-        elif isinstance(parse_object, set):
-            return {recursive(item) for item in cast(set[Any], parse_object)}
-        elif isinstance(parse_object, dict):
-            return {
-                recursive(key): recursive(value)
-                for key, value in cast(dict[Any, Any], parse_object.items())
-            }
-        else:
-            return parse_object
+        match parse_object:
+            case class_object if hasattr(class_object, "__dict__"):
+                return {
+                    recursive(key): MASK
+                    if is_private_attribute(key)
+                    else recursive(value)
+                    for key, value in dict(
+                        cast(dict[str, Any], class_object.__dict__)
+                    ).items()
+                }
+            case list() as list_object:
+                return [recursive(item) for item in cast(list[Any], list_object)]
+            case tuple() as tuple_object:
+                return tuple(
+                    recursive(item) for item in cast(tuple[Any, ...], tuple_object)
+                )
+            case set() as set_object:
+                return {recursive(item) for item in cast(set[Any], set_object)}
+            case dict() as dict_object:
+                return {
+                    recursive(key): recursive(value)
+                    for key, value in cast(dict[Any, Any], dict_object.items())
+                }
+            case _:
+                return parse_object
 
     return recursive(object_)
 
