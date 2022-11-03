@@ -458,7 +458,8 @@ def test_is_private():
 
 
 def test_parse():
-    from typing import Any
+    import inspect
+    from typing import Any, Callable
 
     from category import processor
 
@@ -472,7 +473,9 @@ def test_parse():
             tuple_: tuple[Any, ...],
             set_: set[Any],
             dict_: dict[Any, Any],
+            function_: Callable[..., Any],
         ):
+            self.function_ = function_
             self.int_ = int_
             self.str_ = str_
             self.bool_ = bool_
@@ -480,6 +483,9 @@ def test_parse():
             self.tuple_ = tuple_
             self.set_ = set_
             self.dict_ = dict_
+
+    def argument_function(value: int) -> int:
+        return value
 
     sample = Sample(
         int_=42,
@@ -511,6 +517,7 @@ def test_parse():
                 {42: 42, "42": "42"},
             ],
         },
+        function_=argument_function,
     )
     parsed_sample = processor.parse(sample)
     assert parsed_sample is not sample
@@ -544,6 +551,7 @@ def test_parse():
                 {42: 42, "42": "42"},
             ],
         },
+        "function_": inspect.signature(argument_function),
     } == parsed_sample
 
 

@@ -94,27 +94,29 @@ def parse(object_: Any) -> Any:
 
     def recursive(parse_object: Any, /) -> Any:
         match parse_object:
-            case class_object if hasattr(class_object, "__dict__"):
+            case _ if callable(parse_object):
+                return inspect.signature(parse_object)
+            case _ if hasattr(parse_object, "__dict__"):
                 return {
                     recursive(key): MASK
                     if is_private_attribute(key)
                     else recursive(value)
                     for key, value in dict(
-                        cast(dict[str, Any], class_object.__dict__)
+                        cast(dict[str, Any], parse_object.__dict__)
                     ).items()
                 }
-            case list() as list_object:
-                return [recursive(item) for item in cast(list[Any], list_object)]
-            case tuple() as tuple_object:
+            case list():
+                return [recursive(item) for item in cast(list[Any], parse_object)]
+            case tuple():
                 return tuple(
-                    recursive(item) for item in cast(tuple[Any, ...], tuple_object)
+                    recursive(item) for item in cast(tuple[Any, ...], parse_object)
                 )
-            case set() as set_object:
-                return {recursive(item) for item in cast(set[Any], set_object)}
-            case dict() as dict_object:
+            case set():
+                return {recursive(item) for item in cast(set[Any], parse_object)}
+            case dict():
                 return {
                     recursive(key): recursive(value)
-                    for key, value in cast(dict[Any, Any], dict_object.items())
+                    for key, value in cast(dict[Any, Any], parse_object.items())
                 }
             case _:
                 return parse_object
