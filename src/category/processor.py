@@ -17,52 +17,72 @@ def masking(
     }
 
 
-def arguments(
-    function: Callable[P, Any], /, *args: P.args, **kwargs: P.kwargs
-) -> Arguments:
-    """Derive function arguments"""
-    arguments = deepcopy(inspect.signature(function).parameters.copy())
-    if len(arguments) == 0:
-        return arguments
+def apply_defaults(*, arguments: Arguments, function: Callable[..., Any]) -> Arguments:
+    """Apply default arguments to arguments.
 
-    position_or_keyword_defaults = (
+    - function.__defaults__: position or keyword defaults arguments.
+    - function.__kwdefaults__: keyword only default arguments.
+    """
+    default_list = (
         []
         if function.__defaults__ is None
         else [(None, value) for value in function.__defaults__]
     )
-    keyword_defaults = (
+    keyword_only_default_list = (
         []
         if function.__kwdefaults__ is None
         else [(key, value) for key, value in function.__kwdefaults__.items()]
     )
-    for key, (default_key, default_value) in zip(
-        reversed(arguments),
-        reversed(position_or_keyword_defaults + keyword_defaults),
+    update_arguments = deepcopy(arguments)
+    for argument_key, (default_key, default_value) in zip(
+        reversed(update_arguments),
+        reversed(default_list + keyword_only_default_list),
     ):
         match default_key:
             case None:
+                # Apply position only default arguments
                 # Apply position or keyword default arguments
-                arguments[key] = default_value
+                update_arguments[argument_key] = default_value
             case str():
-                # Apply keyword default arguments
-                arguments[default_key] = default_value
+                # Apply keyword only default arguments
+                update_arguments[default_key] = default_value
+    return update_arguments
 
-    position_parameters = [(None, value) for value in cast(tuple[Any, ...], args)]
+
+def apply_parameters(arguments: Arguments, /, *args: ..., **kwargs: ...) -> Arguments:
+    """Apply parameters to arguments."""
+    update_arguments = deepcopy(arguments)
+    position_parameters = [(None, value) for value in args]
     keyword_parameters = [
         (key, value) for key, value in cast(dict[str, Any], kwargs.items())
     ]
-    for key, (parameter_key, parameter_value) in zip(
-        arguments, position_parameters + keyword_parameters
+    for argument_key, (parameter_key, parameter_value) in zip(
+        update_arguments, position_parameters + keyword_parameters
     ):
         match parameter_key:
             case None:
                 # Apply position parameters
-                arguments[key] = parameter_value
+                update_arguments[argument_key] = parameter_value
             case str():
                 # Applying keyword parameters
-                arguments[parameter_key] = parameter_value
+                update_arguments[parameter_key] = parameter_value
+    return update_arguments
 
-    return arguments
+
+def arguments(
+    function: Callable[P, Any], /, *args: P.args, **kwargs: P.kwargs
+) -> Arguments:
+    """Derive function arguments."""
+    arguments = deepcopy(inspect.signature(function).parameters.copy())
+    if len(arguments) == 0:
+        return arguments
+
+    default_applied_arguments = apply_defaults(arguments=arguments, function=function)
+    parameter_applied_arguments = apply_parameters(
+        default_applied_arguments, *args, **kwargs
+    )
+
+    return parameter_applied_arguments
 
 
 def is_private_attribute(attribute: str) -> bool:
@@ -70,7 +90,7 @@ def is_private_attribute(attribute: str) -> bool:
 
 
 def parse(object_: Any) -> Any:
-    """Recursively decompose object structure"""
+    """Recursively decompose object structure."""
 
     def recursive(parse_object: Any, /) -> Any:
         match parse_object:

@@ -5,19 +5,36 @@
 
 ## Examples
 
+### curried
+
+```python
+from category import currying
+
+@curried
+def function(arg1: int, /, arg2: int, arg3: int = 42, *, arg4: int = 42) -> int:
+    return arg1 + arg2 + arg3 + arg4
+
+function2 = function        # (int) -> ((int) -> int)
+function1 = function1(1)    # (int) -> int
+result = function1(2)       # int
+```
+
 ### Either
 
 ```python
-from category import Either, EitherDo, Left, Right
+from category import Either, EitherDo, Frame, Left, Right
+
+class Error(Frame):
+    ...
 
 @Either.do
-def context() -> EitherDo[str, int]:
-    one = yield from Left[str, int]("one")
+def context(value: int) -> EitherDo[Error, int]:
+    one = yield from Left[Error, int](Error(unmask=("value",)))
     two = 2
-    three = yield from Right[str, int](3)
+    three = yield from Right[Error, int](3)
     return one + two + three
 
-match context().pattern:
+match context(42).pattern:
     case Left(value):
         print(f"Left case {value}")
     case Right(value):
@@ -48,7 +65,7 @@ match context().pattern:
 ```python
 from category import Failure, Success, Try, TryDo
 
-@Try.hold
+@Try.hold(unmask=("value",))
 def hold_context(value: int, /) -> int:
     if not value:
         raise Exception("error")

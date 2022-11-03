@@ -1,5 +1,6 @@
 from .collection import Vector
 from .constraints import SubtypeConstraints
+from .curry import curried
 from .either import Either, EitherDo, Left, LeftProjection, Right, RightProjection
 from .eithert import EitherTFuture, EitherTFutureDo, EitherTTry, EitherTTryDo
 from .future import (
@@ -17,6 +18,7 @@ from .try_ import Failure, Success, Try, TryDo
 __all__ = [
     "Vector",
     "SubtypeConstraints",
+    "curried",
     "Either",
     "EitherDo",
     "Left",
