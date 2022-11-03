@@ -472,19 +472,24 @@ def curried(
     ):
         def partial_application(value: Optional[Any] = None, /):
             key = list(arguments)[position]
-            arguments[key] = value
+            partial_applied_arguments = deepcopy(arguments)
+            partial_applied_arguments[key] = value
             if (
                 position
-                < partial_application_scope(arguments=arguments, function=function)
+                < partial_application_scope(
+                    arguments=partial_applied_arguments, function=function
+                )
                 - LAST_ONE
             ):
                 return closure(
                     function=function,
-                    arguments=deepcopy(arguments),
+                    arguments=partial_applied_arguments,
                     position=next_partial_position(position),
                 )
             else:
-                return _total_application(function=function, arguments=arguments)
+                return _total_application(
+                    function=function, arguments=partial_applied_arguments
+                )
 
         return partial_application
 
