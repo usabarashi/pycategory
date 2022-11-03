@@ -14,6 +14,85 @@ def test_masking():
     assert processor.MASK == masked_arguments.get("unmask", None)
 
 
+def test_apply_defaults():
+    import inspect
+    from copy import deepcopy
+    from typing import Optional
+
+    from category import processor
+
+    def position_defaults_arguments(arg1: int, arg2: Optional[int] = None, /):
+        ...
+
+    arguments = inspect.signature(position_defaults_arguments).parameters.copy()
+    position_defaults_applied_arguments = processor.apply_defaults(
+        arguments=arguments, function=position_defaults_arguments
+    )
+    assert id(arguments) != id(position_defaults_applied_arguments)
+    assert_arguments = deepcopy(arguments)
+    assert_arguments |= {"arg2": None}
+    assert assert_arguments == position_defaults_applied_arguments
+
+    def position_or_keyword_default_arguments(arg1: int, arg2: Optional[int] = None):
+        ...
+
+    arguments = inspect.signature(
+        position_or_keyword_default_arguments
+    ).parameters.copy()
+    position_or_keyword_defaults_applied_arguments = processor.apply_defaults(
+        arguments=arguments, function=position_defaults_arguments
+    )
+    assert_arguments = deepcopy(arguments)
+    assert_arguments |= {"arg2": None}
+    assert assert_arguments == position_or_keyword_defaults_applied_arguments
+
+    def keyword_defaults_arguments(*, arg1: int, arg2: Optional[int] = None):
+        ...
+
+    arguments = inspect.signature(keyword_defaults_arguments).parameters.copy()
+    keyword_defaults_applied_arguments = processor.apply_defaults(
+        arguments=arguments, function=position_defaults_arguments
+    )
+    assert_arguments = deepcopy(arguments)
+    assert_arguments |= {"arg2": None}
+    assert assert_arguments == keyword_defaults_applied_arguments
+
+
+def test_apply_parameter():
+    import inspect
+    from typing import Optional
+
+    from category import processor
+
+    def position_only_parameter(arg1: int, arg2: Optional[int] = None, /):
+        ...
+
+    arguments = inspect.signature(position_only_parameter).parameters.copy()
+    applied_position_only_arguments = processor.apply_parameters(arguments, *(1, 2))
+    assert id(arguments) != id(applied_position_only_arguments)
+    assert {"arg1": 1, "arg2": 2} == applied_position_only_arguments
+
+    def position_or_keyword_default_parameter(arg1: int, arg2: Optional[int] = None):
+        ...
+
+    arguments = inspect.signature(
+        position_or_keyword_default_parameter
+    ).parameters.copy()
+    applied_position_or_keyword_arguments = processor.apply_parameters(
+        arguments, *(1,), **{"arg2": 2}
+    )
+    assert {"arg1": 1, "arg2": 2} == applied_position_or_keyword_arguments
+
+    def keyword_only_parameter(*, arg1: int, arg2: Optional[int] = None):
+        ...
+
+    arguments = inspect.signature(keyword_only_parameter).parameters.copy()
+    applied_keyword_only_arguments = processor.apply_parameters(
+        arguments, **{"arg1": 1, "arg2": 2}
+    )
+    assert {"arg1": 1, "arg2": 2} == applied_keyword_only_arguments
+
+
 def test_arguments():
     from typing import Optional
 
