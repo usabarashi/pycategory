@@ -8,14 +8,14 @@
 ### curried
 
 ```python
-from category import currying
+from category import curried
 
 @curried
-def function(arg1: int, /, arg2: int, arg3: int = 42, *, arg4: int = 42) -> int:
+def function(arg1: int, /, arg2: int, arg3: int = 3, *, arg4: int = 4) -> int:
     return arg1 + arg2 + arg3 + arg4
 
 function2 = function        # (int) -> ((int) -> int)
-function1 = function1(1)    # (int) -> int
+function1 = function2(1)    # (int) -> int
 result = function1(2)       # int
 ```
 
