@@ -5,7 +5,7 @@
 
 ## Examples
 
-### curried
+### curry
 
 ```python
 from category import curry
