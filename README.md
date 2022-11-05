@@ -27,14 +27,14 @@ from category import Pipeline, curried
 def squared(value: int) -> int:
     return value**2
 
-assert 42**2**2 == (Pipeline(42) >> squared >> squared).value
+assert 42**2**2 == ~(Pipeline(42) >> squared >> squared)
 
 @Pipeline
 @curried
 def cubed(arg1: int, arg2: int, arg3: int) -> int:
     return arg1 * arg2 * arg3
 
-assert 42**3 == (cubed << 42 << 42 << 42).value
+assert 42**3 == ~(cubed << 42 << 42 << 42)
 ```
 
 ### Either
