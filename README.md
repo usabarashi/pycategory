@@ -8,9 +8,9 @@
 ### curried
 
 ```python
-from category import curried
+from category import curry
 
-@curried
+@curry
 def function(arg1: int, /, arg2: int, arg3: int = 3, *, arg4: int = 4) -> int:
     return arg1 + arg2 + arg3 + arg4
 
@@ -22,7 +22,7 @@ result = function1(2)       # int
 ### Pipeline
 
 ```python
-from category import Pipeline, curried
+from category import Pipeline, curry
 
 def squared(value: int) -> int:
     return value**2
@@ -30,7 +30,7 @@ def squared(value: int) -> int:
 assert 42**2**2 == ~(Pipeline(42) >> squared >> squared)
 
 @Pipeline
-@curried
+@curry
 def cubed(arg1: int, arg2: int, arg3: int) -> int:
     return arg1 * arg2 * arg3
 

@@ -91,7 +91,7 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
         return Future[T].successful(*args, **kwargs)
 
     def map(
-        self, functor: Callable[[T], TT], /
+        self, other: Callable[[T], TT], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             def fold(previous_result: try_.Try[T], /) -> try_.Try[TT]:
@@ -99,14 +99,14 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
                     case try_.Failure() as failure:
                         return cast(try_.Failure[TT], failure)
                     case try_.Success(previous_value):
-                        return try_.Success[TT](functor(previous_value))
+                        return try_.Success[TT](other(previous_value))
 
             return self.transform(fold)(executor)
 
         return with_context
 
-    def flatmap(
-        self, functor: Callable[[T], Future[TT]], /
+    def flat_map(
+        self, other: Callable[[T], Future[TT]], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             def fold(try__: try_.Try[T]) -> Future[TT]:
@@ -115,7 +115,7 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
                         return cast(Future[TT], self)
                     case try_.Success(value):
                         try:
-                            return functor(value)
+                            return other(value)
                         except Exception as exception:
                             return Future[TT].failed(exception)
 
@@ -124,23 +124,21 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
         return with_context
 
     def recover(
-        self, partial_function: Callable[[Exception], TT], /
+        self, other: Callable[[Exception], TT], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
-            return self.transform(lambda try__: try__.recover(partial_function))(
-                executor
-            )
+            return self.transform(lambda try__: try__.recover(other))(executor)
 
         return with_context
 
     def recover_with(
-        self, partial_function: Callable[[Exception], Future[TT]], /
+        self, other: Callable[[Exception], Future[TT]], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             def complete(try__: try_.Try[T]) -> Future[TT]:
                 match try__.pattern:
                     case try_.Failure() as failure:
-                        if (result := partial_function(failure.exception)) is None:
+                        if (result := other(failure.exception)) is None:
                             return Future[TT].failed(failure.exception)
                         else:
                             return result
@@ -152,25 +150,25 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
         return with_context
 
     def transform(
-        self, try_functor: Callable[[try_.Try[T]], try_.Try[TT]], /
+        self, try_other: Callable[[try_.Try[T]], try_.Try[TT]], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             current_future = Future[TT]()  # PENDING
             self.on_complete(
-                lambda result: current_future.try_complete(try_functor(result))
+                lambda result: current_future.try_complete(try_other(result))
             )(executor)
             return current_future
 
         return with_context
 
     def transform_with(
-        self, functor: Callable[[try_.Try[T]], Future[TT]], /
+        self, other: Callable[[try_.Try[T]], Future[TT]], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             current_future = Future[TT]()
 
             def complete(previous_result: try_.Try[T]) -> None:
-                previous_future = functor(previous_result)
+                previous_future = other(previous_result)
                 previous_future.on_complete(
                     lambda current_result: current_future.try_complete(current_result),
                 )(executor)
@@ -205,14 +203,14 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
             return True
 
     def on_complete(
-        self, try_complete_functor: Callable[[try_.Try[T]], U], /
+        self, try_complete_other: Callable[[try_.Try[T]], U], /
     ) -> Callable[[ExecutionContext], None]:
         def with_context(executor: ExecutionContext, /) -> None:
             if not self.done():
-                self.add_done_callback(fn=lambda _: try_complete_functor(self.value))
+                self.add_done_callback(fn=lambda _: try_complete_other(self.value))
             else:
                 try:
-                    try_complete_functor(self.value)
+                    try_complete_other(self.value)
                 except Exception as exception:
                     self._exception = exception
                     self._result = None
@@ -254,7 +252,7 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
     def do(
         context: Callable[P, FutureDo[T]], /
     ) -> Callable[P, Callable[[ExecutionContext], Future[T]]]:
-        """map, flatmap combination syntax sugar.
+        """map, flat_map combination syntax sugar.
 
         Only type checking can determine type violations, and runtime errors may not occur.
         """
@@ -283,8 +281,8 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
 
         return wrapper
 
-    def method(self, functor: Callable[[Future[T]], TT], /) -> TT:
-        return functor(self)
+    def method(self, other: Callable[[Future[T]], TT], /) -> TT:
+        return other(self)
 
     @staticmethod
     def hold(

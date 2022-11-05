@@ -149,13 +149,13 @@ def test_failure_map():
     assert Failure is type(mapped_failure)
 
 
-def test_failure_flatmap():
+def test_failure_flat_map():
     from category import Failure, Success
 
     failure = Failure[int](Exception())
-    flatmapped_failure = failure.flatmap(lambda success: Success[bool](True))
-    assert failure is flatmapped_failure
-    assert Failure is type(flatmapped_failure)
+    flat_mapped_failure = failure.flat_map(lambda success: Success[bool](True))
+    assert failure is flat_mapped_failure
+    assert Failure is type(flat_mapped_failure)
 
 
 def test_failure_recover():
@@ -267,14 +267,16 @@ def test_success_map():
     assert None is mapped_success.get()
 
 
-def test_success_flatmap():
+def test_success_flat_map():
     from category import Failure, Success
 
     success = Success[int](0)
-    flatmapped_failure = success.flatmap(lambda success: Failure[None](Exception()))
-    assert success is not flatmapped_failure
-    assert Failure is type(flatmapped_failure)
-    assert Success is type(Success[int](0).flatmap(lambda success: Success[None](None)))
+    flat_mapped_failure = success.flat_map(lambda success: Failure[None](Exception()))
+    assert success is not flat_mapped_failure
+    assert Failure is type(flat_mapped_failure)
+    assert Success is type(
+        Success[int](0).flat_map(lambda success: Success[None](None))
+    )
 
 
 def test_success_recover():

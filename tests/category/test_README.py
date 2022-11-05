@@ -2,9 +2,9 @@ from __future__ import annotations
 
 
 def test_curry():
-    from category import curried
+    from category import curry
 
-    @curried
+    @curry
     def function(arg1: int, /, arg2: int, arg3: int = 3, *, arg4: int = 4) -> int:
         return arg1 + arg2 + arg3 + arg4
 
@@ -14,7 +14,7 @@ def test_curry():
 
 
 def test_pipeline():
-    from category import Pipeline, curried
+    from category import Pipeline, curry
 
     def squared(value: int) -> int:
         return value**2
@@ -22,7 +22,7 @@ def test_pipeline():
     assert 42**2**2 == ~(Pipeline(42) >> squared >> squared)
 
     @Pipeline
-    @curried
+    @curry
     def cubed(arg1: int, arg2: int, arg3: int) -> int:
         return arg1 * arg2 * arg3
 

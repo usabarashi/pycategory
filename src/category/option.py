@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
 from functools import wraps
-from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
+from typing import Any, Callable, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
 from . import monad
 
@@ -15,7 +15,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Option(monad.Monad, Generic[T]):
+class Option(monad.Monad[T]):
     """Option"""
 
     @abstractmethod
@@ -23,11 +23,11 @@ class Option(monad.Monad, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, functor: Callable[[T], TT], /) -> Option[TT]:
+    def map(self, other: Callable[[T], TT], /) -> Option[TT]:
         raise NotImplementedError
 
     @abstractmethod
-    def flatmap(self, functor: Callable[[T], Option[TT]], /) -> Option[TT]:
+    def flat_map(self, other: Callable[[T], Option[TT]], /) -> Option[TT]:
         raise NotImplementedError
 
     @abstractmethod
@@ -56,7 +56,7 @@ class Option(monad.Monad, Generic[T]):
 
     @staticmethod
     def do(context: Callable[P, OptionDo[T]], /) -> Callable[P, Option[T]]:
-        """map, flatmap combination syntax sugar.
+        """map, flat_map combination syntax sugar.
 
         Only type checking can determine type violations, and runtime errors may not occur.
         """
@@ -80,7 +80,7 @@ class Option(monad.Monad, Generic[T]):
 
         return wrapper
 
-    def method(self, functor: Callable[[Option[T]], TT], /) -> TT:
+    def method(self, other: Callable[[Option[T]], TT], /) -> TT:
         raise NotImplementedError
 
 
@@ -99,13 +99,13 @@ class Void(Option[T]):
         return False
 
     def __iter__(self) -> Generator[Option[T], None, T]:
-        yield self.flatmap(lambda value: Some[T](value))
+        yield self.flat_map(lambda value: Some[T](value))
         raise GeneratorExit(self)
 
-    def map(self, functor: Callable[[T], TT], /) -> Void[TT]:
+    def map(self, other: Callable[[T], TT], /) -> Void[TT]:
         return cast(Void[TT], self)
 
-    def flatmap(self, functor: Callable[[T], Option[TT]], /) -> Void[TT]:
+    def flat_map(self, other: Callable[[T], Option[TT]], /) -> Void[TT]:
         return cast(Void[TT], self)
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
@@ -127,8 +127,8 @@ class Void(Option[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, functor: Callable[[Void[T]], TT], /) -> TT:
-        return functor(self)
+    def method(self, other: Callable[[Void[T]], TT], /) -> TT:
+        return other(self)
 
 
 class Some(Option[T]):
@@ -146,14 +146,14 @@ class Some(Option[T]):
         return True
 
     def __iter__(self) -> Generator[Option[T], None, T]:
-        yield self.flatmap(lambda value: Some[T](value))
+        yield self.flat_map(lambda value: Some[T](value))
         return self.value
 
-    def map(self, functor: Callable[[T], TT], /) -> Some[TT]:
-        return Some[TT](functor(self.value))
+    def map(self, other: Callable[[T], TT], /) -> Some[TT]:
+        return Some[TT](other(self.value))
 
-    def flatmap(self, functor: Callable[[T], Option[TT]], /) -> Option[TT]:
-        return functor(self.value)
+    def flat_map(self, other: Callable[[T], Option[TT]], /) -> Option[TT]:
+        return other(self.value)
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
         return some(self.value)
@@ -174,8 +174,8 @@ class Some(Option[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, functor: Callable[[Some[T]], TT], /) -> TT:
-        return functor(self)
+    def method(self, other: Callable[[Some[T]], TT], /) -> TT:
+        return other(self)
 
 
 SubType: TypeAlias = Void[T] | Some[T]

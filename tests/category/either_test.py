@@ -95,25 +95,25 @@ def test_left_map():
     assert None is mapped_left.right().get_or_else(lambda: None)
 
 
-def test_left_flatmap():
+def test_left_flat_map():
     from category import Left, LeftProjection, RightProjection
 
     left = Left[int, None](0)
-    flatmapped_left = left.flatmap(lambda right: Left[int, None](0))
-    assert left is flatmapped_left
-    assert Left is type(flatmapped_left)
-    assert LeftProjection is type(flatmapped_left.left())
-    assert 0 == flatmapped_left.left().get()
-    assert 0 == left.flatmap(lambda right: Left[int, None](1)).left().get_or_else(
+    flat_mapped_left = left.flat_map(lambda right: Left[int, None](0))
+    assert left is flat_mapped_left
+    assert Left is type(flat_mapped_left)
+    assert LeftProjection is type(flat_mapped_left.left())
+    assert 0 == flat_mapped_left.left().get()
+    assert 0 == left.flat_map(lambda right: Left[int, None](1)).left().get_or_else(
         lambda: 1
     )
-    assert RightProjection is type(flatmapped_left.right())
+    assert RightProjection is type(flat_mapped_left.right())
     try:
-        flatmapped_left.right().get()
+        flat_mapped_left.right().get()
         assert False
     except Exception as error:
         assert ValueError is type(error)
-    assert None is flatmapped_left.right().get_or_else(lambda: None)
+    assert None is flat_mapped_left.right().get_or_else(lambda: None)
 
 
 def test_left_to_option():
@@ -262,22 +262,22 @@ def test_right_map():
     assert None is mapped_right.left().get_or_else(lambda: None)
 
 
-def test_right_flatmap():
+def test_right_flat_map():
     from category import LeftProjection, Right, RightProjection
 
     right = Right[None, int](0)
-    flatmapped_right = right.flatmap(lambda right: Right[None, int](right + 1))
-    assert right is not flatmapped_right
-    assert Right is type(flatmapped_right)
-    assert RightProjection is type(flatmapped_right.right())
-    assert 1 == flatmapped_right.right().get()
-    assert LeftProjection is type(flatmapped_right.left())
+    flat_mapped_right = right.flat_map(lambda right: Right[None, int](right + 1))
+    assert right is not flat_mapped_right
+    assert Right is type(flat_mapped_right)
+    assert RightProjection is type(flat_mapped_right.right())
+    assert 1 == flat_mapped_right.right().get()
+    assert LeftProjection is type(flat_mapped_right.left())
     try:
-        flatmapped_right.left().get()
+        flat_mapped_right.left().get()
         assert False
     except Exception as error:
         assert ValueError is type(error)
-    assert None is flatmapped_right.left().get_or_else(lambda: None)
+    assert None is flat_mapped_right.left().get_or_else(lambda: None)
 
 
 def test_right_to_option():

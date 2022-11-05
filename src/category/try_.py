@@ -7,7 +7,6 @@ from functools import wraps
 from typing import (
     Any,
     Callable,
-    Generic,
     Literal,
     Optional,
     ParamSpec,
@@ -26,7 +25,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Try(monad.Monad, Generic[T]):
+class Try(monad.Monad[T]):
     """Try"""
 
     @abstractmethod
@@ -34,21 +33,19 @@ class Try(monad.Monad, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
+    def map(self, other: Callable[[T], TT], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
-    def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
+    def flat_map(self, other: Callable[[T], Try[TT]], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
-    def recover(self, partial_function: Callable[[Exception], TT], /) -> Try[TT]:
+    def recover(self, other: Callable[[Exception], TT], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
-    def recover_with(
-        self, partial_function: Callable[[Exception], Try[TT]], /
-    ) -> Try[TT]:
+    def recover_with(self, other: Callable[[Exception], Try[TT]], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractproperty
@@ -90,7 +87,7 @@ class Try(monad.Monad, Generic[T]):
 
     @staticmethod
     def do(context: Callable[P, TryDo[T]], /) -> Callable[P, Try[T]]:
-        """map, flatmap combination syntax sugar.
+        """map, flat_map combination syntax sugar.
 
         Only type checking can determine type violations, and runtime errors may not occur.
         """
@@ -115,7 +112,7 @@ class Try(monad.Monad, Generic[T]):
         return wrapper
 
     @abstractmethod
-    def method(self, functor: Callable[[Try[T]], TT], /) -> TT:
+    def method(self, other: Callable[[Try[T]], TT], /) -> TT:
         raise NotImplementedError
 
     @overload
@@ -192,29 +189,27 @@ class Failure(Try[T]):
         return False
 
     def __iter__(self) -> Generator[Try[T], None, T]:
-        yield self.flatmap(lambda value: Success[T](value))
+        yield self.flat_map(lambda value: Success[T](value))
         raise GeneratorExit(self) from self.exception
 
-    def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
+    def map(self, other: Callable[[T], TT], /) -> Try[TT]:
         return cast(Failure[TT], self)
 
-    def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
+    def flat_map(self, other: Callable[[T], Try[TT]], /) -> Try[TT]:
         return cast(Failure[TT], self)
 
-    def recover(self, partial_function: Callable[[Exception], TT], /) -> Try[TT]:
+    def recover(self, other: Callable[[Exception], TT], /) -> Try[TT]:
         try:
-            if (result := partial_function(self.exception)) is None:
+            if (result := other(self.exception)) is None:
                 return cast(Failure[TT], self)
             else:
                 return Success[TT](result)
         except Exception as exception:
             return Failure[TT](exception)
 
-    def recover_with(
-        self, partial_function: Callable[[Exception], Try[TT]], /
-    ) -> Try[TT]:
+    def recover_with(self, other: Callable[[Exception], Try[TT]], /) -> Try[TT]:
         try:
-            if (result := partial_function(self.exception)) is None:
+            if (result := other(self.exception)) is None:
                 return cast(Failure[TT], self)
             else:
                 return result
@@ -253,8 +248,8 @@ class Failure(Try[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, functor: Callable[[Failure[T]], TT], /) -> TT:
-        return functor(self)
+    def method(self, other: Callable[[Failure[T]], TT], /) -> TT:
+        return other(self)
 
 
 class Success(Try[T]):
@@ -272,21 +267,19 @@ class Success(Try[T]):
         return True
 
     def __iter__(self) -> Generator[Try[T], None, T]:
-        yield self.flatmap(lambda value: Success[T](value))
+        yield self.flat_map(lambda value: Success[T](value))
         return self.value
 
-    def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
-        return Success[TT](functor(self.value))
+    def map(self, other: Callable[[T], TT], /) -> Try[TT]:
+        return Success[TT](other(self.value))
 
-    def flatmap(self, functor: Callable[[T], Try[TT]], /) -> Try[TT]:
-        return functor(self.value)
+    def flat_map(self, other: Callable[[T], Try[TT]], /) -> Try[TT]:
+        return other(self.value)
 
-    def recover(self, partial_function: Callable[[Exception], TT], /) -> Try[TT]:
+    def recover(self, other: Callable[[Exception], TT], /) -> Try[TT]:
         return cast(Try[TT], self)
 
-    def recover_with(
-        self, partial_function: Callable[[Exception], Try[TT]], /
-    ) -> Try[TT]:
+    def recover_with(self, other: Callable[[Exception], Try[TT]], /) -> Try[TT]:
         return cast(Try[TT], self)
 
     @property
@@ -321,8 +314,8 @@ class Success(Try[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, functor: Callable[[Success[T]], TT], /) -> TT:
-        return functor(self)
+    def method(self, other: Callable[[Success[T]], TT], /) -> TT:
+        return other(self)
 
 
 SubType: TypeAlias = Failure[T] | Success[T]

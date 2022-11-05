@@ -65,14 +65,14 @@ def test_void_map():
     assert False is bool(mapped_void)
 
 
-def test_void_flatmap():
+def test_void_flat_map():
     from category import Some, Void
 
     void = Void[int]()
-    flatmapped_void = void.flatmap(lambda some: Some[int](42))
-    assert void is flatmapped_void
-    assert Void is type(flatmapped_void)
-    assert False is bool(flatmapped_void)
+    flat_mapped_void = void.flat_map(lambda some: Some[int](42))
+    assert void is flat_mapped_void
+    assert Void is type(flat_mapped_void)
+    assert False is bool(flat_mapped_void)
 
 
 def test_void_fold():
@@ -150,15 +150,15 @@ def test_some_map():
     assert 43 == mapped_some.get()
 
 
-def test_some_flatmap():
+def test_some_flat_map():
     from category import Some
 
     some = Some[int](42)
-    flatmapped_some = some.flatmap(lambda some: Some[int](some + 1))
-    assert some is not flatmapped_some
-    assert Some is type(flatmapped_some)
-    assert True is bool(flatmapped_some)
-    assert 43 == flatmapped_some.get()
+    flat_mapped_some = some.flat_map(lambda some: Some[int](some + 1))
+    assert some is not flat_mapped_some
+    assert Some is type(flat_mapped_some)
+    assert True is bool(flat_mapped_some)
+    assert 43 == flat_mapped_some.get()
 
 
 def test_some_fold():
