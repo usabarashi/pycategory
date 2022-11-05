@@ -22,9 +22,9 @@ def test____call__():
 
 
 def test___lshift__():
-    from category import Pipeline, curried
+    from category import Pipeline, curry
 
-    @curried
+    @curry
     def function(arg1: int, arg2: int) -> int:
         return arg1 + arg2
 

@@ -13,16 +13,16 @@ class Pipeline(Generic[T]):
     def __init__(self, value: T):
         self.value: Final[T] = value
 
-    def __call__(self: Pipeline[Callable[[A], B]], value: A, /) -> Pipeline[B]:
-        return Pipeline(self.value(value))
+    def __call__(self: Pipeline[Callable[[A], B]], other: A, /) -> Pipeline[B]:
+        return Pipeline(self.value(other))
 
-    def __lshift__(self: Pipeline[Callable[[A], B]], value: A, /) -> Pipeline[B]:
+    def __lshift__(self: Pipeline[Callable[[A], B]], other: A, /) -> Pipeline[B]:
         """<<"""
-        return Pipeline(self.value(value))
+        return Pipeline(self.value(other))
 
-    def __rshift__(self: Pipeline[T], value: Callable[[T], A], /) -> Pipeline[A]:
+    def __rshift__(self: Pipeline[T], other: Callable[[T], A], /) -> Pipeline[A]:
         """>>"""
-        return Pipeline(value(self.value))
+        return Pipeline(other(self.value))
 
     def __invert__(self: Pipeline[T]) -> T:
         """~"""

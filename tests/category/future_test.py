@@ -115,7 +115,7 @@ def test_map():
     assert 43 == success_mapped_thread.value.get()
 
 
-def test_flatmap():
+def test_flat_map():
     from typing import cast
 
     from category import (
@@ -131,87 +131,87 @@ def test_flatmap():
 
     # Failure finished case
     failure_future = Future[int].failed(Exception())
-    failure_flatmapped_future = failure_future.flatmap(
+    failure_flat_mapped_future = failure_future.flat_map(
         lambda success: Future[int].successful(success + 1)
     )(pc)
-    assert failure_future is not failure_flatmapped_future
-    assert Future is type(failure_flatmapped_future)
+    assert failure_future is not failure_flat_mapped_future
+    assert Future is type(failure_flat_mapped_future)
     try:
-        failure_flatmapped_future.result()
+        failure_flat_mapped_future.result()
         assert False
     except Exception as error:
         assert Exception is type(error)
-    assert Failure is type(failure_flatmapped_future.value)
+    assert Failure is type(failure_flat_mapped_future.value)
     assert Exception is type(
-        cast(Failure[int], failure_flatmapped_future.value).exception
+        cast(Failure[int], failure_flat_mapped_future.value).exception
     )
 
     # Failure process running case
     failure_process = Future.hold(process_multi_context)(0)(pc)
-    failure_flatmapped_process = failure_process.flatmap(
+    failure_flat_mapped_process = failure_process.flat_map(
         lambda success: Future[int].successful(success + 1)
     )(pc)
-    assert failure_process is not failure_flatmapped_process
-    assert Future is type(failure_flatmapped_process)
+    assert failure_process is not failure_flat_mapped_process
+    assert Future is type(failure_flat_mapped_process)
     try:
-        failure_flatmapped_process.result()
+        failure_flat_mapped_process.result()
         assert False
     except Exception as error:
         assert ValueError is type(error)
-    assert Failure is type(failure_flatmapped_process.value)
+    assert Failure is type(failure_flat_mapped_process.value)
     assert ValueError is type(
-        cast(Failure[int], failure_flatmapped_process.value).exception
+        cast(Failure[int], failure_flat_mapped_process.value).exception
     )
 
     # Failure thread running case
     failure_thread = Future.hold(process_multi_context)(0)(tc)
-    failure_flatmapped_thread = failure_thread.flatmap(
+    failure_flat_mapped_thread = failure_thread.flat_map(
         lambda success: Future[int].successful(success + 1)
     )(tc)
-    assert failure_thread is not failure_flatmapped_thread
-    assert Future is type(failure_flatmapped_thread)
+    assert failure_thread is not failure_flat_mapped_thread
+    assert Future is type(failure_flat_mapped_thread)
     try:
-        failure_flatmapped_thread.result()
+        failure_flat_mapped_thread.result()
         assert False
     except Exception as error:
         assert ValueError is type(error)
-    assert Failure is type(failure_flatmapped_thread.value)
+    assert Failure is type(failure_flat_mapped_thread.value)
     assert ValueError is type(
-        cast(Failure[int], failure_flatmapped_thread.value).exception
+        cast(Failure[int], failure_flat_mapped_thread.value).exception
     )
 
     # Success finished case
     success_future = Future[int].successful(42)
-    success_flatmapped_future = success_future.flatmap(
+    success_flat_mapped_future = success_future.flat_map(
         lambda success: Future[int].successful(success + 1)
     )(pc)
-    assert success_future is not success_flatmapped_future
-    assert Future is type(success_flatmapped_future)
-    assert 43 == success_flatmapped_future.result()
-    assert Success is type(success_flatmapped_future.value)
-    assert 43 == success_flatmapped_future.value.get()
+    assert success_future is not success_flat_mapped_future
+    assert Future is type(success_flat_mapped_future)
+    assert 43 == success_flat_mapped_future.result()
+    assert Success is type(success_flat_mapped_future.value)
+    assert 43 == success_flat_mapped_future.value.get()
 
     # Success process running case
     success_process = Future[int].hold(process_multi_context)(42)(pc)
-    success_flatmapped_process = success_process.flatmap(
+    success_flat_mapped_process = success_process.flat_map(
         lambda success: Future[int].successful(success + 1)
     )(pc)
-    assert success_process is not success_flatmapped_process
-    assert Future is type(success_flatmapped_process)
-    assert 43 == success_flatmapped_process.result()
-    assert Success is type(success_flatmapped_process.value)
-    assert 43 == success_flatmapped_process.value.get()
+    assert success_process is not success_flat_mapped_process
+    assert Future is type(success_flat_mapped_process)
+    assert 43 == success_flat_mapped_process.result()
+    assert Success is type(success_flat_mapped_process.value)
+    assert 43 == success_flat_mapped_process.value.get()
 
     # Success thread running case
     success_thread = thread_multi_context(42)(tc)
-    success_flatmapped_thread = success_thread.flatmap(
+    success_flat_mapped_thread = success_thread.flat_map(
         lambda success: Future[int].successful(success + 1)
     )(tc)
-    assert success_thread is not success_flatmapped_thread
-    assert Future is type(success_flatmapped_thread)
-    assert 43 == success_flatmapped_thread.result()
-    assert Success is type(success_flatmapped_thread.value)
-    assert 43 == success_flatmapped_thread.value.get()
+    assert success_thread is not success_flat_mapped_thread
+    assert Future is type(success_flat_mapped_thread)
+    assert 43 == success_flat_mapped_thread.result()
+    assert Success is type(success_flat_mapped_thread.value)
+    assert 43 == success_flat_mapped_thread.value.get()
 
 
 def test_recover():

@@ -1,7 +1,7 @@
 def test_curried():
-    from category import curried
+    from category import curry
 
-    @curried
+    @curry
     def curry2(arg1: int, arg2: int) -> int:
         return arg1 + arg2
 
@@ -9,7 +9,7 @@ def test_curried():
     assert int is type(curry2(1)(1))
     assert 2 == curry2(1)(1)
 
-    @curried
+    @curry
     def curry3(arg1: int, /, arg2: int, arg3: int) -> int:
         return arg1 + arg2 + arg3
 
@@ -17,7 +17,7 @@ def test_curried():
     assert int is type(curry3(1)(1)(1))
     assert 3 == curry3(1)(1)(1)
 
-    @curried
+    @curry
     def curry4(arg1: int, /, arg2: int, arg3: int, arg4: int) -> int:
         return arg1 + arg2 + arg3 + arg4
 
@@ -25,7 +25,7 @@ def test_curried():
     assert int is type(curry4(1)(1)(1)(1))
     assert 4 == curry4(1)(1)(1)(1)
 
-    @curried
+    @curry
     def curry5(arg1: int, /, arg2: int, arg3: int, arg4: int, arg5: int) -> int:
         return arg1 + arg2 + arg3 + arg4 + arg5
 
@@ -33,7 +33,7 @@ def test_curried():
     assert int is type(curry5(1)(1)(1)(1)(1))
     assert 5 == curry5(1)(1)(1)(1)(1)
 
-    @curried
+    @curry
     def curry6(
         arg1: int, /, arg2: int, arg3: int, arg4: int, arg5: int, arg6: int
     ) -> int:
@@ -43,7 +43,7 @@ def test_curried():
     assert int is type(curry6(1)(1)(1)(1)(1)(1))
     assert 6 == curry6(1)(1)(1)(1)(1)(1)
 
-    @curried
+    @curry
     def curry7(
         arg1: int,
         /,
@@ -60,7 +60,7 @@ def test_curried():
     assert int is type(curry7(1)(1)(1)(1)(1)(1)(1))
     assert 7 == curry7(1)(1)(1)(1)(1)(1)(1)
 
-    @curried
+    @curry
     def curry8(
         arg1: int,
         /,
@@ -78,7 +78,7 @@ def test_curried():
     assert int is type(curry8(1)(1)(1)(1)(1)(1)(1)(1))
     assert 8 == curry8(1)(1)(1)(1)(1)(1)(1)(1)
 
-    @curried
+    @curry
     def curry9(
         arg1: int,
         /,
@@ -97,7 +97,7 @@ def test_curried():
     assert int is type(curry9(1)(1)(1)(1)(1)(1)(1)(1)(1))
     assert 9 == curry9(1)(1)(1)(1)(1)(1)(1)(1)(1)
 
-    @curried
+    @curry
     def curry10(
         arg1: int,
         /,
@@ -117,7 +117,7 @@ def test_curried():
     assert int is type(curry10(1)(1)(1)(1)(1)(1)(1)(1)(1)(1))
     assert 10 == curry10(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)
 
-    @curried
+    @curry
     def curry11(
         arg1: int,
         /,
@@ -140,7 +140,7 @@ def test_curried():
     assert int is type(curry11(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1))
     assert 11 == curry11(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)
 
-    @curried
+    @curry
     def curry12(
         arg1: int,
         arg2: int,
@@ -174,7 +174,7 @@ def test_curried():
     assert int is type(curry12(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1))
     assert 12 == curry12(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)
 
-    @curried
+    @curry
     def curry13(
         arg1: int,
         arg2: int,
@@ -210,7 +210,7 @@ def test_curried():
     assert int is type(curry13(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1))
     assert 13 == curry13(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)
 
-    @curried
+    @curry
     def curry14(
         arg1: int,
         arg2: int,
@@ -248,7 +248,7 @@ def test_curried():
     assert int is type(curry14(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1))
     assert 14 == curry14(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)
 
-    @curried
+    @curry
     def curry14p(
         arg1: int,
         arg2: int,
@@ -290,7 +290,7 @@ def test_curried():
 
     try:
 
-        @curried
+        @curry
         def curry15(
             arg1: int,
             arg2: int,

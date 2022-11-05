@@ -17,7 +17,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Either(monad.Monad, Generic[L, R]):
+class Either(monad.Monad2[L, R]):
     """Either"""
 
     @abstractmethod
@@ -25,11 +25,11 @@ class Either(monad.Monad, Generic[L, R]):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, functor: Callable[[R], RR], /) -> Either[L, RR]:
+    def map(self, other: Callable[[R], RR], /) -> Either[L, RR]:
         raise NotImplementedError
 
     @abstractmethod
-    def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
+    def flat_map(self, other: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         raise NotImplementedError
 
     @abstractproperty
@@ -76,7 +76,7 @@ class Either(monad.Monad, Generic[L, R]):
 
     @staticmethod
     def do(context: Callable[P, EitherDo[L, R]], /) -> Callable[P, Either[L, R]]:
-        """map, flatmap combination syntax sugar.
+        """map, flat_map combination syntax sugar.
 
         Only type checking can determine type violations, and runtime errors may not occur.
         """
@@ -101,7 +101,7 @@ class Either(monad.Monad, Generic[L, R]):
         return wrapper
 
     @abstractmethod
-    def method(self, functor: Callable[[Either[L, R]], TT], /) -> TT:
+    def method(self, other: Callable[[Either[L, R]], TT], /) -> TT:
         raise NotImplementedError
 
 
@@ -120,13 +120,13 @@ class Left(Either[L, R]):
         return False
 
     def __iter__(self) -> Generator[Either[L, R], None, R]:
-        yield self.flatmap(lambda right: Right[L, R](right))
+        yield self.flat_map(lambda right: Right[L, R](right))
         raise GeneratorExit(self)
 
-    def map(self, functor: Callable[[R], RR], /) -> Left[L, RR]:
+    def map(self, other: Callable[[R], RR], /) -> Left[L, RR]:
         return cast(Left[L, RR], self)
 
-    def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
+    def flat_map(self, other: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         return cast(Left[L, RR], self)
 
     @property
@@ -163,8 +163,8 @@ class Left(Either[L, R]):
     def pattern(self) -> SubType[L, R]:
         return self
 
-    def method(self, functor: Callable[[Left[L, R]], TT], /) -> TT:
-        return functor(self)
+    def method(self, other: Callable[[Left[L, R]], TT], /) -> TT:
+        return other(self)
 
 
 class Right(Either[L, R]):
@@ -182,14 +182,14 @@ class Right(Either[L, R]):
         return True
 
     def __iter__(self) -> Generator[Either[L, R], None, R]:
-        yield self.flatmap(lambda right: Right[L, R](right))
+        yield self.flat_map(lambda right: Right[L, R](right))
         return self.value
 
-    def map(self, functor: Callable[[R], RR], /) -> Right[L, RR]:
-        return Right[L, RR](functor(self.value))
+    def map(self, other: Callable[[R], RR], /) -> Right[L, RR]:
+        return Right[L, RR](other(self.value))
 
-    def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
-        return functor(self.value)
+    def flat_map(self, other: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
+        return other(self.value)
 
     @property
     def to_option(self) -> option.Option[R]:
@@ -225,8 +225,8 @@ class Right(Either[L, R]):
     def pattern(self) -> SubType[L, R]:
         return self
 
-    def method(self, functor: Callable[[Right[L, R]], TT], /) -> TT:
-        return functor(self)
+    def method(self, other: Callable[[Right[L, R]], TT], /) -> TT:
+        return other(self)
 
 
 class LeftProjection(Generic[L, R]):
@@ -257,17 +257,17 @@ class LeftProjection(Generic[L, R]):
             case _:
                 return default()
 
-    def map(self, functor: Callable[[L], LL], /) -> Either[LL, R]:
+    def map(self, other: Callable[[L], LL], /) -> Either[LL, R]:
         match self._either:
             case Left() as left:
-                return Left[LL, R](functor(left.value))
+                return Left[LL, R](other(left.value))
             case Right() as right:
                 return cast(Right[LL, R], right)
 
-    def flatmap(self, functor: Callable[[L], Either[LL, R]], /) -> Either[LL, R]:
+    def flat_map(self, other: Callable[[L], Either[LL, R]], /) -> Either[LL, R]:
         match self._either:
             case Left() as left:
-                return functor(left.value)
+                return other(left.value)
             case Right() as right:
                 return cast(Right[LL, R], right)
 
@@ -300,19 +300,19 @@ class RightProjection(Generic[L, R]):
             case Right() as right:
                 return right.get()
 
-    def map(self, functor: Callable[[R], RR], /) -> Either[L, RR]:
+    def map(self, other: Callable[[R], RR], /) -> Either[L, RR]:
         match self._either:
             case Left() as left:
                 return cast(Left[L, RR], left)
             case Right() as right:
-                return Right[L, RR](functor(right.get()))
+                return Right[L, RR](other(right.get()))
 
-    def flatmap(self, functor: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
+    def flat_map(self, other: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         match self._either:
             case Left() as left:
                 return cast(Left[L, RR], left)
             case Right() as right:
-                return functor(right.get())
+                return other(right.get())
 
 
 SubType: TypeAlias = Left[L, R] | Right[L, R]

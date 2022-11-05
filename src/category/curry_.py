@@ -201,61 +201,59 @@ CURRY14: TypeAlias = Callable[
 
 
 @overload
-def curried(function: Callable[[ARG1, ARG2], T], /) -> CURRY2[ARG1, ARG2, T]:
+def curry(function: Callable[[ARG1, ARG2], T], /) -> CURRY2[ARG1, ARG2, T]:
     ...
 
 
 @overload
-def curried(
-    function: Callable[[ARG1, ARG2, ARG3], T], /
-) -> CURRY3[ARG1, ARG2, ARG3, T]:
+def curry(function: Callable[[ARG1, ARG2, ARG3], T], /) -> CURRY3[ARG1, ARG2, ARG3, T]:
     ...
 
 
 @overload
-def curried(
+def curry(
     function: Callable[[ARG1, ARG2, ARG3, ARG4], T], /
 ) -> CURRY4[ARG1, ARG2, ARG3, ARG4, T]:
     ...
 
 
 @overload
-def curried(
+def curry(
     function: Callable[[ARG1, ARG2, ARG3, ARG4, ARG5], T], /
 ) -> CURRY5[ARG1, ARG2, ARG3, ARG4, ARG5, T]:
     ...
 
 
 @overload
-def curried(
+def curry(
     function: Callable[[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6], T], /
 ) -> CURRY6[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, T]:
     ...
 
 
 @overload
-def curried(
+def curry(
     function: Callable[[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7], T], /
 ) -> CURRY7[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, T]:
     ...
 
 
 @overload
-def curried(
+def curry(
     function: Callable[[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8], T], /
 ) -> CURRY8[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, T]:
     ...
 
 
 @overload
-def curried(
+def curry(
     function: Callable[[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9], T], /
 ) -> CURRY9[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, T]:
     ...
 
 
 @overload
-def curried(
+def curry(
     function: Callable[
         [ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10], T
     ],
@@ -265,7 +263,7 @@ def curried(
 
 
 @overload
-def curried(
+def curry(
     function: Callable[
         [ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11], T
     ],
@@ -275,7 +273,7 @@ def curried(
 
 
 @overload
-def curried(
+def curry(
     function: Callable[
         [ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12], T
     ],
@@ -287,7 +285,7 @@ def curried(
 
 
 @overload
-def curried(
+def curry(
     function: Callable[
         [
             ARG1,
@@ -314,7 +312,7 @@ def curried(
 
 
 @overload
-def curried(
+def curry(
     function: Callable[
         [
             ARG1,
@@ -391,7 +389,7 @@ LIMIT_NUMBER_OF_TYPE_VARIABLES = (
 )
 
 
-def curried(
+def curry(
     function: Callable[P, T], /
 ) -> Union[
     CURRY2[ARG1, ARG2, T],

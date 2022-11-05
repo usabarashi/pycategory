@@ -57,53 +57,53 @@ def test_eitherttry_map():
     assert 2 == mapped_success_right.get()
 
 
-def test_eitherttry_flatmap():
+def test_eitherttry_flat_map():
     from typing import cast
 
     from category import Either, EitherTTry, Failure, Left, Right, Success
 
     # Failure case
     failure = EitherTTry[Exception, int](Failure[Either[Exception, int]](Exception()))
-    flatmapped_failure = failure.flatmap(
+    flat_mapped_failure = failure.flat_map(
         lambda right: EitherTTry[Exception, int](Failure(Exception()))
     )
-    assert failure is flatmapped_failure
-    assert EitherTTry is type(flatmapped_failure)
-    assert Failure is type(flatmapped_failure._value)
+    assert failure is flat_mapped_failure
+    assert EitherTTry is type(flat_mapped_failure)
+    assert Failure is type(flat_mapped_failure._value)
     assert Exception is type(
-        cast(Failure[Either[Exception, int]], flatmapped_failure._value).exception
+        cast(Failure[Either[Exception, int]], flat_mapped_failure._value).exception
     )
 
     # Success[Left[L, R]] case
     success_left = EitherTTry[Exception, int](
         Success[Either[Exception, int]](Left[Exception, int](Exception()))
     )
-    flatmapped_success_left = success_left.flatmap(
+    flat_mapped_success_left = success_left.flat_map(
         lambda right: EitherTTry[Exception, int](
             Success(Left[Exception, int](Exception()))
         )
     )
-    assert success_left is flatmapped_success_left
-    assert EitherTTry is type(flatmapped_success_left)
-    assert Success is type(flatmapped_success_left._value)
-    assert Left is type(flatmapped_success_left._value.get())
-    assert Exception is type(flatmapped_success_left._value.get().left().get())
+    assert success_left is flat_mapped_success_left
+    assert EitherTTry is type(flat_mapped_success_left)
+    assert Success is type(flat_mapped_success_left._value)
+    assert Left is type(flat_mapped_success_left._value.get())
+    assert Exception is type(flat_mapped_success_left._value.get().left().get())
 
     # Success[Right[L, R]] case
     success_right = EitherTTry[Exception, int](
         Success[Either[Exception, int]](Right[Exception, int](1))
     )
-    flatmapped_success_right = success_right.flatmap(
+    flat_mapped_success_right = success_right.flat_map(
         lambda right: EitherTTry[Exception, int](
             Success(Right[Exception, int](right + 1))
         )
     )
-    assert success_right is not flatmapped_success_right
-    assert EitherTTry is type(flatmapped_success_right)
-    assert Success is type(flatmapped_success_right._value)
-    assert Right is type(flatmapped_success_right._value.get())
-    assert 2 == flatmapped_success_right._value.get().right().get()
-    assert 2 == flatmapped_success_right.get()
+    assert success_right is not flat_mapped_success_right
+    assert EitherTTry is type(flat_mapped_success_right)
+    assert Success is type(flat_mapped_success_right._value)
+    assert Right is type(flat_mapped_success_right._value.get())
+    assert 2 == flat_mapped_success_right._value.get().right().get()
+    assert 2 == flat_mapped_success_right.get()
 
 
 def test_eitherttry_fold():
@@ -189,16 +189,8 @@ def test_eitherttry_get_or_else():
 def test_eitherttry_do():
     from typing import cast
 
-    from category import (
-        Either,
-        EitherTTry,
-        EitherTTryDo,
-        Failure,
-        Left,
-        Right,
-        Some,
-        Success,
-    )
+    from category import (Either, EitherTTry, EitherTTryDo, Failure, Left,
+                          Right, Some, Success)
 
     @EitherTTry.do
     def safe_context() -> EitherTTryDo[IndexError | KeyError, int]:
@@ -391,7 +383,7 @@ def test_eithertfuture_map():
     assert 2 == mapped_right.get()
 
 
-def test_eithertfuture_flatmap():
+def test_eithertfuture_flat_map():
     from category import Either, EitherTFuture
     from category import ExecutionContext as ec
     from category import Future, Left, Right
@@ -400,7 +392,7 @@ def test_eithertfuture_flatmap():
     failure_future = Future[Either[Exception, int]]()
     failure_future.set_exception(exception=Exception())
     failure = EitherTFuture[Exception, int](failure_future)
-    mapped_failure = failure.flatmap(
+    mapped_failure = failure.flat_map(
         lambda right: EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](1))
         )
@@ -418,7 +410,7 @@ def test_eithertfuture_flatmap():
     left = EitherTFuture[Exception, int](
         Future[Either[Exception, int]].successful(Left[Exception, int](Exception()))
     )
-    mapped_left = left.flatmap(
+    mapped_left = left.flat_map(
         lambda right: EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](right + 1))
         )
@@ -433,16 +425,16 @@ def test_eithertfuture_flatmap():
     right = EitherTFuture[Exception, int](
         Future[Either[Exception, int]].successful(Right[Exception, int](1))
     )
-    flatmapped_right = right.flatmap(
+    flat_mapped_right = right.flat_map(
         lambda right: EitherTFuture[Exception, int](
             Future[Either[Exception, int]].successful(Right[Exception, int](right + 1))
         )
     )(ec)
-    assert right is not flatmapped_right
-    assert EitherTFuture is type(flatmapped_right)
-    assert Right is type(flatmapped_right._value.result())
-    assert 2 == flatmapped_right._value.result().get()
-    assert 2 == flatmapped_right.get()
+    assert right is not flat_mapped_right
+    assert EitherTFuture is type(flat_mapped_right)
+    assert Right is type(flat_mapped_right._value.result())
+    assert 2 == flat_mapped_right._value.result().get()
+    assert 2 == flat_mapped_right.get()
 
 
 def test_eithertfuture_fold():
@@ -533,17 +525,8 @@ def test_eithertfuture_getorelse():
 def test_eithertfuture_do():
     from typing import cast
 
-    from category import (
-        Either,
-        EitherTFuture,
-        EitherTFutureDo,
-        Failure,
-        Future,
-        Left,
-        Right,
-        Some,
-        Success,
-    )
+    from category import (Either, EitherTFuture, EitherTFutureDo, Failure,
+                          Future, Left, Right, Some, Success)
 
     @EitherTFuture.do
     def safe_context() -> EitherTFutureDo[IndexError | KeyError, int]:
@@ -667,17 +650,8 @@ def test_eithertfuture_do():
 def test_method():
     from typing import Callable, TypeVar
 
-    from category import (
-        Either,
-        EitherTFuture,
-        Future,
-        Left,
-        Option,
-        Right,
-        Some,
-        Success,
-        Void,
-    )
+    from category import (Either, EitherTFuture, Future, Left, Option, Right,
+                          Some, Success, Void)
 
     T = TypeVar("T")
     L = TypeVar("L")
