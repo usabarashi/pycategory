@@ -11,7 +11,7 @@ def test___init__():
     assert callable(Pipeline(function).value)
 
 
-def test___call__():
+def test____call__():
     from category import Pipeline
 
     def function(value: int) -> int:
@@ -31,7 +31,7 @@ def test___lshift__():
     assert 3 == (Pipeline(function) << 1 << 2).value
 
 
-def test__rshift__():
+def test___rshift__():
     from category import Pipeline
 
     def function(value: int) -> int:
@@ -39,3 +39,18 @@ def test__rshift__():
 
     assert Pipeline is type(Pipeline(42) >> function >> function)
     assert 42 == (Pipeline(42) >> function >> function).value
+
+
+def test___invert__():
+    from category import Pipeline
+
+    def function(value: int) -> int:
+        return value
+
+    assert 42 == ~(Pipeline(42) >> function >> function)
+
+
+def test_get__():
+    from category import Pipeline
+
+    assert 42 == Pipeline(42).get()

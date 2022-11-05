@@ -20,6 +20,13 @@ class Pipeline(Generic[T]):
         """<<"""
         return Pipeline(self.value(value))
 
-    def __rshift__(self: Pipeline[T], function: Callable[[T], A], /) -> Pipeline[A]:
+    def __rshift__(self: Pipeline[T], value: Callable[[T], A], /) -> Pipeline[A]:
         """>>"""
-        return Pipeline(function(self.value))
+        return Pipeline(value(self.value))
+
+    def __invert__(self: Pipeline[T]) -> T:
+        """~"""
+        return self.value
+
+    def get(self) -> T:
+        return self.value
