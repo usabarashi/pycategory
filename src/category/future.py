@@ -62,7 +62,7 @@ class ThreadPoolExecutionContext(concurrent.futures.ThreadPoolExecutor):
             return future
 
 
-class Future(monad.Monad, concurrent.futures.Future[T]):
+class Future(concurrent.futures.Future[T], monad.Monad):
     """Future"""
 
     def __init__(self) -> None:
@@ -91,7 +91,7 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
         return Future[T].successful(*args, **kwargs)
 
     def map(
-        self, other: Callable[[T], TT], /
+        self, functor: Callable[[T], TT], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             def fold(previous_result: try_.Try[T], /) -> try_.Try[TT]:
@@ -99,7 +99,7 @@ class Future(monad.Monad, concurrent.futures.Future[T]):
                     case try_.Failure() as failure:
                         return cast(try_.Failure[TT], failure)
                     case try_.Success(previous_value):
-                        return try_.Success[TT](other(previous_value))
+                        return try_.Success[TT](functor(previous_value))
 
             return self.transform(fold)(executor)
 
