@@ -23,7 +23,7 @@ class Option(monad.Monad[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, other: Callable[[T], TT], /) -> Option[TT]:
+    def map(self, functor: Callable[[T], TT], /) -> Option[TT]:
         raise NotImplementedError
 
     @abstractmethod
@@ -102,7 +102,7 @@ class Void(Option[T]):
         yield self.flat_map(lambda value: Some[T](value))
         raise GeneratorExit(self)
 
-    def map(self, other: Callable[[T], TT], /) -> Void[TT]:
+    def map(self, functor: Callable[[T], TT], /) -> Void[TT]:
         return cast(Void[TT], self)
 
     def flat_map(self, other: Callable[[T], Option[TT]], /) -> Void[TT]:
@@ -149,8 +149,8 @@ class Some(Option[T]):
         yield self.flat_map(lambda value: Some[T](value))
         return self.value
 
-    def map(self, other: Callable[[T], TT], /) -> Some[TT]:
-        return Some[TT](other(self.value))
+    def map(self, functor: Callable[[T], TT], /) -> Some[TT]:
+        return Some[TT](functor(self.value))
 
     def flat_map(self, other: Callable[[T], Option[TT]], /) -> Option[TT]:
         return other(self.value)

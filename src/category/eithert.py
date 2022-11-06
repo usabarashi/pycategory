@@ -62,9 +62,9 @@ class EitherTTry(monad.Monad2[L, R]):
             case try_.Success(either_):
                 return either_.get_or_else(default)
 
-    def map(self, other: Callable[[R], RR], /) -> EitherTTry[L, RR]:
+    def map(self, functor: Callable[[R], RR], /) -> EitherTTry[L, RR]:
         try__ = self._value
-        mapped_try = try__.map(lambda either_: either_.map(other))
+        mapped_try = try__.map(lambda either_: either_.map(functor))
         return EitherTTry[L, RR](mapped_try)
 
     def flat_map(self, other: Callable[[R], EitherTTry[L, RR]], /) -> EitherTTry[L, RR]:
@@ -176,11 +176,11 @@ class EitherTFuture(monad.Monad2[L, R]):
             return default()
 
     def map(
-        self, other: Callable[[R], RR], /
+        self, functor: Callable[[R], RR], /
     ) -> Callable[[future.ExecutionContext], EitherTFuture[L, RR]]:
         def with_context(executor: future.ExecutionContext, /) -> EitherTFuture[L, RR]:
             future_ = self._value
-            mapped_future = future_.map(lambda either_: either_.map(other))(executor)
+            mapped_future = future_.map(lambda either_: either_.map(functor))(executor)
             return EitherTFuture[L, RR](mapped_future)
 
         return with_context

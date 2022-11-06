@@ -33,7 +33,7 @@ class Try(monad.Monad[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, other: Callable[[T], TT], /) -> Try[TT]:
+    def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
@@ -192,7 +192,7 @@ class Failure(Try[T]):
         yield self.flat_map(lambda value: Success[T](value))
         raise GeneratorExit(self) from self.exception
 
-    def map(self, other: Callable[[T], TT], /) -> Try[TT]:
+    def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
         return cast(Failure[TT], self)
 
     def flat_map(self, other: Callable[[T], Try[TT]], /) -> Try[TT]:
@@ -270,8 +270,8 @@ class Success(Try[T]):
         yield self.flat_map(lambda value: Success[T](value))
         return self.value
 
-    def map(self, other: Callable[[T], TT], /) -> Try[TT]:
-        return Success[TT](other(self.value))
+    def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
+        return Success[TT](functor(self.value))
 
     def flat_map(self, other: Callable[[T], Try[TT]], /) -> Try[TT]:
         return other(self.value)

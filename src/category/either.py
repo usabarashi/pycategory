@@ -25,7 +25,7 @@ class Either(monad.Monad2[L, R]):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, other: Callable[[R], RR], /) -> Either[L, RR]:
+    def map(self, functor: Callable[[R], RR], /) -> Either[L, RR]:
         raise NotImplementedError
 
     @abstractmethod
@@ -123,7 +123,7 @@ class Left(Either[L, R]):
         yield self.flat_map(lambda right: Right[L, R](right))
         raise GeneratorExit(self)
 
-    def map(self, other: Callable[[R], RR], /) -> Left[L, RR]:
+    def map(self, functor: Callable[[R], RR], /) -> Left[L, RR]:
         return cast(Left[L, RR], self)
 
     def flat_map(self, other: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
@@ -185,8 +185,8 @@ class Right(Either[L, R]):
         yield self.flat_map(lambda right: Right[L, R](right))
         return self.value
 
-    def map(self, other: Callable[[R], RR], /) -> Right[L, RR]:
-        return Right[L, RR](other(self.value))
+    def map(self, functor: Callable[[R], RR], /) -> Right[L, RR]:
+        return Right[L, RR](functor(self.value))
 
     def flat_map(self, other: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         return other(self.value)
@@ -257,10 +257,10 @@ class LeftProjection(Generic[L, R]):
             case _:
                 return default()
 
-    def map(self, other: Callable[[L], LL], /) -> Either[LL, R]:
+    def map(self, functor: Callable[[L], LL], /) -> Either[LL, R]:
         match self._either:
             case Left() as left:
-                return Left[LL, R](other(left.value))
+                return Left[LL, R](functor(left.value))
             case Right() as right:
                 return cast(Right[LL, R], right)
 
@@ -300,12 +300,12 @@ class RightProjection(Generic[L, R]):
             case Right() as right:
                 return right.get()
 
-    def map(self, other: Callable[[R], RR], /) -> Either[L, RR]:
+    def map(self, functor: Callable[[R], RR], /) -> Either[L, RR]:
         match self._either:
             case Left() as left:
                 return cast(Left[L, RR], left)
             case Right() as right:
-                return Right[L, RR](other(right.get()))
+                return Right[L, RR](functor(right.get()))
 
     def flat_map(self, other: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         match self._either:

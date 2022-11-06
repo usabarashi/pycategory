@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from typing import Callable, Final, Generic, TypeVar
+from typing import Callable, Final, TypeVar
+
+from . import functor
 
 T = TypeVar("T")
 A = TypeVar("A")
 B = TypeVar("B")
 
 
-class Pipeline(Generic[T]):
+class Pipeline(functor.Functor[T]):
     """Pipeline"""
 
     def __init__(self, value: T):
@@ -20,13 +22,16 @@ class Pipeline(Generic[T]):
         """<<"""
         return Pipeline(self.value(other))
 
-    def __rshift__(self: Pipeline[T], other: Callable[[T], A], /) -> Pipeline[A]:
+    def __rshift__(self: Pipeline[T], functor: Callable[[T], A], /) -> Pipeline[A]:
         """>>"""
-        return Pipeline(other(self.value))
+        return Pipeline(functor(self.value))
 
     def __invert__(self: Pipeline[T]) -> T:
         """~"""
         return self.value
+
+    def map(self: Pipeline[T], functor: Callable[[T], A], /) -> Pipeline[A]:
+        return Pipeline(functor(self.value))
 
     def get(self) -> T:
         return self.value
