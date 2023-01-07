@@ -206,7 +206,7 @@ def test_immutable_vector_map():
     assert [0, 2, 4] == mapped_vector
 
 
-def test_immutable_vector_redece():
+def test_immutable_vector_reduce():
     vector = Vector([0, 1, 2])
     reduced_vector = vector.reduce(lambda left, right: left * right)
     assert reduced_vector is not vector
