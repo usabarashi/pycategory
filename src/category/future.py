@@ -77,9 +77,8 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
     def __iter__(self) -> Generator[Future[T], None, T]:
         try:
             match self.pattern:
-                case try_.Failure():
-                    yield self
-                    raise GeneratorExit(self)
+                case try_.Failure() as failure:
+                    raise GeneratorExit(self) from failure.exception
                 case try_.Success(value):
                     yield self
                     return value
@@ -268,12 +267,8 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
                         yield_state = next(context_)
                         if not isinstance(yield_state, Future):
                             raise TypeError(yield_state)
-                        match yield_state.composability():
-                            case monad.Composability.Immutable:
-                                return yield_state
-                            case monad.Composability.Variable:
-                                # Priority is given to the value of the sub-generator's monad.
-                                ...
+                except GeneratorExit as exit:
+                    return cast(Future[T], exit.args[monad.FixedMonad])
                 except StopIteration as return_:
                     return Future[T].pure(return_.value)
 

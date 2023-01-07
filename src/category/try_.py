@@ -163,7 +163,6 @@ class Failure(Try[T]):
         return False
 
     def __iter__(self) -> Generator[Try[T], None, T]:
-        yield self.flat_map(lambda value: Success[T](value))
         raise GeneratorExit(self) from self.exception
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
@@ -241,7 +240,7 @@ class Success(Try[T]):
         return True
 
     def __iter__(self) -> Generator[Try[T], None, T]:
-        yield self.flat_map(lambda value: Success[T](value))
+        yield self
         return self.value
 
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:

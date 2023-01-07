@@ -30,18 +30,13 @@ class EitherTTry(Generic[L, R], monad.Monad[R]):
                 return False
 
     def __iter__(self) -> Generator[EitherTTry[L, R], None, R]:
-        lift: Callable[[R], EitherTTry[L, R]] = lambda right: EitherTTry[L, R](
-            try_.Success[either.Either[L, R]](either.Right[L, R](right))
-        )
         match self._value:
             case try_.Failure() as failure:
-                yield self.flat_map(lift)
                 raise GeneratorExit(self) from failure.exception
             case try_.Success(either.Left()):
-                yield self.flat_map(lift)
                 raise GeneratorExit(self)
             case try_.Success(either.Right(value)):
-                yield self.flat_map(lift)
+                yield self
                 return value
             case _:
                 raise ValueError(self)
@@ -105,12 +100,8 @@ class EitherTTry(Generic[L, R], monad.Monad[R]):
                     yield_state = next(context_)
                     if not isinstance(yield_state, EitherTTry):
                         raise TypeError(yield_state)
-                    match yield_state.composability():
-                        case monad.Composability.Immutable:
-                            return yield_state
-                        case monad.Composability.Variable:
-                            # Priority is given to the value of the sub-generator's monad.
-                            ...
+            except GeneratorExit as exit:
+                return cast(EitherTTry[L, R], exit.args[monad.FixedMonad])
             except StopIteration as return_:
                 return EitherTTry[L, R].pure(return_.value)
 
@@ -147,7 +138,6 @@ class EitherTFuture(Generic[L, R], monad.Monad[R]):
         try:
             match self._value.result().pattern:
                 case either.Left():
-                    yield self.flat_map(lift)(future.ExecutionContext)
                     raise GeneratorExit(self)
                 case either.Right(value):
                     yield self.flat_map(lift)(future.ExecutionContext)
@@ -155,9 +145,8 @@ class EitherTFuture(Generic[L, R], monad.Monad[R]):
         except Exception as error:
             future_ = future.Future[either.Either[L, R]]()
             future_.set_exception(error)
-
-            yield EitherTFuture[L, R](future_)
-            raise GeneratorExit from error
+            eithert_future = EitherTFuture[L, R](future_)
+            raise GeneratorExit(eithert_future) from error
 
     @staticmethod
     def pure(value: R) -> EitherTFuture[L, R]:
@@ -237,12 +226,8 @@ class EitherTFuture(Generic[L, R], monad.Monad[R]):
                     yield_state = next(context_)
                     if not isinstance(yield_state, EitherTFuture):
                         raise TypeError(yield_state)
-                    match yield_state.composability():
-                        case monad.Composability.Immutable:
-                            return yield_state
-                        case monad.Composability.Variable:
-                            # Priority is given to the value of the sub-generator's monad.
-                            ...
+            except GeneratorExit as exit:
+                return cast(EitherTFuture[L, R], exit.args[monad.FixedMonad])
             except StopIteration as return_:
                 return EitherTFuture[L, R].pure(return_.value)
 
