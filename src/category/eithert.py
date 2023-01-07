@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from functools import wraps
-from typing import Any, Callable, ParamSpec, TypeAlias, TypeVar, cast
+from typing import Any, Callable, Generic, ParamSpec, TypeAlias, TypeVar, cast
 
 from . import either, future, monad, try_
 
@@ -16,7 +16,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class EitherTTry(monad.Monad2[L, R]):
+class EitherTTry(Generic[L, R], monad.Monad[R]):
     """Either Transformer Try"""
 
     def __init__(self, value: try_.Try[either.Either[L, R]], /):
@@ -47,7 +47,7 @@ class EitherTTry(monad.Monad2[L, R]):
                 raise ValueError(self)
 
     @staticmethod
-    def lift(value: R) -> EitherTTry[L, R]:
+    def pure(value: R) -> EitherTTry[L, R]:
         return EitherTTry[L, R](
             try_.Success[either.Either[L, R]](either.Right[L, R](value))
         )
@@ -112,7 +112,7 @@ class EitherTTry(monad.Monad2[L, R]):
                             # Priority is given to the value of the sub-generator's monad.
                             ...
             except StopIteration as return_:
-                return EitherTTry[L, R].lift(return_.value)
+                return EitherTTry[L, R].pure(return_.value)
 
         return wrapper
 
@@ -123,7 +123,7 @@ class EitherTTry(monad.Monad2[L, R]):
 EitherTTryDo: TypeAlias = Generator[EitherTTry[L, R], Any, R]
 
 
-class EitherTFuture(monad.Monad2[L, R]):
+class EitherTFuture(Generic[L, R], monad.Monad[R]):
     """Either Transformer Future"""
 
     def __init__(self, value: future.Future[either.Either[L, R]], /):
@@ -160,7 +160,7 @@ class EitherTFuture(monad.Monad2[L, R]):
             raise GeneratorExit from error
 
     @staticmethod
-    def lift(value: R) -> EitherTFuture[L, R]:
+    def pure(value: R) -> EitherTFuture[L, R]:
         return EitherTFuture[L, R](
             future.Future[either.Either[L, R]].successful(either.Right[L, R](value))
         )
@@ -244,7 +244,7 @@ class EitherTFuture(monad.Monad2[L, R]):
                             # Priority is given to the value of the sub-generator's monad.
                             ...
             except StopIteration as return_:
-                return EitherTFuture[L, R].lift(return_.value)
+                return EitherTFuture[L, R].pure(return_.value)
 
         return wrapper
 

@@ -1,7 +1,7 @@
 def test_option_do():
-    from category import VOID, Option, OptionDo, Right, Some, Void
+    from category import VOID, Monad, OptionDo, Right, Some, Void
 
-    @Option.do
+    @Monad.do
     def safe_context() -> OptionDo[int]:
         _ = yield from Some[bool](True)
         one = yield from Some[int](1)
@@ -9,7 +9,7 @@ def test_option_do():
         three = yield from Some[int](3)
         return one + two + three
 
-    @Option.do
+    @Monad.do
     def outside_context() -> OptionDo[int]:
         _ = yield from Some[bool](True)
         one = yield from Some[int](1)
@@ -18,7 +18,7 @@ def test_option_do():
         _ = yield from Right[Exception, int](42)  # Outside
         return str(one + two + three)  # Outside
 
-    @Option.do
+    @Monad.do
     def void_context() -> OptionDo[int]:
         one = yield from Some[int](1)
         two = 2
@@ -31,7 +31,7 @@ def test_option_do():
     assert False is void_context().not_empty()
     assert None is void_context().fold(void=lambda: None, some=lambda some: None)
 
-    @Option.do
+    @Monad.do
     def some_context() -> OptionDo[int]:
         one = yield from Some[int](1)
         two = 2

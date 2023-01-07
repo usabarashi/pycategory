@@ -62,7 +62,7 @@ class ThreadPoolExecutionContext(concurrent.futures.ThreadPoolExecutor):
             return future
 
 
-class Future(concurrent.futures.Future[T], monad.Monad):
+class Future(concurrent.futures.Future[T], monad.Monad[T]):
     """Future"""
 
     def __init__(self) -> None:
@@ -87,7 +87,7 @@ class Future(concurrent.futures.Future[T], monad.Monad):
             raise
 
     @staticmethod
-    def lift(*args: ..., **kwargs: ...) -> Future[T]:
+    def pure(*args: ..., **kwargs: ...) -> Future[T]:
         return Future[T].successful(*args, **kwargs)
 
     def map(
@@ -275,7 +275,7 @@ class Future(concurrent.futures.Future[T], monad.Monad):
                                 # Priority is given to the value of the sub-generator's monad.
                                 ...
                 except StopIteration as return_:
-                    return Future[T].lift(return_.value)
+                    return Future[T].pure(return_.value)
 
             return with_context
 
@@ -323,6 +323,6 @@ class Future(concurrent.futures.Future[T], monad.Monad):
         return wrapper
 
 
-FutureDo: TypeAlias = Generator[Future[Any], None, T]
+FutureDo: TypeAlias = Generator[Future[T], None, T]
 ExecutionContext: TypeAlias = ProcessPoolExecutionContext | ThreadPoolExecutionContext
 SubType: TypeAlias = try_.Failure[T] | try_.Success[T]

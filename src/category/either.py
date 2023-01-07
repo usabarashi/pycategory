@@ -3,8 +3,7 @@ from __future__ import annotations
 
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
-from functools import wraps
-from typing import Any, Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
+from typing import Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
 from . import constraints, monad, option, try_
 
@@ -17,7 +16,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Either(monad.Monad2[L, R]):
+class Either(Generic[L, R], monad.Monad[R]):
     """Either"""
 
     @abstractmethod
@@ -73,32 +72,6 @@ class Either(monad.Monad2[L, R]):
     @abstractproperty
     def pattern(self) -> SubType[L, R]:
         raise NotImplementedError
-
-    @staticmethod
-    def do(context: Callable[P, EitherDo[L, R]], /) -> Callable[P, Either[L, R]]:
-        """map, flat_map combination syntax sugar.
-
-        Only type checking can determine type violations, and runtime errors may not occur.
-        """
-
-        @wraps(context)
-        def wrapper(*args: P.args, **kwargs: P.kwargs):
-            context_ = context(*args, **kwargs)
-            try:
-                while True:
-                    yield_state = next(context_)
-                    if not isinstance(yield_state, Either):
-                        raise TypeError(yield_state)
-                    match yield_state.composability():
-                        case monad.Composability.Immutable:
-                            return yield_state
-                        case monad.Composability.Variable:
-                            # Priority is given to the value of the sub-generator's monad.
-                            ...
-            except StopIteration as return_:
-                return Right[L, R].lift(return_.value)
-
-        return wrapper
 
     @abstractmethod
     def method(self, other: Callable[[Either[L, R]], TT], /) -> TT:
@@ -316,4 +289,4 @@ class RightProjection(Generic[L, R]):
 
 
 SubType: TypeAlias = Left[L, R] | Right[L, R]
-EitherDo: TypeAlias = Generator[Either[L, Any], None, R]
+EitherDo: TypeAlias = Generator[Either[L, R], None, R]

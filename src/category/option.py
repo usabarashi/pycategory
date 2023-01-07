@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
-from functools import wraps
 from typing import Any, Callable, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
 from . import monad
@@ -53,32 +52,6 @@ class Option(monad.Monad[T]):
     @abstractproperty
     def pattern(self) -> SubType[T]:
         raise NotImplementedError
-
-    @staticmethod
-    def do(context: Callable[P, OptionDo[T]], /) -> Callable[P, Option[T]]:
-        """map, flat_map combination syntax sugar.
-
-        Only type checking can determine type violations, and runtime errors may not occur.
-        """
-
-        @wraps(context)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Option[T]:
-            context_ = context(*args, **kwargs)
-            try:
-                while True:
-                    yield_state = next(context_)
-                    if not isinstance(yield_state, Option):
-                        raise TypeError(yield_state)
-                    match yield_state.composability():
-                        case monad.Composability.Immutable:
-                            return yield_state
-                        case monad.Composability.Variable:
-                            # Priority is given to the value of the sub-generator's monad.
-                            ...
-            except StopIteration as return_:
-                return Some[T].lift(return_.value)
-
-        return wrapper
 
     def method(self, other: Callable[[Option[T]], TT], /) -> TT:
         raise NotImplementedError
@@ -179,6 +152,6 @@ class Some(Option[T]):
 
 
 SubType: TypeAlias = Void[T] | Some[T]
-OptionDo: TypeAlias = Generator[Option[Any], None, T]
+OptionDo: TypeAlias = Generator[Option[T], None, T]
 
 SINGLETON_VOID = Void[Any]()
