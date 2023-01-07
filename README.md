@@ -81,7 +81,7 @@ match context().pattern:
 ### Try
 
 ```python
-from category import Failure, Monad, Success, TryDo
+from category import Failure, Monad, Success, Try, TryDo
 
 @Try.hold(unmask=("value",))
 def hold_context(value: int, /) -> int:

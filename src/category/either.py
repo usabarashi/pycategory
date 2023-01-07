@@ -93,7 +93,6 @@ class Left(Either[L, R]):
         return False
 
     def __iter__(self) -> Generator[Either[L, R], None, R]:
-        yield self.flat_map(lambda right: Right[L, R](right))
         raise GeneratorExit(self)
 
     def map(self, functor: Callable[[R], RR], /) -> Left[L, RR]:
@@ -155,7 +154,7 @@ class Right(Either[L, R]):
         return True
 
     def __iter__(self) -> Generator[Either[L, R], None, R]:
-        yield self.flat_map(lambda right: Right[L, R](right))
+        yield self
         return self.value
 
     def map(self, functor: Callable[[R], RR], /) -> Right[L, RR]:

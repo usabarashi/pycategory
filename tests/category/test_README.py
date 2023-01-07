@@ -30,12 +30,12 @@ def test_pipeline():
 
 
 def test_either():
-    from category import Either, EitherDo, Frame, Left, Right
+    from category import EitherDo, Frame, Left, Monad, Right
 
     class Error(Frame):
         ...
 
-    @Either.do
+    @Monad.do
     def context(value: int) -> EitherDo[Error, int]:
         one = yield from Left[Error, int](Error(unmask=("value",)))
         two = 2
@@ -50,9 +50,9 @@ def test_either():
 
 
 def test_option():
-    from category import VOID, Option, OptionDo, Some, Void
+    from category import VOID, Monad, OptionDo, Some, Void
 
-    @Option.do
+    @Monad.do
     def context() -> OptionDo[int]:
         one = yield from VOID
         two = 2
@@ -67,7 +67,7 @@ def test_option():
 
 
 def test_try():
-    from category import Failure, Success, Try, TryDo
+    from category import Failure, Monad, Success, Try, TryDo
 
     @Try.hold(unmask=("value",))
     def hold_context(value: int, /) -> int:
@@ -75,7 +75,7 @@ def test_try():
             raise ValueError("error")
         return value
 
-    @Try.do
+    @Monad.do
     def context() -> TryDo[int]:
         one = yield from hold_context(0)
         two = 2

@@ -1,7 +1,6 @@
 """Monad"""
 from __future__ import annotations
 
-from enum import Enum, auto
 from functools import wraps
 from typing import (
     Any,
@@ -22,10 +21,7 @@ A = TypeVar("A", covariant=True)
 B = TypeVar("B", covariant=True)
 P = ParamSpec("P")
 
-
-class Composability(Enum):
-    Immutable = auto()
-    Variable = auto()
+FixedMonad = 0
 
 
 class Monad(Generic[A], applicative_functor.ApplicativeFunctor[A]):
@@ -45,7 +41,7 @@ class Monad(Generic[A], applicative_functor.ApplicativeFunctor[A]):
     def __bool__(self) -> bool:
         raise NotImplementedError
 
-    def __iter__(self) -> Generator[Self, None, A]:
+    def __iter__(self) -> Generator[Monad[A], None, A]:
         raise NotImplementedError
 
     def unapply(self) -> tuple[()] | tuple[Any, ...]:
@@ -59,13 +55,6 @@ class Monad(Generic[A], applicative_functor.ApplicativeFunctor[A]):
             return tuple(
                 value for key, value in vars(self).items() if key in self.__match_args__
             )
-
-    def composability(self) -> Composability:
-        match self.__bool__():
-            case False:
-                return Composability.Immutable
-            case True:
-                return Composability.Variable
 
     def flat_map(self: Monad[A], other: Callable[[A], Monad[B]], /) -> Monad[A]:
         raise NotImplementedError
@@ -83,25 +72,21 @@ class Monad(Generic[A], applicative_functor.ApplicativeFunctor[A]):
                     yield_state = next(context_)
                     if not isinstance(yield_state, Monad):
                         raise TypeError(yield_state)
-                    match yield_state.composability(), context_type:
-                        case Composability.Immutable, _:
-                            return yield_state
-                        case Composability.Variable, None:
+                    match context_type:
+                        case None:
                             context_type = type(yield_state)
-                        case Composability.Variable, _ if type(
-                            yield_state
-                        ) is not context_type:
+                        case _ if type(yield_state) is not context_type:
                             raise TypeError(
                                 yield_state,
                                 f"A different type ${type(yield_state)} from the context ${context_} is specified.",
                             )
-                        case Composability.Variable, _ if type(
-                            yield_state
-                        ) is context_type:
+                        case _ if type(yield_state) is context_type:
                             # Priority is given to the value of the subgenerator's return monad.
                             ...
                         case _:
                             raise ValueError(context)
+            except GeneratorExit as exit:
+                return cast(Monad[A], exit.args[FixedMonad])
             except StopIteration as return_:
                 if context_type is None:
                     raise TypeError(context, "No context type specification")

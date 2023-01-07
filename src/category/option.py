@@ -72,7 +72,6 @@ class Void(Option[T]):
         return False
 
     def __iter__(self) -> Generator[Option[T], None, T]:
-        yield self.flat_map(lambda value: Some[T](value))
         raise GeneratorExit(self)
 
     def map(self, functor: Callable[[T], TT], /) -> Void[TT]:
@@ -119,7 +118,7 @@ class Some(Option[T]):
         return True
 
     def __iter__(self) -> Generator[Option[T], None, T]:
-        yield self.flat_map(lambda value: Some[T](value))
+        yield self
         return self.value
 
     def map(self, functor: Callable[[T], TT], /) -> Some[TT]:
