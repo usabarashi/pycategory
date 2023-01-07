@@ -40,12 +40,12 @@ assert 42**3 == ~(cubed << 42 << 42 << 42)
 ### Either
 
 ```python
-from category import Either, EitherDo, Frame, Left, Right
+from category import EitherDo, Frame, Left, Monad, Right
 
 class Error(Frame):
     ...
 
-@Either.do
+@Monad.do
 def context(value: int) -> EitherDo[Error, int]:
     one = yield from Left[Error, int](Error(unmask=("value",)))
     two = 2
@@ -62,9 +62,9 @@ match context(42).pattern:
 ### Option
 
 ```python
-from category import VOID, Option, OptionDo, Some, Void
+from category import VOID, Monad, OptionDo, Some, Void
 
-@Option.do
+@Monad.do
 def context() -> OptionDo[int]:
     one = yield from VOID
     two = 2
@@ -81,7 +81,7 @@ match context().pattern:
 ### Try
 
 ```python
-from category import Failure, Success, Try, TryDo
+from category import Failure, Monad, Success, TryDo
 
 @Try.hold(unmask=("value",))
 def hold_context(value: int, /) -> int:
@@ -89,7 +89,7 @@ def hold_context(value: int, /) -> int:
         raise Exception("error")
     return value
 
-@Try.do
+@Monad.do
 def context() -> TryDo[int]:
     one = yield from hold_context(0)
     two = 2

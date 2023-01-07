@@ -8,15 +8,15 @@ def test_do():
         EitherTTryDo,
         Future,
         FutureDo,
+        Monad,
         OptionDo,
         Right,
         Some,
         Success,
         TryDo,
     )
-    from category.monad import do
 
-    @do
+    @Monad.do
     def either_context() -> EitherDo[IndexError | KeyError, int]:
         _ = 42
         result = yield from Right[IndexError, int](42)
@@ -27,7 +27,7 @@ def test_do():
 
     assert 42 == either_context().get()
 
-    @do
+    @Monad.do
     def option_context() -> OptionDo[int]:
         _ = 42
         result = yield from Some[int](42)
@@ -37,7 +37,7 @@ def test_do():
 
     assert 42 == option_context().get()
 
-    @do
+    @Monad.do
     def try_context() -> TryDo[int]:
         _ = 42
         result = yield from Success[int](42)
@@ -47,7 +47,7 @@ def test_do():
 
     assert 42 == try_context().get()
 
-    @do
+    @Monad.do
     def future_context() -> FutureDo[int]:
         _ = 42
         result = yield from Future[int].successful(42)
@@ -57,7 +57,7 @@ def test_do():
 
     assert 42 == future_context().result()
 
-    @do
+    @Monad.do
     def eitherttry_context() -> EitherTTryDo[ValueError | Exception, int]:
         _ = 42
         result = yield from EitherTTry[Exception, int](
@@ -71,7 +71,7 @@ def test_do():
 
     assert 42 == eitherttry_context().get()
 
-    @do
+    @Monad.do
     def eithertfuture_context() -> EitherTFutureDo[Exception, int]:
         _ = 42
         result = yield from EitherTFuture[Exception, int](

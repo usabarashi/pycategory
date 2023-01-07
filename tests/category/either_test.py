@@ -1,7 +1,7 @@
 def test_either_do():
-    from category import Either, EitherDo, Left, Right, Some, Success
+    from category import EitherDo, Left, Monad, Right, Some, Success
 
-    @Either.do
+    @Monad.do
     def safe_context() -> EitherDo[IndexError | KeyError, int]:
         _ = yield from Right[IndexError, bool](True)
         one = yield from Right[IndexError, int](1)
@@ -13,7 +13,7 @@ def test_either_do():
 
     assert 6 == safe_context().get()
 
-    @Either.do
+    @Monad.do
     def outside_context() -> EitherDo[IndexError | KeyError, int]:
         _ = yield from Right[IndexError, bool](True)
         one = yield from Right[IndexError, int](1)
@@ -33,7 +33,7 @@ def test_either_do():
     except Exception as error:
         assert TypeError is type(error)
 
-    @Either.do
+    @Monad.do
     def left_context() -> EitherDo[Exception, int]:
         one = yield from Right[Exception, int](1)
         two = 2
@@ -49,7 +49,7 @@ def test_either_do():
     )
     assert None is left_context().fold(left=lambda left: None, right=lambda right: None)
 
-    @Either.do
+    @Monad.do
     def right_context() -> EitherDo[None, int]:
         one = yield from Right[None, int](1)
         two = 2

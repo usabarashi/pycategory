@@ -10,6 +10,7 @@ from .future import (
     ProcessPoolExecutionContext,
     ThreadPoolExecutionContext,
 )
+from .monad import Monad
 from .option import SINGLETON_VOID as VOID
 from .option import Option, OptionDo, Some, Void
 from .pipeline import Pipeline
@@ -35,6 +36,7 @@ __all__ = [
     "FutureDo",
     "ProcessPoolExecutionContext",
     "ThreadPoolExecutionContext",
+    "Monad",
     "Option",
     "OptionDo",
     "Some",

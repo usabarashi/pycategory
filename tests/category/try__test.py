@@ -55,9 +55,9 @@ def test_try_hold():
 
 
 def test_try_do():
-    from category import Failure, Right, Success, Try, TryDo
+    from category import Failure, Monad, Right, Success, Try, TryDo
 
-    @Try.do
+    @Monad.do
     def safe_context() -> TryDo[int]:
         _ = yield from Success[bool](True)
         one = yield from Success[int](1)
@@ -65,7 +65,7 @@ def test_try_do():
         three = yield from Success[int](3)
         return one + two + three
 
-    @Try.do
+    @Monad.do
     def outside_context() -> TryDo[int]:
         _ = yield from Success[bool](True)
         one = yield from Success[int](1)
@@ -74,7 +74,7 @@ def test_try_do():
         three = yield from Right[Exception, int](42)  # Outside
         return str(one + two + three)  # Outside
 
-    @Try.do
+    @Monad.do
     def failure_context() -> TryDo[int]:
         one = yield from Success[int](1)
         two = 2
@@ -88,7 +88,7 @@ def test_try_do():
     except Exception as error:
         assert ValueError is type(error)
 
-    @Try.do
+    @Monad.do
     def success_context() -> TryDo[int]:
         one = yield from Success[int](1)
         two = 2

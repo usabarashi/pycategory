@@ -85,32 +85,6 @@ class Try(monad.Monad[T]):
     def pattern(self) -> SubType[T]:
         raise NotImplementedError
 
-    @staticmethod
-    def do(context: Callable[P, TryDo[T]], /) -> Callable[P, Try[T]]:
-        """map, flat_map combination syntax sugar.
-
-        Only type checking can determine type violations, and runtime errors may not occur.
-        """
-
-        @wraps(context)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Try[T]:
-            context_ = context(*args, **kwargs)
-            try:
-                while True:
-                    yield_state = next(context_)
-                    if not isinstance(yield_state, Try):
-                        raise TypeError(yield_state)
-                    match yield_state.composability():
-                        case monad.Composability.Immutable:
-                            return yield_state
-                        case monad.Composability.Variable:
-                            # Priority is given to the value of the sub-generator's monad.
-                            ...
-            except StopIteration as return_:
-                return Success[T].lift(return_.value)
-
-        return wrapper
-
     @abstractmethod
     def method(self, other: Callable[[Try[T]], TT], /) -> TT:
         raise NotImplementedError
@@ -319,4 +293,4 @@ class Success(Try[T]):
 
 
 SubType: TypeAlias = Failure[T] | Success[T]
-TryDo: TypeAlias = Generator[Try[Any], None, T]
+TryDo: TypeAlias = Generator[Try[T], None, T]
