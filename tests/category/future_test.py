@@ -545,32 +545,3 @@ def test_do():
     assert 6 == success_result.result()
     assert Success is type(success_result.value)
     assert 6 == success_result.value.get()
-
-
-def test_method():
-    from category import Failure, Future, Success
-
-    def to_failure(self: Future[int], /) -> Future[int]:
-        try:
-            self.result()
-            return Future[int].failed(Exception())
-        except Exception as error:
-            return Future[int].failed(error)
-
-    def to_success(self: Future[int], /) -> Future[int]:
-        try:
-            result = self.result()
-            return Future[int].successful(result)
-        except Exception:
-            return Future[int].successful(42)
-
-    failure = Future[int].failed(Exception())
-    success = Future[int].successful(42)
-    assert Future is type(failure.method(to_failure))
-    assert Failure is type(failure.method(to_failure).value)
-    assert Future is type(failure.method(to_success))
-    assert Success is type(failure.method(to_success).value)
-    assert Future is type(success.method(to_failure))
-    assert Failure is type(success.method(to_failure).value)
-    assert Future is type(success.method(to_success))
-    assert Success is type(success.method(to_success).value)

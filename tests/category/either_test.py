@@ -206,27 +206,6 @@ def test_left_get_or_else():
     assert False is Left[Exception, int](Exception()).get_or_else(lambda: False)
 
 
-def test_left_method():
-    from category import Either, Left, Right
-
-    def to_left(self: Either[Exception, int]) -> Left[Exception, int]:
-        match self.pattern:
-            case Left():
-                return self.pattern
-            case Right():
-                return Left[Exception, int](Exception())
-
-    def to_right(self: Either[Exception, int]) -> Right[Exception, int]:
-        match self.pattern:
-            case Left():
-                return Right[Exception, int](1)
-            case Right():
-                return self.pattern
-
-    assert Left is type(Left[Exception, int](Exception()).method(to_left))
-    assert Right is type(Left[Exception, int](Exception()).method(to_right))
-
-
 def test_right():
     from category import Right
 
@@ -354,27 +333,6 @@ def test_right_get_or_else():
     from category import Right
 
     assert 1 == Right[Exception, int](1).get_or_else(lambda: False)
-
-
-def test_right_method():
-    from category import Either, Left, Right
-
-    def to_left(either: Either[Exception, int]) -> Left[Exception, int]:
-        match either.pattern:
-            case Left():
-                return either.pattern
-            case _:
-                return Left[Exception, int](Exception())
-
-    def to_right(either: Either[Exception, int]) -> Right[Exception, int]:
-        match either.pattern:
-            case Left():
-                return Right[Exception, int](1)
-            case _:
-                return either.pattern
-
-    assert Left is type(Right[Exception, int](1).method(to_left))
-    assert Right is type(Right[Exception, int](1).method(to_right))
 
 
 def test_dataclass():

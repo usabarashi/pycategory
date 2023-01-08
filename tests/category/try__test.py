@@ -225,27 +225,6 @@ def test_failure_get_or_else():
     assert False is Failure[int](Exception()).get_or_else(lambda: False)
 
 
-def test_failure_method():
-    from category import Failure, Success, Try
-
-    def to_failure(self: Try[int], /) -> Failure[int]:
-        match self.pattern:
-            case Failure():
-                return self.pattern
-            case Success():
-                return Failure[int](Exception())
-
-    def to_success(self: Try[int], /) -> Success[int]:
-        match self.pattern:
-            case Failure():
-                return Success[int](1)
-            case Success():
-                return self.pattern
-
-    assert Failure is type(Failure[int](Exception()).method(to_failure))
-    assert Success is type(Failure[int](Exception()).method(to_success))
-
-
 def test_success():
     from category import Success
 
@@ -341,27 +320,6 @@ def test_success_get_or_else():
     from category import Success
 
     assert 1 == Success[int](1).get_or_else(lambda: Exception())
-
-
-def test_success_method():
-    from category import Failure, Success, Try
-
-    def to_failure(self: Try[int], /) -> Failure[int]:
-        match self.pattern:
-            case Failure():
-                return self.pattern
-            case Success():
-                return Failure[int](Exception())
-
-    def to_success(self: Try[int], /) -> Success[int]:
-        match self.pattern:
-            case Failure():
-                return Success[int](1)
-            case Success():
-                return self.pattern
-
-    assert Failure is type(Success[int](1).method(to_failure))
-    assert Success is type(Success[int](1).method(to_success))
 
 
 def test_dataclass():

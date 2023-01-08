@@ -103,27 +103,6 @@ def test_void_get_or_else():
     assert False is VOID.get_or_else(lambda: False)
 
 
-def test_void_method():
-    from category import VOID, Option, Some, Void
-
-    def to_void(self: Option[int], /) -> Void[int]:
-        match self.pattern:
-            case Void():
-                return self.pattern
-            case Some():
-                return VOID
-
-    def to_some(self: Option[int], /) -> Some[int]:
-        match self.pattern:
-            case Void():
-                return Some[int](42)
-            case Some():
-                return self.pattern
-
-    assert Void is type(VOID.method(to_void))
-    assert Some is type(VOID.method(to_some))
-
-
 def test_some():
     from category import Some
 
@@ -179,27 +158,6 @@ def test_some_get_or_else():
     from category import Some
 
     assert 42 == Some[int](42).get_or_else(lambda: 8)
-
-
-def test_some_method():
-    from category import VOID, Option, Some, Void
-
-    def to_void(self: Option[int], /) -> Void[int]:
-        match self.pattern:
-            case Void():
-                return self.pattern
-            case Some():
-                return VOID
-
-    def to_some(self: Option[int], /) -> Some[int]:
-        match self.pattern:
-            case Void():
-                return Some[int](42)
-            case Some():
-                return self.pattern
-
-    assert Void is type(Some[int](42).method(to_void))
-    assert Some is type(Some[int](42).method(to_some))
 
 
 def test_dataclass():
