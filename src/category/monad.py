@@ -56,7 +56,7 @@ class Monad(Generic[A], applicative_functor.ApplicativeFunctor[A]):
                 value for key, value in vars(self).items() if key in self.__match_args__
             )
 
-    def flat_map(self: Monad[A], other: Callable[[A], Monad[B]], /) -> Monad[A]:
+    def flat_map(self: Monad[A], function_: Callable[[A], Monad[B]], /) -> Monad[B]:
         raise NotImplementedError
 
     @staticmethod

@@ -27,6 +27,10 @@ class Either(Generic[L, R], monad.Monad[R]):
     def map(self, functor: Callable[[R], RR], /) -> Either[L, RR]:
         raise NotImplementedError
 
+    @staticmethod
+    def pure(value: R) -> Either[L, R]:
+        return Right[L, R](value)
+
     @abstractmethod
     def flat_map(self, other: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         raise NotImplementedError
@@ -95,10 +99,10 @@ class Left(Either[L, R]):
     def __iter__(self) -> Generator[Either[L, R], None, R]:
         raise GeneratorExit(self)
 
-    def map(self, functor: Callable[[R], RR], /) -> Left[L, RR]:
+    def map(self, function_: Callable[[R], RR], /) -> Left[L, RR]:
         return cast(Left[L, RR], self)
 
-    def flat_map(self, other: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
+    def flat_map(self, function_: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         return cast(Left[L, RR], self)
 
     @property
@@ -160,8 +164,8 @@ class Right(Either[L, R]):
     def map(self, functor: Callable[[R], RR], /) -> Right[L, RR]:
         return Right[L, RR](functor(self.value))
 
-    def flat_map(self, other: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
-        return other(self.value)
+    def flat_map(self, function_: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
+        return function_(self.value)
 
     @property
     def to_option(self) -> option.Option[R]:

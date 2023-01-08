@@ -13,6 +13,7 @@ def test_do():
         Right,
         Some,
         Success,
+        ThreadPoolExecutionContext,
         TryDo,
     )
 
@@ -47,6 +48,9 @@ def test_do():
 
     assert 42 == try_context().get()
 
+    te = ThreadPoolExecutionContext(max_workers=5)
+
+    @Future.with_context
     @Monad.do
     def future_context() -> FutureDo[int]:
         _ = 42
@@ -55,7 +59,7 @@ def test_do():
         _ = yield from Future[bool].successful(True)
         return result
 
-    assert 42 == future_context().result()
+    assert 42 == future_context()(te).result()
 
     @Monad.do
     def eitherttry_context() -> EitherTTryDo[ValueError | Exception, int]:
