@@ -36,6 +36,10 @@ class Try(monad.Monad[T]):
     def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
         raise NotImplementedError
 
+    @staticmethod
+    def pure(value: T) -> Try[T]:
+        return Success[T](value)
+
     @abstractmethod
     def flat_map(self, other: Callable[[T], Try[TT]], /) -> Try[TT]:
         raise NotImplementedError

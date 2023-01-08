@@ -496,6 +496,7 @@ def test_do():
         Failure,
         Future,
         FutureDo,
+        Monad,
         ProcessPoolExecutionContext,
         Success,
         ThreadPoolExecutionContext,
@@ -504,7 +505,8 @@ def test_do():
     pe = ProcessPoolExecutionContext(max_workers=5)
     te = ThreadPoolExecutionContext(max_workers=5)
 
-    @Future.do
+    @Future.with_context
+    @Monad.do
     def safe_context() -> FutureDo[int]:
         _ = yield from Future[bool].successful(True)
         one = yield from Future[int].hold(process_multi_context)(1)(pe)
@@ -513,14 +515,15 @@ def test_do():
         return one + two + three
 
     # Failure case
-    @Future.do
+    @Future.with_context
+    @Monad.do
     def failure_context() -> FutureDo[int]:
         one = yield from Future[int].hold(process_multi_context)(1)(pe)
         two = 2
         three = yield from thread_multi_context(0)(te)
         return one + two + three
 
-    failure_result = failure_context()(pe)
+    failure_result = failure_context()(te)
     assert Future is type(failure_result)
     try:
         failure_result.result()
@@ -531,7 +534,8 @@ def test_do():
     assert ValueError is type(cast(Failure[int], failure_result.value).exception)
 
     # Success case
-    @Future.do
+    @Future.with_context
+    @Monad.do
     def success_context() -> FutureDo[int]:
         one = yield from Future[int].hold(process_multi_context)(1)(pe)
         two = 2

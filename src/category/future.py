@@ -86,8 +86,8 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
             raise
 
     @staticmethod
-    def pure(*args: ..., **kwargs: ...) -> Future[T]:
-        return Future[T].successful(*args, **kwargs)
+    def pure(value: T) -> Future[T]:
+        return Future.successful(value)
 
     def map(
         self, functor: Callable[[T], TT], /
@@ -247,37 +247,23 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
     def pattern(self) -> SubType[T]:
         return self.value
 
+    def method(self, other: Callable[[Future[T]], TT], /) -> TT:
+        return other(self)
+
     @staticmethod
-    def do(
-        context: Callable[P, FutureDo[T]], /
+    def with_context(
+        function_: Callable[P, Future[T]]
     ) -> Callable[P, Callable[[ExecutionContext], Future[T]]]:
-        """map, flat_map combination syntax sugar.
-
-        Only type checking can determine type violations, and runtime errors may not occur.
-        """
-
-        @wraps(context)
+        @wraps(function_)
         def wrapper(
             *args: P.args, **kwargs: P.kwargs
         ) -> Callable[[ExecutionContext], Future[T]]:
-            def with_context(executor: ExecutionContext, /) -> Future[T]:
-                context_ = context(*args, **kwargs)
-                try:
-                    while True:
-                        yield_state = next(context_)
-                        if not isinstance(yield_state, Future):
-                            raise TypeError(yield_state)
-                except GeneratorExit as exit:
-                    return cast(Future[T], exit.args[monad.FixedMonad])
-                except StopIteration as return_:
-                    return Future[T].pure(return_.value)
+            def wrapper_(executor: ExecutionContext, /) -> Future[T]:
+                return executor.submit(lambda: function_(*args, **kwargs).result())
 
-            return with_context
+            return wrapper_
 
         return wrapper
-
-    def method(self, other: Callable[[Future[T]], TT], /) -> TT:
-        return other(self)
 
     @staticmethod
     def hold(
@@ -318,6 +304,6 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
         return wrapper
 
 
-FutureDo: TypeAlias = Generator[Future[T], None, T]
 ExecutionContext: TypeAlias = ProcessPoolExecutionContext | ThreadPoolExecutionContext
 SubType: TypeAlias = try_.Failure[T] | try_.Success[T]
+FutureDo: TypeAlias = Generator[Future[T], None, T]

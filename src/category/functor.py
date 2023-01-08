@@ -13,5 +13,5 @@ class Functor(Generic[A]):
         fmap :: (a -> b) -> f a -> f b
     """
 
-    def map(self: Functor[A], function: Callable[[A], B], /) -> Functor[B]:
+    def map(self: Functor[A], function_: Callable[[A], B], /) -> Functor[B]:
         raise NotImplementedError

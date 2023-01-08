@@ -25,6 +25,10 @@ class Option(monad.Monad[T]):
     def map(self, functor: Callable[[T], TT], /) -> Option[TT]:
         raise NotImplementedError
 
+    @staticmethod
+    def pure(value: T) -> Option[T]:
+        return Some[T](value)
+
     @abstractmethod
     def flat_map(self, other: Callable[[T], Option[TT]], /) -> Option[TT]:
         raise NotImplementedError

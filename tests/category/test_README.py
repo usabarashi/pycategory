@@ -100,6 +100,7 @@ def test_future():
         Failure,
         Future,
         FutureDo,
+        Monad,
         ProcessPoolExecutionContext,
         Success,
         ThreadPoolExecutionContext,
@@ -114,7 +115,8 @@ def test_future():
             raise ValueError("error")
         return value
 
-    @Future.do
+    @Future.with_context
+    @Monad.do
     def context() -> FutureDo[int]:
         one = yield from Future.hold(toplevel_process_function)(0)(pe)
         two = 2

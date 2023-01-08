@@ -16,9 +16,9 @@ class ApplicativeFunctor(functor.Functor[A]):
         (<*>) :: f (a -> b) -> f a -> f b
     """
 
-    @classmethod
-    def pure(cls, *args: ..., **kwargs: ...) -> ApplicativeFunctor[A]:
-        return cls(*args, **kwargs)
+    @staticmethod
+    def pure(value: A) -> ApplicativeFunctor[A]:
+        raise NotImplementedError
 
     def ap(
         self: ApplicativeFunctor[A], other: ApplicativeFunctor[Callable[[A], B]]
