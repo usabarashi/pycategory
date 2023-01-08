@@ -24,6 +24,3 @@ class ApplicativeFunctor(functor.Functor[A]):
         self: ApplicativeFunctor[A], other: ApplicativeFunctor[Callable[[A], B]]
     ) -> ApplicativeFunctor[B]:
         raise NotImplementedError
-
-    def get(self) -> A:
-        raise NotImplementedError

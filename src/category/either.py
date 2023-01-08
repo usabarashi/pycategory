@@ -1,11 +1,11 @@
 """Either"""
 from __future__ import annotations
 
-from abc import abstractmethod, abstractproperty
+from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
 from typing import Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
-from . import constraints, extension, monad, option, try_
+from . import constraints, extension, extractor, monad, option, try_
 
 L = TypeVar("L", covariant=True)
 R = TypeVar("R", covariant=True)
@@ -16,7 +16,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Either(Generic[L, R], monad.Monad[R], extension.Extension):
+class Either(ABC, Generic[L, R], monad.Monad[R], extension.Extension):
     """Either"""
 
     @abstractmethod
@@ -78,7 +78,7 @@ class Either(Generic[L, R], monad.Monad[R], extension.Extension):
         raise NotImplementedError
 
 
-class Left(Either[L, R]):
+class Left(Either[L, R], extractor.Extractor):
     """Left"""
 
     __match_args__ = ("value",)
@@ -92,7 +92,7 @@ class Left(Either[L, R]):
     def __iter__(self) -> Generator[Either[L, R], None, R]:
         raise GeneratorExit(self)
 
-    def map(self, _: Callable[[R], RR], /) -> Left[L, RR]:
+    def map(self, _: Callable[[R], RR], /) -> Either[L, RR]:
         return cast(Left[L, RR], self)
 
     def flat_map(self, _: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
@@ -100,7 +100,7 @@ class Left(Either[L, R]):
 
     @property
     def to_option(self) -> option.Option[R]:
-        return option.Void[R]()
+        return option.VOID
 
     def to_try(
         self, evidence: constraints.SubtypeConstraints[L, Exception], /
@@ -133,7 +133,7 @@ class Left(Either[L, R]):
         return self
 
 
-class Right(Either[L, R]):
+class Right(Either[L, R], extractor.Extractor):
     """Right"""
 
     __match_args__ = ("value",)
@@ -148,7 +148,7 @@ class Right(Either[L, R]):
         yield self
         return self.value
 
-    def map(self, function_: Callable[[R], RR], /) -> Right[L, RR]:
+    def map(self, function_: Callable[[R], RR], /) -> Either[L, RR]:
         return Right[L, RR](function_(self.value))
 
     def flat_map(self, function_: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:

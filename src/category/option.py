@@ -1,11 +1,11 @@
 """Option"""
 from __future__ import annotations
 
-from abc import abstractmethod, abstractproperty
+from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
 from typing import Any, Callable, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
-from . import extension, monad
+from . import extension, extractor, monad
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -14,7 +14,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Option(monad.Monad[T], extension.Extension):
+class Option(ABC, monad.Monad[T], extension.Extension):
     """Option"""
 
     @abstractmethod
@@ -72,10 +72,10 @@ class Void(Option[T]):
     def __iter__(self) -> Generator[Option[T], None, T]:
         raise GeneratorExit(self)
 
-    def map(self, _: Callable[[T], TT], /) -> Void[TT]:
+    def map(self, _: Callable[[T], TT], /) -> Option[TT]:
         return cast(Void[TT], self)
 
-    def flat_map(self, _: Callable[[T], Option[TT]], /) -> Void[TT]:
+    def flat_map(self, _: Callable[[T], Option[TT]], /) -> Option[TT]:
         return cast(Void[TT], self)
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
@@ -98,7 +98,7 @@ class Void(Option[T]):
         return self
 
 
-class Some(Option[T]):
+class Some(Option[T], extractor.Extractor):
     """Some"""
 
     __match_args__ = ("value",)
@@ -113,7 +113,7 @@ class Some(Option[T]):
         yield self
         return self.value
 
-    def map(self, function_: Callable[[T], TT], /) -> Some[TT]:
+    def map(self, function_: Callable[[T], TT], /) -> Option[TT]:
         return Some[TT](function_(self.value))
 
     def flat_map(self, function_: Callable[[T], Option[TT]], /) -> Option[TT]:
@@ -141,5 +141,4 @@ class Some(Option[T]):
 
 SubType: TypeAlias = Void[T] | Some[T]
 OptionDo: TypeAlias = Generator[Option[T], None, T]
-
-SINGLETON_VOID = Void[Any]()
+VOID = Void[Any]()

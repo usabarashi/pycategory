@@ -1,7 +1,7 @@
 """Try"""
 from __future__ import annotations
 
-from abc import abstractmethod, abstractproperty
+from abc import ABC, abstractmethod, abstractproperty
 from collections.abc import Generator
 from functools import wraps
 from typing import (
@@ -16,7 +16,7 @@ from typing import (
     overload,
 )
 
-from . import collection, either, extension, monad, option, processor
+from . import collection, either, extension, extractor, monad, option, processor
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -25,7 +25,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Try(monad.Monad[T], extension.Extension):
+class Try(ABC, monad.Monad[T], extension.Extension):
     """Try"""
 
     @abstractmethod
@@ -148,10 +148,10 @@ def _hold(
     return wrapper
 
 
-class Failure(Try[T]):
+class Failure(Try[T], extractor.Extractor):
     """Failure"""
 
-    __match_args__ = ()
+    __match_args__ = ("exception",)
 
     def __init__(self, exception: Exception, /):
         self.exception = exception
@@ -192,7 +192,7 @@ class Failure(Try[T]):
 
     @property
     def to_option(self) -> option.Option[T]:
-        return option.Void[T]()
+        return option.VOID
 
     def fold(
         self,
@@ -219,7 +219,7 @@ class Failure(Try[T]):
         return self
 
 
-class Success(Try[T]):
+class Success(Try[T], extractor.Extractor):
     """Success"""
 
     __match_args__ = ("value",)
