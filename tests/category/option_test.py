@@ -26,7 +26,6 @@ def test_option_do():
         return one + two + three
 
     assert Void is type(void_context())
-    assert False is bool(void_context())
     assert True is void_context().is_empty()
     assert False is void_context().not_empty()
     assert None is void_context().fold(void=lambda: None, some=lambda some: None)
@@ -40,7 +39,6 @@ def test_option_do():
 
     assert Some is type(some_context())
     assert 6 == some_context().get()
-    assert True is bool(some_context())
     assert False is some_context().is_empty()
     assert True is some_context().not_empty()
     assert None is some_context().fold(void=lambda: None, some=lambda some: None)
@@ -50,9 +48,7 @@ def test_void():
     from category import VOID, Void
 
     assert Void is type(VOID)
-    assert False is bool(VOID)
     assert Void is type(eval(f"{repr(VOID)}"))
-    assert False is bool(eval(f"{repr(VOID)}"))
 
 
 def test_void_map():
@@ -62,7 +58,6 @@ def test_void_map():
     mapped_void = void.map(lambda some: 42)
     assert void is mapped_void
     assert Void is type(mapped_void)
-    assert False is bool(mapped_void)
 
 
 def test_void_flat_map():
@@ -72,7 +67,6 @@ def test_void_flat_map():
     flat_mapped_void = void.flat_map(lambda some: Some[int](42))
     assert void is flat_mapped_void
     assert Void is type(flat_mapped_void)
-    assert False is bool(flat_mapped_void)
 
 
 def test_void_fold():
@@ -134,9 +128,7 @@ def test_some():
     from category import Some
 
     assert Some is type(Some[int](42))
-    assert True is bool(Some[int](42))
     assert Some is type(eval(f"{repr(Some[int](42))}"))
-    assert True is bool(eval(f"{repr(Some[int](42))}"))
 
 
 def test_some_map():
@@ -146,7 +138,6 @@ def test_some_map():
     mapped_some = some.map(lambda some: some + 1)
     assert some is not mapped_some
     assert Some is type(mapped_some)
-    assert True is bool(mapped_some)
     assert 43 == mapped_some.get()
 
 
@@ -157,7 +148,6 @@ def test_some_flat_map():
     flat_mapped_some = some.flat_map(lambda some: Some[int](some + 1))
     assert some is not flat_mapped_some
     assert Some is type(flat_mapped_some)
-    assert True is bool(flat_mapped_some)
     assert 43 == flat_mapped_some.get()
 
 

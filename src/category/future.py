@@ -71,9 +71,6 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
     def unapply(self) -> tuple[()] | tuple[Any]:
         return (self.result(),)
 
-    def __bool__(self) -> bool:
-        return self.done() and bool(self.value)
-
     def __iter__(self) -> Generator[Future[T], None, T]:
         try:
             match self.pattern:

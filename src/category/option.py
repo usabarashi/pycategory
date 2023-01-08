@@ -69,9 +69,6 @@ class Void(Option[T]):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
 
-    def __bool__(self) -> Literal[False]:
-        return False
-
     def __iter__(self) -> Generator[Option[T], None, T]:
         raise GeneratorExit(self)
 
@@ -111,9 +108,6 @@ class Some(Option[T]):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({repr(self.value)})"
-
-    def __bool__(self) -> Literal[True]:
-        return True
 
     def __iter__(self) -> Generator[Option[T], None, T]:
         yield self

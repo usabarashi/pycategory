@@ -38,9 +38,6 @@ class Monad(Generic[A], applicative_functor.ApplicativeFunctor[A]):
 
     __match_args__: tuple[()] | tuple[str] = ()
 
-    def __bool__(self) -> bool:
-        raise NotImplementedError
-
     def __iter__(self) -> Generator[Monad[A], None, A]:
         raise NotImplementedError
 
