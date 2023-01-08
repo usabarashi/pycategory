@@ -5,7 +5,7 @@ from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
 from typing import Any, Callable, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
-from . import monad
+from . import extension, monad
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -14,7 +14,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Option(monad.Monad[T]):
+class Option(monad.Monad[T], extension.Extension):
     """Option"""
 
     @abstractmethod
@@ -55,9 +55,6 @@ class Option(monad.Monad[T]):
 
     @abstractproperty
     def pattern(self) -> SubType[T]:
-        raise NotImplementedError
-
-    def method(self, function_: Callable[[Option[T]], TT], /) -> TT:
         raise NotImplementedError
 
 
@@ -103,9 +100,6 @@ class Void(Option[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, function_: Callable[[Void[T]], TT], /) -> TT:
-        return function_(self)
-
 
 class Some(Option[T]):
     """Some"""
@@ -149,9 +143,6 @@ class Some(Option[T]):
     @property
     def pattern(self) -> SubType[T]:
         return self
-
-    def method(self, function_: Callable[[Some[T]], TT], /) -> TT:
-        return function_(self)
 
 
 SubType: TypeAlias = Void[T] | Some[T]
