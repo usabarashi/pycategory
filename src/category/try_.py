@@ -33,7 +33,7 @@ class Try(monad.Monad[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
+    def map(self, function_: Callable[[T], TT], /) -> Try[TT]:
         raise NotImplementedError
 
     @staticmethod
@@ -41,15 +41,15 @@ class Try(monad.Monad[T]):
         return Success[T](value)
 
     @abstractmethod
-    def flat_map(self, other: Callable[[T], Try[TT]], /) -> Try[TT]:
+    def flat_map(self, function_: Callable[[T], Try[TT]], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
-    def recover(self, other: Callable[[Exception], TT], /) -> Try[TT]:
+    def recover(self, function_: Callable[[Exception], TT], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
-    def recover_with(self, other: Callable[[Exception], Try[TT]], /) -> Try[TT]:
+    def recover_with(self, function_: Callable[[Exception], Try[TT]], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractproperty
@@ -90,7 +90,7 @@ class Try(monad.Monad[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def method(self, other: Callable[[Try[T]], TT], /) -> TT:
+    def method(self, function_: Callable[[Try[T]], TT], /) -> TT:
         raise NotImplementedError
 
     @overload
@@ -169,24 +169,24 @@ class Failure(Try[T]):
     def __iter__(self) -> Generator[Try[T], None, T]:
         raise GeneratorExit(self) from self.exception
 
-    def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
+    def map(self, _: Callable[[T], TT], /) -> Try[TT]:
         return cast(Failure[TT], self)
 
-    def flat_map(self, other: Callable[[T], Try[TT]], /) -> Try[TT]:
+    def flat_map(self, _: Callable[[T], Try[TT]], /) -> Try[TT]:
         return cast(Failure[TT], self)
 
-    def recover(self, other: Callable[[Exception], TT], /) -> Try[TT]:
+    def recover(self, function_: Callable[[Exception], TT], /) -> Try[TT]:
         try:
-            if (result := other(self.exception)) is None:
+            if (result := function_(self.exception)) is None:
                 return cast(Failure[TT], self)
             else:
                 return Success[TT](result)
         except Exception as exception:
             return Failure[TT](exception)
 
-    def recover_with(self, other: Callable[[Exception], Try[TT]], /) -> Try[TT]:
+    def recover_with(self, function_: Callable[[Exception], Try[TT]], /) -> Try[TT]:
         try:
-            if (result := other(self.exception)) is None:
+            if (result := function_(self.exception)) is None:
                 return cast(Failure[TT], self)
             else:
                 return result
@@ -225,8 +225,8 @@ class Failure(Try[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, other: Callable[[Failure[T]], TT], /) -> TT:
-        return other(self)
+    def method(self, function_: Callable[[Failure[T]], TT], /) -> TT:
+        return function_(self)
 
 
 class Success(Try[T]):
@@ -247,16 +247,16 @@ class Success(Try[T]):
         yield self
         return self.value
 
-    def map(self, functor: Callable[[T], TT], /) -> Try[TT]:
-        return Success[TT](functor(self.value))
+    def map(self, function_: Callable[[T], TT], /) -> Try[TT]:
+        return Success[TT](function_(self.value))
 
-    def flat_map(self, other: Callable[[T], Try[TT]], /) -> Try[TT]:
-        return other(self.value)
+    def flat_map(self, function_: Callable[[T], Try[TT]], /) -> Try[TT]:
+        return function_(self.value)
 
-    def recover(self, other: Callable[[Exception], TT], /) -> Try[TT]:
+    def recover(self, _: Callable[[Exception], TT], /) -> Try[TT]:
         return cast(Try[TT], self)
 
-    def recover_with(self, other: Callable[[Exception], Try[TT]], /) -> Try[TT]:
+    def recover_with(self, _: Callable[[Exception], Try[TT]], /) -> Try[TT]:
         return cast(Try[TT], self)
 
     @property
@@ -291,8 +291,8 @@ class Success(Try[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, other: Callable[[Success[T]], TT], /) -> TT:
-        return other(self)
+    def method(self, function_: Callable[[Success[T]], TT], /) -> TT:
+        return function_(self)
 
 
 SubType: TypeAlias = Failure[T] | Success[T]

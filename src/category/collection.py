@@ -97,8 +97,8 @@ class Vector(list[T]):
     def size(self) -> int:
         return len(self)
 
-    def map(self, functor: Callable[[T], A], /) -> Vector[A]:
-        return self.__class__([functor(element) for element in self])
+    def map(self, function_: Callable[[T], A], /) -> Vector[A]:
+        return self.__class__([function_(element) for element in self])
 
     def reduce(self, function: Callable[[T, T], T], /) -> T:
         return reduce(function, self)
