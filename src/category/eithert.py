@@ -22,13 +22,6 @@ class EitherTTry(Generic[L, R], monad.Monad[R], extension.Extension):
     def __init__(self, value: try_.Try[either.Either[L, R]], /):
         self._value = value
 
-    def __bool__(self) -> bool:
-        match self._value:
-            case try_.Success(either.Right()):
-                return True
-            case _:
-                return False
-
     def __iter__(self) -> Generator[EitherTTry[L, R], None, R]:
         match self._value:
             case try_.Failure() as failure:
@@ -118,17 +111,6 @@ class EitherTFuture(Generic[L, R], monad.Monad[R]):
 
     def __init__(self, value: future.Future[either.Either[L, R]], /):
         self._value = value
-
-    def __bool__(self) -> bool:
-        future_ = self._value
-        if not future_.done():
-            return False
-        else:
-            match future_.value.pattern:
-                case try_.Failure():
-                    return False
-                case try_.Success(either):
-                    return bool(either)
 
     def __iter__(self) -> Generator[EitherTFuture[L, R], None, R]:
         lift: Callable[[R], EitherTFuture[L, R]] = lambda right: EitherTFuture[L, R](

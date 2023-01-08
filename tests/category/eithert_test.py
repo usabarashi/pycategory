@@ -3,19 +3,16 @@ def test_eitherttry():
 
     failure = EitherTTry[Exception, int](Failure[Either[Exception, int]](Exception()))
     assert EitherTTry is type(failure)
-    assert False is bool(failure)
 
     success_left = EitherTTry[Exception, int](
         Success[Either[Exception, int]](Left[Exception, int](Exception()))
     )
     assert EitherTTry is type(success_left)
-    assert False is bool(success_left)
 
     success_right = EitherTTry[Exception, int](
         Success[Either[Exception, int]](Right[Exception, int](1))
     )
     assert EitherTTry is type(success_right)
-    assert True is bool(success_right)
 
 
 def test_eitherttry_map():
@@ -189,8 +186,16 @@ def test_eitherttry_get_or_else():
 def test_eitherttry_do():
     from typing import cast
 
-    from category import (Either, EitherTTry, EitherTTryDo, Failure, Left,
-                          Right, Some, Success)
+    from category import (
+        Either,
+        EitherTTry,
+        EitherTTryDo,
+        Failure,
+        Left,
+        Right,
+        Some,
+        Success,
+    )
 
     @EitherTTry.do
     def safe_context() -> EitherTTryDo[IndexError | KeyError, int]:
@@ -316,28 +321,24 @@ def test_eithertfuture():
     # Not complete
     not_complete = EitherTFuture[Exception, int](Future[Either[Exception, int]]())
     assert EitherTFuture is type(not_complete)
-    assert False is bool(not_complete)
 
     # Complete Failure
     failiure_future = Future[Either[Exception, int]]()
     failiure_future.set_exception(exception=Exception())
     failure = EitherTFuture[Exception, int](failiure_future)
     assert EitherTFuture is type(failure)
-    assert False is bool(failure)
 
     # Complete Success[Left[L, R]]
     success_left = EitherTFuture[Exception, int](
         Future[Either[Exception, int]].successful(Left[Exception, int](Exception()))
     )
     assert EitherTFuture is type(success_left)
-    assert False is bool(success_left)
 
     # Complete Success[Right[L, R]]
     success_right = EitherTFuture[Exception, int](
         Future[Either[Exception, int]].successful(Right[Exception, int](1))
     )
     assert EitherTFuture is type(success_right)
-    assert True is bool(success_right)
 
 
 def test_eithertfuture_map():
@@ -525,8 +526,17 @@ def test_eithertfuture_getorelse():
 def test_eithertfuture_do():
     from typing import cast
 
-    from category import (Either, EitherTFuture, EitherTFutureDo, Failure,
-                          Future, Left, Right, Some, Success)
+    from category import (
+        Either,
+        EitherTFuture,
+        EitherTFutureDo,
+        Failure,
+        Future,
+        Left,
+        Right,
+        Some,
+        Success,
+    )
 
     @EitherTFuture.do
     def safe_context() -> EitherTFutureDo[IndexError | KeyError, int]:
@@ -650,8 +660,17 @@ def test_eithertfuture_do():
 def test_method():
     from typing import Callable, TypeVar
 
-    from category import (Either, EitherTFuture, Future, Left, Option, Right,
-                          Some, Success, Void)
+    from category import (
+        Either,
+        EitherTFuture,
+        Future,
+        Left,
+        Option,
+        Right,
+        Some,
+        Success,
+        Void,
+    )
 
     T = TypeVar("T")
     L = TypeVar("L")

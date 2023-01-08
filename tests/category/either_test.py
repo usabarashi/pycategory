@@ -41,7 +41,6 @@ def test_either_do():
         return one + two + three
 
     assert Exception is type(left_context().left().get())
-    assert False is bool(left_context())
     assert True is left_context().is_left()
     assert False is left_context().is_right()
     assert type(Left[Exception, int](Exception()).left().get()) is type(
@@ -57,7 +56,6 @@ def test_either_do():
         return one + two + three
 
     assert 6 == right_context().right().get()
-    assert True is bool(right_context())
     assert False is right_context().is_left()
     assert True is right_context().is_right()
     assert Right is type(right_context())
@@ -71,9 +69,7 @@ def test_left():
     from category import Left
 
     assert Left is type(Left[int, None](42))
-    assert False is bool(Left[int, None](42))
     assert Left is type(eval(f"{Left[int, None](42)}"))
-    assert False is bool(eval(f"{Left[int, None](42)}"))
 
 
 def test_left_map():
@@ -149,9 +145,7 @@ def test_left_leftprojecton():
     from category import Left, LeftProjection
 
     assert LeftProjection is type(eval(f"{Left[int, None](42).left()}"))
-    assert False is bool(eval(f"{Left[int, None](42).left()}"))
     assert LeftProjection is type(eval(f"{Left[int, None](42).left()}"))
-    assert False is bool(eval(f"{Left[int, None](42).left()}"))
 
 
 def test_left_leftprojection_get():
@@ -171,7 +165,6 @@ def test_left_rightprojecton():
     from category import Left, RightProjection
 
     assert RightProjection is type(Left[int, None](0).right())
-    assert False is bool(Left[int, None](0).right())
 
 
 def test_left_rightprojecton_get():
@@ -238,9 +231,7 @@ def test_right():
     from category import Right
 
     assert Right is type(Right[None, int](42))
-    assert True is bool(Right[None, int](42))
     assert Right is type(eval(f"{Right[None, int](42)}"))
-    assert True is bool(eval(f"{Right[None, int](42)}"))
 
 
 def test_right_map():
@@ -313,9 +304,7 @@ def test_right_rightprojecton():
     from category import Right, RightProjection
 
     assert RightProjection is type(Right[None, int](42).right())
-    assert True is bool(Right[None, int](42).right())
     assert RightProjection is type(eval(f"{Right[None, int](42).right()}"))
-    assert True is bool(eval(f"{Right[None, int](42).right()}"))
 
 
 def test_right_rightprojection_get():
@@ -329,7 +318,6 @@ def test_right_leftprojecton():
     from category import LeftProjection, Right
 
     assert LeftProjection is type(Right[None, int](0).left())
-    assert True is bool(Right[None, int](0).left())
 
 
 def test_right_leftprojecton_get():

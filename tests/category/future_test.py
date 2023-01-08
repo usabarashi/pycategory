@@ -28,8 +28,6 @@ def test_future():
     from category import Future
 
     assert Future is type(Future[int].successful(1))
-    assert True is bool(Future[int].successful(1))
-    assert False is bool(Future[int]())
 
 
 def test_map():

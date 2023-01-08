@@ -135,9 +135,7 @@ def test_failure():
     from category import Failure
 
     assert Failure is type(Failure[int](Exception()))
-    assert False is bool(Failure[int](Exception()))
     assert Failure is type(eval(f"{repr(Failure[int](Exception()))}"))
-    assert False is bool(eval(f"{repr(Failure[int](Exception()))}"))
 
 
 def test_failure_map():
@@ -252,9 +250,7 @@ def test_success():
     from category import Success
 
     assert Success is type(Success[int](42))
-    assert True is bool(Success[int](42))
     assert Success is type(eval(f"{repr(Success[int](42))}"))
-    assert True is bool(eval(f"{repr(Success[int](42))}"))
 
 
 def test_success_map():

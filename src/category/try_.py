@@ -159,9 +159,6 @@ class Failure(Try[T]):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({repr(self.exception)})"
 
-    def __bool__(self) -> Literal[False]:
-        return False
-
     def __iter__(self) -> Generator[Try[T], None, T]:
         raise GeneratorExit(self) from self.exception
 
@@ -232,9 +229,6 @@ class Success(Try[T]):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.value})"
-
-    def __bool__(self) -> Literal[True]:
-        return True
 
     def __iter__(self) -> Generator[Try[T], None, T]:
         yield self
