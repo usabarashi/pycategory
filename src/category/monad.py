@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from functools import wraps
 from typing import (
-    Any,
     Callable,
     Generator,
     Generic,
@@ -36,22 +35,8 @@ class Monad(Generic[A], applicative_functor.ApplicativeFunctor[A]):
         fail msg = error msg
     """
 
-    __match_args__: tuple[()] | tuple[str] = ()
-
     def __iter__(self) -> Generator[Monad[A], None, A]:
         raise NotImplementedError
-
-    def unapply(self) -> tuple[()] | tuple[Any, ...]:
-        """
-
-        Return match attributes as tuples
-        """
-        if len(self.__match_args__) <= 0:
-            return ()
-        else:
-            return tuple(
-                value for key, value in vars(self).items() if key in self.__match_args__
-            )
 
     def flat_map(self: Monad[A], function_: Callable[[A], Monad[B]], /) -> Monad[B]:
         raise NotImplementedError
