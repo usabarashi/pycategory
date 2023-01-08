@@ -7,7 +7,7 @@ from concurrent.futures._base import PENDING
 from functools import wraps
 from typing import Any, Callable, ParamSpec, TypeAlias, TypeVar, cast
 
-from . import monad, try_
+from . import extension, monad, try_
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -62,7 +62,7 @@ class ThreadPoolExecutionContext(concurrent.futures.ThreadPoolExecutor):
             return future
 
 
-class Future(concurrent.futures.Future[T], monad.Monad[T]):
+class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
     """Future"""
 
     def __init__(self) -> None:
@@ -246,9 +246,6 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
     @property
     def pattern(self) -> SubType[T]:
         return self.value
-
-    def method(self, function_: Callable[[Future[T]], TT], /) -> TT:
-        return function_(self)
 
     @staticmethod
     def with_context(

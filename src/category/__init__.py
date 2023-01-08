@@ -3,6 +3,7 @@ from .constraints import SubtypeConstraints
 from .curry_ import curry
 from .either import Either, EitherDo, Left, LeftProjection, Right, RightProjection
 from .eithert import EitherTFuture, EitherTFutureDo, EitherTTry, EitherTTryDo
+from .extension import Extension
 from .future import (
     ExecutionContext,
     Future,
@@ -31,6 +32,7 @@ __all__ = [
     "EitherTFutureDo",
     "EitherTTry",
     "EitherTTryDo",
+    "Extension",
     "ExecutionContext",
     "Future",
     "FutureDo",

@@ -16,7 +16,7 @@ from typing import (
     overload,
 )
 
-from . import collection, either, monad, option, processor
+from . import collection, either, extension, monad, option, processor
 
 T = TypeVar("T", covariant=True)
 TT = TypeVar("TT")
@@ -25,7 +25,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Try(monad.Monad[T]):
+class Try(monad.Monad[T], extension.Extension):
     """Try"""
 
     @abstractmethod
@@ -87,10 +87,6 @@ class Try(monad.Monad[T]):
 
     @abstractproperty
     def pattern(self) -> SubType[T]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def method(self, function_: Callable[[Try[T]], TT], /) -> TT:
         raise NotImplementedError
 
     @overload
@@ -225,9 +221,6 @@ class Failure(Try[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, function_: Callable[[Failure[T]], TT], /) -> TT:
-        return function_(self)
-
 
 class Success(Try[T]):
     """Success"""
@@ -290,9 +283,6 @@ class Success(Try[T]):
     @property
     def pattern(self) -> SubType[T]:
         return self
-
-    def method(self, function_: Callable[[Success[T]], TT], /) -> TT:
-        return function_(self)
 
 
 SubType: TypeAlias = Failure[T] | Success[T]

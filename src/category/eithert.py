@@ -5,7 +5,7 @@ from collections.abc import Generator
 from functools import wraps
 from typing import Any, Callable, Generic, ParamSpec, TypeAlias, TypeVar, cast
 
-from . import either, future, monad, try_
+from . import either, extension, future, monad, try_
 
 L = TypeVar("L", covariant=True)
 R = TypeVar("R", covariant=True)
@@ -16,7 +16,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class EitherTTry(Generic[L, R], monad.Monad[R]):
+class EitherTTry(Generic[L, R], monad.Monad[R], extension.Extension):
     """Either Transformer Try"""
 
     def __init__(self, value: try_.Try[either.Either[L, R]], /):
@@ -108,9 +108,6 @@ class EitherTTry(Generic[L, R], monad.Monad[R]):
                 return EitherTTry[L, R].pure(return_.value)
 
         return wrapper
-
-    def method(self, function_: Callable[[EitherTTry[L, R]], TT], /) -> TT:
-        return function_(self)
 
 
 EitherTTryDo: TypeAlias = Generator[EitherTTry[L, R], Any, R]
@@ -236,9 +233,6 @@ class EitherTFuture(Generic[L, R], monad.Monad[R]):
                 return EitherTFuture[L, R].pure(return_.value)
 
         return wrapper
-
-    def method(self, function_: Callable[[EitherTFuture[L, R]], TT], /) -> TT:
-        return function_(self)
 
 
 EitherTFutureDo: TypeAlias = Generator[EitherTFuture[L, Any], Any, R]

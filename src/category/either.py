@@ -5,7 +5,7 @@ from abc import abstractmethod, abstractproperty
 from collections.abc import Generator
 from typing import Callable, Generic, Literal, ParamSpec, TypeAlias, TypeVar, cast
 
-from . import constraints, monad, option, try_
+from . import constraints, extension, monad, option, try_
 
 L = TypeVar("L", covariant=True)
 R = TypeVar("R", covariant=True)
@@ -16,7 +16,7 @@ U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Either(Generic[L, R], monad.Monad[R]):
+class Either(Generic[L, R], monad.Monad[R], extension.Extension):
     """Either"""
 
     @abstractmethod
@@ -77,10 +77,6 @@ class Either(Generic[L, R], monad.Monad[R]):
     def pattern(self) -> SubType[L, R]:
         raise NotImplementedError
 
-    @abstractmethod
-    def method(self, function_: Callable[[Either[L, R]], TT], /) -> TT:
-        raise NotImplementedError
-
 
 class Left(Either[L, R]):
     """Left"""
@@ -138,9 +134,6 @@ class Left(Either[L, R]):
     @property
     def pattern(self) -> SubType[L, R]:
         return self
-
-    def method(self, function_: Callable[[Left[L, R]], TT], /) -> TT:
-        return function_(self)
 
 
 class Right(Either[L, R]):
@@ -201,11 +194,8 @@ class Right(Either[L, R]):
     def pattern(self) -> SubType[L, R]:
         return self
 
-    def method(self, function_: Callable[[Right[L, R]], TT], /) -> TT:
-        return function_(self)
 
-
-class LeftProjection(Generic[L, R]):
+class LeftProjection(Generic[L, R], extension.Extension):
     """LeftProjection"""
 
     __match_args__ = ("either",)
@@ -248,7 +238,7 @@ class LeftProjection(Generic[L, R]):
                 return cast(Right[LL, R], right)
 
 
-class RightProjection(Generic[L, R]):
+class RightProjection(Generic[L, R], extension.Extension):
     """RightProjection"""
 
     __match_args__ = ("either",)
