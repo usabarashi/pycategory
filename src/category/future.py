@@ -90,7 +90,7 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
         return Future.successful(value)
 
     def map(
-        self, functor: Callable[[T], TT], /
+        self, function_: Callable[[T], TT], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             def fold(previous_result: try_.Try[T], /) -> try_.Try[TT]:
@@ -98,14 +98,14 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
                     case try_.Failure() as failure:
                         return cast(try_.Failure[TT], failure)
                     case try_.Success(previous_value):
-                        return try_.Success[TT](functor(previous_value))
+                        return try_.Success[TT](function_(previous_value))
 
             return self.transform(fold)(executor)
 
         return with_context
 
     def flat_map(
-        self, other: Callable[[T], Future[TT]], /
+        self, function_: Callable[[T], Future[TT]], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             def fold(try__: try_.Try[T]) -> Future[TT]:
@@ -114,7 +114,7 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
                         return cast(Future[TT], self)
                     case try_.Success(value):
                         try:
-                            return other(value)
+                            return function_(value)
                         except Exception as exception:
                             return Future[TT].failed(exception)
 
@@ -123,21 +123,21 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
         return with_context
 
     def recover(
-        self, other: Callable[[Exception], TT], /
+        self, function_: Callable[[Exception], TT], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
-            return self.transform(lambda try__: try__.recover(other))(executor)
+            return self.transform(lambda try__: try__.recover(function_))(executor)
 
         return with_context
 
     def recover_with(
-        self, other: Callable[[Exception], Future[TT]], /
+        self, function_: Callable[[Exception], Future[TT]], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             def complete(try__: try_.Try[T]) -> Future[TT]:
                 match try__.pattern:
                     case try_.Failure() as failure:
-                        if (result := other(failure.exception)) is None:
+                        if (result := function_(failure.exception)) is None:
                             return Future[TT].failed(failure.exception)
                         else:
                             return result
@@ -161,13 +161,13 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
         return with_context
 
     def transform_with(
-        self, other: Callable[[try_.Try[T]], Future[TT]], /
+        self, function_: Callable[[try_.Try[T]], Future[TT]], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             current_future = Future[TT]()
 
             def complete(previous_result: try_.Try[T]) -> None:
-                previous_future = other(previous_result)
+                previous_future = function_(previous_result)
                 previous_future.on_complete(
                     lambda current_result: current_future.try_complete(current_result),
                 )(executor)
@@ -247,8 +247,8 @@ class Future(concurrent.futures.Future[T], monad.Monad[T]):
     def pattern(self) -> SubType[T]:
         return self.value
 
-    def method(self, other: Callable[[Future[T]], TT], /) -> TT:
-        return other(self)
+    def method(self, function_: Callable[[Future[T]], TT], /) -> TT:
+        return function_(self)
 
     @staticmethod
     def with_context(

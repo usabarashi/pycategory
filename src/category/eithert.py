@@ -57,19 +57,21 @@ class EitherTTry(Generic[L, R], monad.Monad[R]):
             case try_.Success(either_):
                 return either_.get_or_else(default)
 
-    def map(self, functor: Callable[[R], RR], /) -> EitherTTry[L, RR]:
+    def map(self, function_: Callable[[R], RR], /) -> EitherTTry[L, RR]:
         try__ = self._value
-        mapped_try = try__.map(lambda either_: either_.map(functor))
+        mapped_try = try__.map(lambda either_: either_.map(function_))
         return EitherTTry[L, RR](mapped_try)
 
-    def flat_map(self, other: Callable[[R], EitherTTry[L, RR]], /) -> EitherTTry[L, RR]:
+    def flat_map(
+        self, function_: Callable[[R], EitherTTry[L, RR]], /
+    ) -> EitherTTry[L, RR]:
         match self._value:
             case try_.Failure():
                 return cast(EitherTTry[L, RR], self)
             case try_.Success(either.Left()):
                 return cast(EitherTTry[L, RR], self)
             case try_.Success(either.Right(value)):
-                return other(value)
+                return function_(value)
             case _:
                 raise ValueError(self)
 
@@ -107,8 +109,8 @@ class EitherTTry(Generic[L, R], monad.Monad[R]):
 
         return wrapper
 
-    def method(self, other: Callable[[EitherTTry[L, R]], TT], /) -> TT:
-        return other(self)
+    def method(self, function_: Callable[[EitherTTry[L, R]], TT], /) -> TT:
+        return function_(self)
 
 
 EitherTTryDo: TypeAlias = Generator[EitherTTry[L, R], Any, R]
@@ -165,17 +167,19 @@ class EitherTFuture(Generic[L, R], monad.Monad[R]):
             return default()
 
     def map(
-        self, functor: Callable[[R], RR], /
+        self, function_: Callable[[R], RR], /
     ) -> Callable[[future.ExecutionContext], EitherTFuture[L, RR]]:
         def with_context(executor: future.ExecutionContext, /) -> EitherTFuture[L, RR]:
             future_ = self._value
-            mapped_future = future_.map(lambda either_: either_.map(functor))(executor)
+            mapped_future = future_.map(lambda either_: either_.map(function_))(
+                executor
+            )
             return EitherTFuture[L, RR](mapped_future)
 
         return with_context
 
     def flat_map(
-        self, other: Callable[[R], EitherTFuture[L, RR]], /
+        self, function_: Callable[[R], EitherTFuture[L, RR]], /
     ) -> Callable[[future.ExecutionContext], EitherTFuture[L, RR]]:
         def with_context(executor: future.ExecutionContext, /) -> EitherTFuture[L, RR]:
             try:
@@ -185,7 +189,7 @@ class EitherTFuture(Generic[L, R], monad.Monad[R]):
                         future_ = future.Future[either.Left[L, RR]].successful(left)
                         return EitherTFuture[L, RR](future_)
                     case either.Right(value):
-                        return other(value)
+                        return function_(value)
             except Exception as error:
                 future_ = future.Future[either.Either[L, RR]]()
                 future_.set_exception(exception=error)
@@ -233,8 +237,8 @@ class EitherTFuture(Generic[L, R], monad.Monad[R]):
 
         return wrapper
 
-    def method(self, other: Callable[[EitherTFuture[L, R]], TT], /) -> TT:
-        return other(self)
+    def method(self, function_: Callable[[EitherTFuture[L, R]], TT], /) -> TT:
+        return function_(self)
 
 
 EitherTFutureDo: TypeAlias = Generator[EitherTFuture[L, Any], Any, R]

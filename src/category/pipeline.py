@@ -22,16 +22,16 @@ class Pipeline(functor.Functor[T]):
         """<<"""
         return Pipeline(self.value(other))
 
-    def __rshift__(self: Pipeline[T], functor: Callable[[T], A], /) -> Pipeline[A]:
+    def __rshift__(self: Pipeline[T], function_: Callable[[T], A], /) -> Pipeline[A]:
         """>>"""
-        return Pipeline(functor(self.value))
+        return Pipeline(function_(self.value))
 
     def __invert__(self: Pipeline[T]) -> T:
         """~"""
         return self.value
 
-    def map(self: Pipeline[T], functor: Callable[[T], A], /) -> Pipeline[A]:
-        return Pipeline(functor(self.value))
+    def map(self: Pipeline[T], function_: Callable[[T], A], /) -> Pipeline[A]:
+        return Pipeline(function_(self.value))
 
     def get(self) -> T:
         return self.value

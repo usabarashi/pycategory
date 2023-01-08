@@ -22,7 +22,7 @@ class Option(monad.Monad[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, functor: Callable[[T], TT], /) -> Option[TT]:
+    def map(self, function_: Callable[[T], TT], /) -> Option[TT]:
         raise NotImplementedError
 
     @staticmethod
@@ -30,7 +30,7 @@ class Option(monad.Monad[T]):
         return Some[T](value)
 
     @abstractmethod
-    def flat_map(self, other: Callable[[T], Option[TT]], /) -> Option[TT]:
+    def flat_map(self, function_: Callable[[T], Option[TT]], /) -> Option[TT]:
         raise NotImplementedError
 
     @abstractmethod
@@ -57,7 +57,7 @@ class Option(monad.Monad[T]):
     def pattern(self) -> SubType[T]:
         raise NotImplementedError
 
-    def method(self, other: Callable[[Option[T]], TT], /) -> TT:
+    def method(self, function_: Callable[[Option[T]], TT], /) -> TT:
         raise NotImplementedError
 
 
@@ -78,10 +78,10 @@ class Void(Option[T]):
     def __iter__(self) -> Generator[Option[T], None, T]:
         raise GeneratorExit(self)
 
-    def map(self, functor: Callable[[T], TT], /) -> Void[TT]:
+    def map(self, _: Callable[[T], TT], /) -> Void[TT]:
         return cast(Void[TT], self)
 
-    def flat_map(self, other: Callable[[T], Option[TT]], /) -> Void[TT]:
+    def flat_map(self, _: Callable[[T], Option[TT]], /) -> Void[TT]:
         return cast(Void[TT], self)
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
@@ -103,8 +103,8 @@ class Void(Option[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, other: Callable[[Void[T]], TT], /) -> TT:
-        return other(self)
+    def method(self, function_: Callable[[Void[T]], TT], /) -> TT:
+        return function_(self)
 
 
 class Some(Option[T]):
@@ -125,11 +125,11 @@ class Some(Option[T]):
         yield self
         return self.value
 
-    def map(self, functor: Callable[[T], TT], /) -> Some[TT]:
-        return Some[TT](functor(self.value))
+    def map(self, function_: Callable[[T], TT], /) -> Some[TT]:
+        return Some[TT](function_(self.value))
 
-    def flat_map(self, other: Callable[[T], Option[TT]], /) -> Option[TT]:
-        return other(self.value)
+    def flat_map(self, function_: Callable[[T], Option[TT]], /) -> Option[TT]:
+        return function_(self.value)
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
         return some(self.value)
@@ -150,8 +150,8 @@ class Some(Option[T]):
     def pattern(self) -> SubType[T]:
         return self
 
-    def method(self, other: Callable[[Some[T]], TT], /) -> TT:
-        return other(self)
+    def method(self, function_: Callable[[Some[T]], TT], /) -> TT:
+        return function_(self)
 
 
 SubType: TypeAlias = Void[T] | Some[T]
