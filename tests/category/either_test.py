@@ -1,3 +1,24 @@
+def test_functor_law():
+    from category import Left, Right, functor
+
+    assert functor.identity_law(
+        Left[Exception, int](Exception()),
+    )
+    assert functor.identity_law(
+        Right[Exception, int](42),
+    )
+    assert functor.composite_law(
+        F=Left[Exception, int](Exception()),
+        f=lambda v: [v],
+        g=lambda v: (v,),
+    )
+    assert functor.composite_law(
+        F=Right[Exception, int](42),
+        f=lambda v: [v],
+        g=lambda v: (v,),
+    )
+
+
 def test_either_do():
     from category import EitherDo, Left, Monad, Right, Some, Success
 

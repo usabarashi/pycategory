@@ -5,6 +5,7 @@ from .either import Either, EitherDo, Left, LeftProjection, Right, RightProjecti
 from .eithert import EitherTFuture, EitherTFutureDo, EitherTTry, EitherTTryDo
 from .extension import Extension
 from .extractor import Extractor
+from .functor import Functor
 from .future import (
     ExecutionContext,
     Future,
@@ -34,6 +35,7 @@ __all__ = [
     "EitherTTryDo",
     "Extension",
     "Extractor",
+    "Functor",
     "ExecutionContext",
     "Future",
     "FutureDo",
