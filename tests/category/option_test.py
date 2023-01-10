@@ -1,3 +1,12 @@
+def test_functor_law():
+    from category import VOID, Some, functor
+
+    assert functor.identity_law(VOID)
+    assert functor.identity_law(Some[int](42))
+    assert functor.composite_law(F=VOID, f=lambda v: [v], g=lambda v: (v,))
+    assert functor.composite_law(F=Some[int](42), f=lambda v: [v], g=lambda v: (v,))
+
+
 def test_option_do():
     from category import VOID, Monad, OptionDo, Right, Some, Void
 

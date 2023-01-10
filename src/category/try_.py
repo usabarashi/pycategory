@@ -159,6 +159,13 @@ class Failure(Try[T], extractor.Extractor):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({repr(self.exception)})"
 
+    def __eq__(self, other: Try[T]) -> bool:
+        match other.pattern:
+            case Failure(exception):
+                return self.exception == exception
+            case Success():
+                return False
+
     def __iter__(self) -> Generator[Try[T], None, T]:
         raise GeneratorExit(self) from self.exception
 
@@ -229,6 +236,13 @@ class Success(Try[T], extractor.Extractor):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.value})"
+
+    def __eq__(self, other: Try[T]) -> bool:
+        match other.pattern:
+            case Failure():
+                return False
+            case Success(value):
+                return self.value == value
 
     def __iter__(self) -> Generator[Try[T], None, T]:
         yield self

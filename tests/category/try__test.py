@@ -1,3 +1,14 @@
+def test_functor_law():
+    from category import Failure, Success, functor
+
+    assert functor.identity_law(Failure[int](Exception()))
+    assert functor.identity_law(Success[int](42))
+    assert functor.composite_law(
+        F=Failure[int](Exception()), f=lambda v: [v], g=lambda v: (v,)
+    )
+    assert functor.composite_law(F=Success[int](42), f=lambda v: [v], g=lambda v: (v,))
+
+
 def test_try_hold():
     from typing import cast
 

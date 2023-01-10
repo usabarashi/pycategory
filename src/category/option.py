@@ -109,6 +109,13 @@ class Some(Option[T], extractor.Extractor):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({repr(self.value)})"
 
+    def __eq__(self, other: Option[T]) -> bool:
+        match other.pattern:
+            case Void():
+                return False
+            case Some(value):
+                return self.value == value
+
     def __iter__(self) -> Generator[Option[T], None, T]:
         yield self
         return self.value

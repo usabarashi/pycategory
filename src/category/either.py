@@ -89,6 +89,13 @@ class Left(Either[L, R], extractor.Extractor):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.value})"
 
+    def __eq__(self, other: Either[L, R]) -> bool:
+        match other.pattern:
+            case Left(value):
+                return self.value == value
+            case Right():
+                return False
+
     def __iter__(self) -> Generator[Either[L, R], None, R]:
         raise GeneratorExit(self)
 
@@ -143,6 +150,13 @@ class Right(Either[L, R], extractor.Extractor):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.value})"
+
+    def __eq__(self, other: Either[L, R]) -> bool:
+        match other.pattern:
+            case Left():
+                return False
+            case Right(value):
+                return self.value == value
 
     def __iter__(self) -> Generator[Either[L, R], None, R]:
         yield self
