@@ -1,13 +1,6 @@
 import inspect
 from functools import wraps
-from typing import (
-    Callable,
-    Optional,
-    ParamSpec,
-    Type,
-    TypeVar,
-    overload,
-)
+from typing import Callable, Optional, ParamSpec, Type, TypeVar, overload
 
 T = TypeVar("T")
 Implicit = Optional[T]
@@ -19,7 +12,7 @@ ONE_STEP_CALL_BACK: int = 1
 def parameter(type_: Type[T], /, *, depth: int = 1) -> Optional[T]:
     """
 
-    of the specified type Look for implicit parameters.
+    Look of the specified type Look for implicit parameters.
     """
     variables = inspect.getargvalues(
         inspect.stack()[depth + ONE_STEP_CALL_BACK].frame
