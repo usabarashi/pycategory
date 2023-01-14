@@ -10,7 +10,6 @@ from typing import (
     ParamSpec,
     TypeAlias,
     TypeVar,
-    Union,
     overload,
 )
 
@@ -18,50 +17,54 @@ from . import processor
 
 P = ParamSpec("P")
 T = TypeVar("T")
-ARG1 = TypeVar("ARG1")
-ARG2 = TypeVar("ARG2")
-ARG3 = TypeVar("ARG3")
-ARG4 = TypeVar("ARG4")
-ARG5 = TypeVar("ARG5")
-ARG6 = TypeVar("ARG6")
-ARG7 = TypeVar("ARG7")
-ARG8 = TypeVar("ARG8")
-ARG9 = TypeVar("ARG9")
-ARG10 = TypeVar("ARG10")
-ARG11 = TypeVar("ARG11")
-ARG12 = TypeVar("ARG12")
-ARG13 = TypeVar("ARG13")
-ARG14 = TypeVar("ARG14")
+S1m = TypeVar("S1m")
+S2m = TypeVar("S2m")
+S3m = TypeVar("S3m")
+S4m = TypeVar("S4m")
+S5m = TypeVar("S5m")
+S6m = TypeVar("S6m")
+S7m = TypeVar("S7m")
+S8m = TypeVar("S8m")
+S9m = TypeVar("S9m")
+S10m = TypeVar("S10m")
+S11m = TypeVar("S11m")
+S12m = TypeVar("S12m")
+S13m = TypeVar("S13m")
+S14m = TypeVar("S14m")
+S15m = TypeVar("S15m")
+S16m = TypeVar("S16m")
+S17m = TypeVar("S17m")
+S18m = TypeVar("S18m")
+S19m = TypeVar("S19m")
+S20m = TypeVar("S20m")
+S21m = TypeVar("S21m")
+S22m = TypeVar("S22m")
 
-CURRY2: TypeAlias = Callable[[ARG1], Callable[[ARG2], T]]
-CURRY3: TypeAlias = Callable[[ARG1], CURRY2[ARG2, ARG3, T]]
-CURRY4: TypeAlias = Callable[[ARG1], CURRY3[ARG2, ARG3, ARG4, T]]
-CURRY5: TypeAlias = Callable[[ARG1], CURRY4[ARG2, ARG3, ARG4, ARG5, T]]
-CURRY6: TypeAlias = Callable[[ARG1], CURRY5[ARG2, ARG3, ARG4, ARG5, ARG6, T]]
-CURRY7: TypeAlias = Callable[[ARG1], CURRY6[ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, T]]
-CURRY8: TypeAlias = Callable[
-    [ARG1], CURRY7[ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, T]
-]
-CURRY9: TypeAlias = Callable[
-    [ARG1], CURRY8[ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, T]
-]
+CURRY2: TypeAlias = Callable[[S1m], Callable[[S2m], T]]
+CURRY3: TypeAlias = Callable[[S1m], CURRY2[S2m, S3m, T]]
+CURRY4: TypeAlias = Callable[[S1m], CURRY3[S2m, S3m, S4m, T]]
+CURRY5: TypeAlias = Callable[[S1m], CURRY4[S2m, S3m, S4m, S5m, T]]
+CURRY6: TypeAlias = Callable[[S1m], CURRY5[S2m, S3m, S4m, S5m, S6m, T]]
+CURRY7: TypeAlias = Callable[[S1m], CURRY6[S2m, S3m, S4m, S5m, S6m, S7m, T]]
+CURRY8: TypeAlias = Callable[[S1m], CURRY7[S2m, S3m, S4m, S5m, S6m, S7m, S8m, T]]
+CURRY9: TypeAlias = Callable[[S1m], CURRY8[S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, T]]
 CURRY10: TypeAlias = Callable[
-    [ARG1],
+    [S1m],
     Callable[
-        [ARG2],
+        [S2m],
         Callable[
-            [ARG3],
+            [S3m],
             Callable[
-                [ARG4],
+                [S4m],
                 Callable[
-                    [ARG5],
+                    [S5m],
                     Callable[
-                        [ARG6],
+                        [S6m],
                         Callable[
-                            [ARG7],
+                            [S7m],
                             Callable[
-                                [ARG8],
-                                Callable[[ARG9], Callable[[ARG10], T]],
+                                [S8m],
+                                Callable[[S9m], Callable[[S10m], T]],
                             ],
                         ],
                     ],
@@ -71,24 +74,22 @@ CURRY10: TypeAlias = Callable[
     ],
 ]
 CURRY11: TypeAlias = Callable[
-    [ARG1],
+    [S1m],
     Callable[
-        [ARG2],
+        [S2m],
         Callable[
-            [ARG3],
+            [S3m],
             Callable[
-                [ARG4],
+                [S4m],
                 Callable[
-                    [ARG5],
+                    [S5m],
                     Callable[
-                        [ARG6],
+                        [S6m],
                         Callable[
-                            [ARG7],
+                            [S7m],
                             Callable[
-                                [ARG8],
-                                Callable[
-                                    [ARG9], Callable[[ARG10], Callable[[ARG11], T]]
-                                ],
+                                [S8m],
+                                Callable[[S9m], Callable[[S10m], Callable[[S11m], T]]],
                             ],
                         ],
                     ],
@@ -98,25 +99,25 @@ CURRY11: TypeAlias = Callable[
     ],
 ]
 CURRY12: TypeAlias = Callable[
-    [ARG1],
+    [S1m],
     Callable[
-        [ARG2],
+        [S2m],
         Callable[
-            [ARG3],
+            [S3m],
             Callable[
-                [ARG4],
+                [S4m],
                 Callable[
-                    [ARG5],
+                    [S5m],
                     Callable[
-                        [ARG6],
+                        [S6m],
                         Callable[
-                            [ARG7],
+                            [S7m],
                             Callable[
-                                [ARG8],
+                                [S8m],
                                 Callable[
-                                    [ARG9],
+                                    [S9m],
                                     Callable[
-                                        [ARG10], Callable[[ARG11], Callable[[ARG12], T]]
+                                        [S10m], Callable[[S11m], Callable[[S12m], T]]
                                     ],
                                 ],
                             ],
@@ -128,28 +129,28 @@ CURRY12: TypeAlias = Callable[
     ],
 ]
 CURRY13: TypeAlias = Callable[
-    [ARG1],
+    [S1m],
     Callable[
-        [ARG2],
+        [S2m],
         Callable[
-            [ARG3],
+            [S3m],
             Callable[
-                [ARG4],
+                [S4m],
                 Callable[
-                    [ARG5],
+                    [S5m],
                     Callable[
-                        [ARG6],
+                        [S6m],
                         Callable[
-                            [ARG7],
+                            [S7m],
                             Callable[
-                                [ARG8],
+                                [S8m],
                                 Callable[
-                                    [ARG9],
+                                    [S9m],
                                     Callable[
-                                        [ARG10],
+                                        [S10m],
                                         Callable[
-                                            [ARG11],
-                                            Callable[[ARG12], Callable[[ARG13], T]],
+                                            [S11m],
+                                            Callable[[S12m], Callable[[S13m], T]],
                                         ],
                                     ],
                                 ],
@@ -162,30 +163,473 @@ CURRY13: TypeAlias = Callable[
     ],
 ]
 CURRY14: TypeAlias = Callable[
-    [ARG1],
+    [S1m],
     Callable[
-        [ARG2],
+        [S2m],
         Callable[
-            [ARG3],
+            [S3m],
             Callable[
-                [ARG4],
+                [S4m],
                 Callable[
-                    [ARG5],
+                    [S5m],
                     Callable[
-                        [ARG6],
+                        [S6m],
                         Callable[
-                            [ARG7],
+                            [S7m],
                             Callable[
-                                [ARG8],
+                                [S8m],
                                 Callable[
-                                    [ARG9],
+                                    [S9m],
                                     Callable[
-                                        [ARG10],
+                                        [S10m],
                                         Callable[
-                                            [ARG11],
+                                            [S11m],
                                             Callable[
-                                                [ARG12],
-                                                Callable[[ARG13], Callable[[ARG14], T]],
+                                                [S12m],
+                                                Callable[[S13m], Callable[[S14m], T]],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ],
+]
+CURRY15: TypeAlias = Callable[
+    [S1m],
+    Callable[
+        [S2m],
+        Callable[
+            [S3m],
+            Callable[
+                [S4m],
+                Callable[
+                    [S5m],
+                    Callable[
+                        [S6m],
+                        Callable[
+                            [S7m],
+                            Callable[
+                                [S8m],
+                                Callable[
+                                    [S9m],
+                                    Callable[
+                                        [S10m],
+                                        Callable[
+                                            [S11m],
+                                            Callable[
+                                                [S12m],
+                                                Callable[
+                                                    [S13m],
+                                                    Callable[
+                                                        [S14m], Callable[[S15m], T]
+                                                    ],
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ],
+]
+CURRY16: TypeAlias = Callable[
+    [S1m],
+    Callable[
+        [S2m],
+        Callable[
+            [S3m],
+            Callable[
+                [S4m],
+                Callable[
+                    [S5m],
+                    Callable[
+                        [S6m],
+                        Callable[
+                            [S7m],
+                            Callable[
+                                [S8m],
+                                Callable[
+                                    [S9m],
+                                    Callable[
+                                        [S10m],
+                                        Callable[
+                                            [S11m],
+                                            Callable[
+                                                [S12m],
+                                                Callable[
+                                                    [S13m],
+                                                    Callable[
+                                                        [S14m],
+                                                        Callable[
+                                                            [S15m], Callable[[S16m], T]
+                                                        ],
+                                                    ],
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ],
+]
+CURRY17: TypeAlias = Callable[
+    [S1m],
+    Callable[
+        [S2m],
+        Callable[
+            [S3m],
+            Callable[
+                [S4m],
+                Callable[
+                    [S5m],
+                    Callable[
+                        [S6m],
+                        Callable[
+                            [S7m],
+                            Callable[
+                                [S8m],
+                                Callable[
+                                    [S9m],
+                                    Callable[
+                                        [S10m],
+                                        Callable[
+                                            [S11m],
+                                            Callable[
+                                                [S12m],
+                                                Callable[
+                                                    [S13m],
+                                                    Callable[
+                                                        [S14m],
+                                                        Callable[
+                                                            [S15m],
+                                                            Callable[
+                                                                [S16m],
+                                                                Callable[[S17m], T],
+                                                            ],
+                                                        ],
+                                                    ],
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ],
+]
+CURRY18: TypeAlias = Callable[
+    [S1m],
+    Callable[
+        [S2m],
+        Callable[
+            [S3m],
+            Callable[
+                [S4m],
+                Callable[
+                    [S5m],
+                    Callable[
+                        [S6m],
+                        Callable[
+                            [S7m],
+                            Callable[
+                                [S8m],
+                                Callable[
+                                    [S9m],
+                                    Callable[
+                                        [S10m],
+                                        Callable[
+                                            [S11m],
+                                            Callable[
+                                                [S12m],
+                                                Callable[
+                                                    [S13m],
+                                                    Callable[
+                                                        [S14m],
+                                                        Callable[
+                                                            [S15m],
+                                                            Callable[
+                                                                [S16m],
+                                                                Callable[
+                                                                    [S17m],
+                                                                    Callable[[S18m], T],
+                                                                ],
+                                                            ],
+                                                        ],
+                                                    ],
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ],
+]
+CURRY19: TypeAlias = Callable[
+    [S1m],
+    Callable[
+        [S2m],
+        Callable[
+            [S3m],
+            Callable[
+                [S4m],
+                Callable[
+                    [S5m],
+                    Callable[
+                        [S6m],
+                        Callable[
+                            [S7m],
+                            Callable[
+                                [S8m],
+                                Callable[
+                                    [S9m],
+                                    Callable[
+                                        [S10m],
+                                        Callable[
+                                            [S11m],
+                                            Callable[
+                                                [S12m],
+                                                Callable[
+                                                    [S13m],
+                                                    Callable[
+                                                        [S14m],
+                                                        Callable[
+                                                            [S15m],
+                                                            Callable[
+                                                                [S16m],
+                                                                Callable[
+                                                                    [S17m],
+                                                                    Callable[
+                                                                        [S18m],
+                                                                        Callable[
+                                                                            [S19m], T
+                                                                        ],
+                                                                    ],
+                                                                ],
+                                                            ],
+                                                        ],
+                                                    ],
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ],
+]
+CURRY20: TypeAlias = Callable[
+    [S1m],
+    Callable[
+        [S2m],
+        Callable[
+            [S3m],
+            Callable[
+                [S4m],
+                Callable[
+                    [S5m],
+                    Callable[
+                        [S6m],
+                        Callable[
+                            [S7m],
+                            Callable[
+                                [S8m],
+                                Callable[
+                                    [S9m],
+                                    Callable[
+                                        [S10m],
+                                        Callable[
+                                            [S11m],
+                                            Callable[
+                                                [S12m],
+                                                Callable[
+                                                    [S13m],
+                                                    Callable[
+                                                        [S14m],
+                                                        Callable[
+                                                            [S15m],
+                                                            Callable[
+                                                                [S16m],
+                                                                Callable[
+                                                                    [S17m],
+                                                                    Callable[
+                                                                        [S18m],
+                                                                        Callable[
+                                                                            [S19m],
+                                                                            Callable[
+                                                                                [S20m],
+                                                                                T,
+                                                                            ],
+                                                                        ],
+                                                                    ],
+                                                                ],
+                                                            ],
+                                                        ],
+                                                    ],
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ],
+]
+CURRY21: TypeAlias = Callable[
+    [S1m],
+    Callable[
+        [S2m],
+        Callable[
+            [S3m],
+            Callable[
+                [S4m],
+                Callable[
+                    [S5m],
+                    Callable[
+                        [S6m],
+                        Callable[
+                            [S7m],
+                            Callable[
+                                [S8m],
+                                Callable[
+                                    [S9m],
+                                    Callable[
+                                        [S10m],
+                                        Callable[
+                                            [S11m],
+                                            Callable[
+                                                [S12m],
+                                                Callable[
+                                                    [S13m],
+                                                    Callable[
+                                                        [S14m],
+                                                        Callable[
+                                                            [S15m],
+                                                            Callable[
+                                                                [S16m],
+                                                                Callable[
+                                                                    [S17m],
+                                                                    Callable[
+                                                                        [S18m],
+                                                                        Callable[
+                                                                            [S19m],
+                                                                            Callable[
+                                                                                [S20m],
+                                                                                Callable[
+                                                                                    [
+                                                                                        S21m
+                                                                                    ],
+                                                                                    T,
+                                                                                ],
+                                                                            ],
+                                                                        ],
+                                                                    ],
+                                                                ],
+                                                            ],
+                                                        ],
+                                                    ],
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ],
+]
+CURRY22: TypeAlias = Callable[
+    [S1m],
+    Callable[
+        [S2m],
+        Callable[
+            [S3m],
+            Callable[
+                [S4m],
+                Callable[
+                    [S5m],
+                    Callable[
+                        [S6m],
+                        Callable[
+                            [S7m],
+                            Callable[
+                                [S8m],
+                                Callable[
+                                    [S9m],
+                                    Callable[
+                                        [S10m],
+                                        Callable[
+                                            [S11m],
+                                            Callable[
+                                                [S12m],
+                                                Callable[
+                                                    [S13m],
+                                                    Callable[
+                                                        [S14m],
+                                                        Callable[
+                                                            [S15m],
+                                                            Callable[
+                                                                [S16m],
+                                                                Callable[
+                                                                    [S17m],
+                                                                    Callable[
+                                                                        [S18m],
+                                                                        Callable[
+                                                                            [S19m],
+                                                                            Callable[
+                                                                                [S20m],
+                                                                                Callable[
+                                                                                    [
+                                                                                        S21m
+                                                                                    ],
+                                                                                    Callable[
+                                                                                        [
+                                                                                            S22m
+                                                                                        ],
+                                                                                        T,
+                                                                                    ],
+                                                                                ],
+                                                                            ],
+                                                                        ],
+                                                                    ],
+                                                                ],
+                                                            ],
+                                                        ],
+                                                    ],
+                                                ],
                                             ],
                                         ],
                                     ],
@@ -201,86 +645,80 @@ CURRY14: TypeAlias = Callable[
 
 
 @overload
-def curry(function: Callable[[ARG1, ARG2], T], /) -> CURRY2[ARG1, ARG2, T]:
+def curry(function: Callable[[S1m, S2m], T], /) -> CURRY2[S1m, S2m, T]:
     ...
 
 
 @overload
-def curry(function: Callable[[ARG1, ARG2, ARG3], T], /) -> CURRY3[ARG1, ARG2, ARG3, T]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[[ARG1, ARG2, ARG3, ARG4], T], /
-) -> CURRY4[ARG1, ARG2, ARG3, ARG4, T]:
+def curry(function: Callable[[S1m, S2m, S3m], T], /) -> CURRY3[S1m, S2m, S3m, T]:
     ...
 
 
 @overload
 def curry(
-    function: Callable[[ARG1, ARG2, ARG3, ARG4, ARG5], T], /
-) -> CURRY5[ARG1, ARG2, ARG3, ARG4, ARG5, T]:
+    function: Callable[[S1m, S2m, S3m, S4m], T], /
+) -> CURRY4[S1m, S2m, S3m, S4m, T]:
     ...
 
 
 @overload
 def curry(
-    function: Callable[[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6], T], /
-) -> CURRY6[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, T]:
+    function: Callable[[S1m, S2m, S3m, S4m, S5m], T], /
+) -> CURRY5[S1m, S2m, S3m, S4m, S5m, T]:
     ...
 
 
 @overload
 def curry(
-    function: Callable[[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7], T], /
-) -> CURRY7[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, T]:
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m], T], /
+) -> CURRY6[S1m, S2m, S3m, S4m, S5m, S6m, T]:
     ...
 
 
 @overload
 def curry(
-    function: Callable[[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8], T], /
-) -> CURRY8[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, T]:
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m], T], /
+) -> CURRY7[S1m, S2m, S3m, S4m, S5m, S6m, S7m, T]:
     ...
 
 
 @overload
 def curry(
-    function: Callable[[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9], T], /
-) -> CURRY9[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, T]:
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m], T], /
+) -> CURRY8[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, T]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m], T], /
+) -> CURRY9[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, T]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m], T],
+    /,
+) -> CURRY10[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, T]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m], T],
+    /,
+) -> CURRY11[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, T]:
     ...
 
 
 @overload
 def curry(
     function: Callable[
-        [ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10], T
+        [S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m], T
     ],
     /,
-) -> CURRY10[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, T]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11], T
-    ],
-    /,
-) -> CURRY11[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, T]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12], T
-    ],
-    /,
-) -> CURRY12[
-    ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, T
-]:
+) -> CURRY12[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, T]:
     ...
 
 
@@ -288,26 +726,24 @@ def curry(
 def curry(
     function: Callable[
         [
-            ARG1,
-            ARG2,
-            ARG3,
-            ARG4,
-            ARG5,
-            ARG6,
-            ARG7,
-            ARG8,
-            ARG9,
-            ARG10,
-            ARG11,
-            ARG12,
-            ARG13,
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
         ],
         T,
     ],
     /,
-) -> CURRY13[
-    ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, T
-]:
+) -> CURRY13[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, T]:
     ...
 
 
@@ -315,39 +751,447 @@ def curry(
 def curry(
     function: Callable[
         [
-            ARG1,
-            ARG2,
-            ARG3,
-            ARG4,
-            ARG5,
-            ARG6,
-            ARG7,
-            ARG8,
-            ARG9,
-            ARG10,
-            ARG11,
-            ARG12,
-            ARG13,
-            ARG14,
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
         ],
         T,
     ],
     /,
 ) -> CURRY14[
-    ARG1,
-    ARG2,
-    ARG3,
-    ARG4,
-    ARG5,
-    ARG6,
-    ARG7,
-    ARG8,
-    ARG9,
-    ARG10,
-    ARG11,
-    ARG12,
-    ARG13,
-    ARG14,
+    S1m,
+    S2m,
+    S3m,
+    S4m,
+    S5m,
+    S6m,
+    S7m,
+    S8m,
+    S9m,
+    S10m,
+    S11m,
+    S12m,
+    S13m,
+    S14m,
+    T,
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+        ],
+        T,
+    ],
+    /,
+) -> CURRY15[
+    S1m,
+    S2m,
+    S3m,
+    S4m,
+    S5m,
+    S6m,
+    S7m,
+    S8m,
+    S9m,
+    S10m,
+    S11m,
+    S12m,
+    S13m,
+    S14m,
+    S15m,
+    T,
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+        ],
+        T,
+    ],
+    /,
+) -> CURRY16[
+    S1m,
+    S2m,
+    S3m,
+    S4m,
+    S5m,
+    S6m,
+    S7m,
+    S8m,
+    S9m,
+    S10m,
+    S11m,
+    S12m,
+    S13m,
+    S14m,
+    S15m,
+    S16m,
+    T,
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+        ],
+        T,
+    ],
+    /,
+) -> CURRY17[
+    S1m,
+    S2m,
+    S3m,
+    S4m,
+    S5m,
+    S6m,
+    S7m,
+    S8m,
+    S9m,
+    S10m,
+    S11m,
+    S12m,
+    S13m,
+    S14m,
+    S15m,
+    S16m,
+    S17m,
+    T,
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+            S18m,
+        ],
+        T,
+    ],
+    /,
+) -> CURRY18[
+    S1m,
+    S2m,
+    S3m,
+    S4m,
+    S5m,
+    S6m,
+    S7m,
+    S8m,
+    S9m,
+    S10m,
+    S11m,
+    S12m,
+    S13m,
+    S14m,
+    S15m,
+    S16m,
+    S17m,
+    S18m,
+    T,
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+            S18m,
+            S19m,
+        ],
+        T,
+    ],
+    /,
+) -> CURRY19[
+    S1m,
+    S2m,
+    S3m,
+    S4m,
+    S5m,
+    S6m,
+    S7m,
+    S8m,
+    S9m,
+    S10m,
+    S11m,
+    S12m,
+    S13m,
+    S14m,
+    S15m,
+    S16m,
+    S17m,
+    S18m,
+    S19m,
+    T,
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+            S18m,
+            S19m,
+            S20m,
+        ],
+        T,
+    ],
+    /,
+) -> CURRY20[
+    S1m,
+    S2m,
+    S3m,
+    S4m,
+    S5m,
+    S6m,
+    S7m,
+    S8m,
+    S9m,
+    S10m,
+    S11m,
+    S12m,
+    S13m,
+    S14m,
+    S15m,
+    S16m,
+    S17m,
+    S18m,
+    S19m,
+    S20m,
+    T,
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+            S18m,
+            S19m,
+            S20m,
+            S21m,
+        ],
+        T,
+    ],
+    /,
+) -> CURRY21[
+    S1m,
+    S2m,
+    S3m,
+    S4m,
+    S5m,
+    S6m,
+    S7m,
+    S8m,
+    S9m,
+    S10m,
+    S11m,
+    S12m,
+    S13m,
+    S14m,
+    S15m,
+    S16m,
+    S17m,
+    S18m,
+    S19m,
+    S20m,
+    S21m,
+    T,
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+            S18m,
+            S19m,
+            S20m,
+            S21m,
+            S22m,
+        ],
+        T,
+    ],
+    /,
+) -> CURRY22[
+    S1m,
+    S2m,
+    S3m,
+    S4m,
+    S5m,
+    S6m,
+    S7m,
+    S8m,
+    S9m,
+    S10m,
+    S11m,
+    S12m,
+    S13m,
+    S14m,
+    S15m,
+    S16m,
+    S17m,
+    S18m,
+    S19m,
+    S20m,
+    S21m,
+    S22m,
     T,
 ]:
     ...
@@ -385,60 +1229,11 @@ def next_partial_position(position: int, /) -> int:
 
 LAST_ONE = 1
 LIMIT_NUMBER_OF_TYPE_VARIABLES = (
-    14  # Limit number of Type variables that can be parsed by the signature.
+    22  # Limit number of Type variables that can be parsed by the signature.
 )
 
 
-def curry(
-    function: Callable[P, T], /
-) -> Union[
-    CURRY2[ARG1, ARG2, T],
-    CURRY3[ARG1, ARG2, ARG3, T],
-    CURRY4[ARG1, ARG2, ARG3, ARG4, T],
-    CURRY5[ARG1, ARG2, ARG3, ARG4, ARG5, T],
-    CURRY6[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, T],
-    CURRY7[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, T],
-    CURRY8[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, T],
-    CURRY9[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, T],
-    CURRY10[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, T],
-    CURRY11[ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, T],
-    CURRY12[
-        ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, T
-    ],
-    CURRY13[
-        ARG1,
-        ARG2,
-        ARG3,
-        ARG4,
-        ARG5,
-        ARG6,
-        ARG7,
-        ARG8,
-        ARG9,
-        ARG10,
-        ARG11,
-        ARG12,
-        ARG13,
-        T,
-    ],
-    CURRY14[
-        ARG1,
-        ARG2,
-        ARG3,
-        ARG4,
-        ARG5,
-        ARG6,
-        ARG7,
-        ARG8,
-        ARG9,
-        ARG10,
-        ARG11,
-        ARG12,
-        ARG13,
-        ARG14,
-        T,
-    ],
-]:
+def curry(function: Callable[P, T], /):
     """currying
 
     - Only positional arguments are supported.
