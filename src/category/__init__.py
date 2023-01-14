@@ -1,10 +1,10 @@
 from .collection import Vector
 from .constraints import SubtypeConstraints
-from .curry_ import curry
 from .either import Either, EitherDo, Left, LeftProjection, Right, RightProjection
 from .eithert import EitherTFuture, EitherTFutureDo, EitherTTry, EitherTTryDo
 from .extension import Extension
 from .extractor import Extractor
+from .function_ import curry, function
 from .functor import Functor
 from .future import (
     ExecutionContext,
@@ -22,7 +22,6 @@ from .try_ import Failure, Success, Try, TryDo
 __all__ = [
     "Vector",
     "SubtypeConstraints",
-    "curry",
     "Either",
     "EitherDo",
     "Left",
@@ -35,6 +34,8 @@ __all__ = [
     "EitherTTryDo",
     "Extension",
     "Extractor",
+    "curry",
+    "function",
     "Functor",
     "ExecutionContext",
     "Future",
