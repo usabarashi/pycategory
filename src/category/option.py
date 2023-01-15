@@ -22,7 +22,7 @@ class Option(ABC, monad.Monad[T], extension.Extension):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, function_: Callable[[T], TT], /) -> Option[TT]:
+    def map(self, func: Callable[[T], TT], /) -> Option[TT]:
         raise NotImplementedError
 
     @staticmethod
@@ -30,7 +30,7 @@ class Option(ABC, monad.Monad[T], extension.Extension):
         return Some[T](value)
 
     @abstractmethod
-    def flat_map(self, function_: Callable[[T], Option[TT]], /) -> Option[TT]:
+    def flat_map(self, func: Callable[[T], Option[TT]], /) -> Option[TT]:
         raise NotImplementedError
 
     @abstractmethod
@@ -120,11 +120,11 @@ class Some(Option[T], extractor.Extractor):
         yield self
         return self.value
 
-    def map(self, function_: Callable[[T], TT], /) -> Option[TT]:
-        return Some[TT](function_(self.value))
+    def map(self, func: Callable[[T], TT], /) -> Option[TT]:
+        return Some[TT](func(self.value))
 
-    def flat_map(self, function_: Callable[[T], Option[TT]], /) -> Option[TT]:
-        return function_(self.value)
+    def flat_map(self, func: Callable[[T], Option[TT]], /) -> Option[TT]:
+        return func(self.value)
 
     def fold(self, *, void: Callable[..., U], some: Callable[[T], U]) -> U:
         return some(self.value)

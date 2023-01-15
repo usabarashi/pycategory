@@ -24,7 +24,7 @@ class Either(ABC, Generic[L, R], monad.Monad[R], extension.Extension):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, function_: Callable[[R], RR], /) -> Either[L, RR]:
+    def map(self, func: Callable[[R], RR], /) -> Either[L, RR]:
         raise NotImplementedError
 
     @staticmethod
@@ -32,7 +32,7 @@ class Either(ABC, Generic[L, R], monad.Monad[R], extension.Extension):
         return Right[L, R](value)
 
     @abstractmethod
-    def flat_map(self, function_: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
+    def flat_map(self, func: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         raise NotImplementedError
 
     @abstractproperty
@@ -162,11 +162,11 @@ class Right(Either[L, R], extractor.Extractor):
         yield self
         return self.value
 
-    def map(self, function_: Callable[[R], RR], /) -> Either[L, RR]:
-        return Right[L, RR](function_(self.value))
+    def map(self, func: Callable[[R], RR], /) -> Either[L, RR]:
+        return Right[L, RR](func(self.value))
 
-    def flat_map(self, function_: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
-        return function_(self.value)
+    def flat_map(self, func: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
+        return func(self.value)
 
     @property
     def to_option(self) -> option.Option[R]:
@@ -228,17 +228,17 @@ class LeftProjection(Generic[L, R], extension.Extension):
             case _:
                 return default()
 
-    def map(self, function_: Callable[[L], LL], /) -> Either[LL, R]:
+    def map(self, func: Callable[[L], LL], /) -> Either[LL, R]:
         match self._either:
             case Left() as left:
-                return Left[LL, R](function_(left.value))
+                return Left[LL, R](func(left.value))
             case Right() as right:
                 return cast(Right[LL, R], right)
 
-    def flat_map(self, function_: Callable[[L], Either[LL, R]], /) -> Either[LL, R]:
+    def flat_map(self, func: Callable[[L], Either[LL, R]], /) -> Either[LL, R]:
         match self._either:
             case Left() as left:
-                return function_(left.value)
+                return func(left.value)
             case Right() as right:
                 return cast(Right[LL, R], right)
 
@@ -268,19 +268,19 @@ class RightProjection(Generic[L, R], extension.Extension):
             case Right() as right:
                 return right.get()
 
-    def map(self, function_: Callable[[R], RR], /) -> Either[L, RR]:
+    def map(self, func: Callable[[R], RR], /) -> Either[L, RR]:
         match self._either:
             case Left() as left:
                 return cast(Left[L, RR], left)
             case Right() as right:
-                return Right[L, RR](function_(right.get()))
+                return Right[L, RR](func(right.get()))
 
-    def flat_map(self, function_: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
+    def flat_map(self, func: Callable[[R], Either[L, RR]], /) -> Either[L, RR]:
         match self._either:
             case Left() as left:
                 return cast(Left[L, RR], left)
             case Right() as right:
-                return function_(right.get())
+                return func(right.get())
 
 
 SubType: TypeAlias = Left[L, R] | Right[L, R]

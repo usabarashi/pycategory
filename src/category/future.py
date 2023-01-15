@@ -87,7 +87,7 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
         return Future.successful(value)
 
     def map(
-        self, function_: Callable[[T], TT], /
+        self, func: Callable[[T], TT], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             def fold(previous_result: try_.Try[T], /) -> try_.Try[TT]:
@@ -95,14 +95,14 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
                     case try_.Failure() as failure:
                         return cast(try_.Failure[TT], failure)
                     case try_.Success(previous_value):
-                        return try_.Success[TT](function_(previous_value))
+                        return try_.Success[TT](func(previous_value))
 
             return self.transform(fold)(executor)
 
         return with_context
 
     def flat_map(
-        self, function_: Callable[[T], Future[TT]], /
+        self, func: Callable[[T], Future[TT]], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             def fold(try__: try_.Try[T]) -> Future[TT]:
@@ -111,7 +111,7 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
                         return cast(Future[TT], self)
                     case try_.Success(value):
                         try:
-                            return function_(value)
+                            return func(value)
                         except Exception as exception:
                             return Future[TT].failed(exception)
 
@@ -120,21 +120,21 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
         return with_context
 
     def recover(
-        self, function_: Callable[[Exception], TT], /
+        self, func: Callable[[Exception], TT], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
-            return self.transform(lambda try__: try__.recover(function_))(executor)
+            return self.transform(lambda try__: try__.recover(func))(executor)
 
         return with_context
 
     def recover_with(
-        self, function_: Callable[[Exception], Future[TT]], /
+        self, func: Callable[[Exception], Future[TT]], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             def complete(try__: try_.Try[T]) -> Future[TT]:
                 match try__.pattern:
                     case try_.Failure() as failure:
-                        if (result := function_(failure.exception)) is None:
+                        if (result := func(failure.exception)) is None:
                             return Future[TT].failed(failure.exception)
                         else:
                             return result
@@ -158,13 +158,13 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
         return with_context
 
     def transform_with(
-        self, function_: Callable[[try_.Try[T]], Future[TT]], /
+        self, func: Callable[[try_.Try[T]], Future[TT]], /
     ) -> Callable[[ExecutionContext], Future[TT]]:
         def with_context(executor: ExecutionContext, /) -> Future[TT]:
             current_future = Future[TT]()
 
             def complete(previous_result: try_.Try[T]) -> None:
-                previous_future = function_(previous_result)
+                previous_future = func(previous_result)
                 previous_future.on_complete(
                     lambda current_result: current_future.try_complete(current_result),
                 )(executor)
@@ -246,14 +246,14 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
 
     @staticmethod
     def with_context(
-        function_: Callable[P, Future[T]]
+        func: Callable[P, Future[T]]
     ) -> Callable[P, Callable[[ExecutionContext], Future[T]]]:
-        @wraps(function_)
+        @wraps(func)
         def wrapper(
             *args: P.args, **kwargs: P.kwargs
         ) -> Callable[[ExecutionContext], Future[T]]:
             def wrapper_(executor: ExecutionContext, /) -> Future[T]:
-                return executor.submit(lambda: function_(*args, **kwargs).result())
+                return executor.submit(lambda: func(*args, **kwargs)).result()
 
             return wrapper_
 
@@ -261,7 +261,7 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
 
     @staticmethod
     def hold(
-        function: Callable[P, T]
+        func: Callable[P, T]
     ) -> Callable[P, Callable[[ExecutionContext], Future[T]]]:
         """
 
@@ -286,12 +286,12 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
 
         """
 
-        @wraps(function)
+        @wraps(func)
         def wrapper(
             *args: P.args, **kwargs: P.kwargs
         ) -> Callable[[ExecutionContext], Future[T]]:
             def with_context(executor: ExecutionContext, /) -> Future[T]:
-                return executor.submit(function, *args, **kwargs)
+                return executor.submit(func, *args, **kwargs)
 
             return with_context
 
