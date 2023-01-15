@@ -123,7 +123,7 @@ def test_future():
         three = yield from thread_function(3)(te)
         return one + two + three
 
-    match context()(pe).pattern:
+    match context()(te).pattern:
         case Failure() as failure:
             print(f"Failure case {failure.exception}")
         case Success(value):

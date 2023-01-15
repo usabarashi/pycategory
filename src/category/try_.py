@@ -33,7 +33,7 @@ class Try(ABC, monad.Monad[T], extension.Extension):
         raise NotImplementedError
 
     @abstractmethod
-    def map(self, function_: Callable[[T], TT], /) -> Try[TT]:
+    def map(self, func: Callable[[T], TT], /) -> Try[TT]:
         raise NotImplementedError
 
     @staticmethod
@@ -41,15 +41,15 @@ class Try(ABC, monad.Monad[T], extension.Extension):
         return Success[T](value)
 
     @abstractmethod
-    def flat_map(self, function_: Callable[[T], Try[TT]], /) -> Try[TT]:
+    def flat_map(self, func: Callable[[T], Try[TT]], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
-    def recover(self, function_: Callable[[Exception], TT], /) -> Try[TT]:
+    def recover(self, func: Callable[[Exception], TT], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractmethod
-    def recover_with(self, function_: Callable[[Exception], Try[TT]], /) -> Try[TT]:
+    def recover_with(self, func: Callable[[Exception], Try[TT]], /) -> Try[TT]:
         raise NotImplementedError
 
     @abstractproperty
@@ -91,7 +91,7 @@ class Try(ABC, monad.Monad[T], extension.Extension):
 
     @overload
     @staticmethod
-    def hold(function: Callable[P, T], /) -> Callable[P, Try[T]]:
+    def hold(func: Callable[P, T], /) -> Callable[P, Try[T]]:
         ...
 
     @overload
@@ -108,33 +108,33 @@ class Try(ABC, monad.Monad[T], extension.Extension):
 
     @staticmethod
     def hold(
-        function: Optional[Callable[P, T]] = None,
+        func: Optional[Callable[P, T]] = None,
         /,
         *,
         unmask: Optional[tuple[str, ...]] = None,
         debugger: Optional[Callable[[processor.Arguments], Any]] = None,
     ) -> Callable[P, Try[T]] | Callable[[Callable[P, T]], Callable[P, Try[T]]]:
-        def wrap(function_: Callable[P, T], /) -> Callable[P, Try[T]]:
-            return _hold(function=function_, unmask=unmask, debugger=debugger)
+        def wrap(func: Callable[P, T], /) -> Callable[P, Try[T]]:
+            return _hold(func=func, unmask=unmask, debugger=debugger)
 
-        if function is None:
+        if func is None:
             return wrap
         else:
-            return wrap(function)
+            return wrap(func)
 
 
 def _hold(
     *,
-    function: Callable[P, T],
+    func: Callable[P, T],
     unmask: Optional[tuple[str, ...]] = None,
     debugger: Optional[Callable[[processor.Arguments], Any]] = None,
 ) -> Callable[P, Try[T]]:
-    @wraps(function)
+    @wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> Try[T]:
         try:
-            return Success[T](function(*args, **kwargs))
+            return Success[T](func(*args, **kwargs))
         except Exception as exception:
-            arguments = processor.arguments(function, *args, **kwargs)
+            arguments = processor.arguments(func, *args, **kwargs)
             masked_arguments = processor.masking(arguments=arguments, unmask=unmask)
             parsed_arguments = processor.parse(masked_arguments)
             debug = processor.execute_debugger(debugger=debugger, arguments=arguments)
@@ -175,18 +175,18 @@ class Failure(Try[T], extractor.Extractor):
     def flat_map(self, _: Callable[[T], Try[TT]], /) -> Try[TT]:
         return cast(Failure[TT], self)
 
-    def recover(self, function_: Callable[[Exception], TT], /) -> Try[TT]:
+    def recover(self, func: Callable[[Exception], TT], /) -> Try[TT]:
         try:
-            if (result := function_(self.exception)) is None:
+            if (result := func(self.exception)) is None:
                 return cast(Failure[TT], self)
             else:
                 return Success[TT](result)
         except Exception as exception:
             return Failure[TT](exception)
 
-    def recover_with(self, function_: Callable[[Exception], Try[TT]], /) -> Try[TT]:
+    def recover_with(self, func: Callable[[Exception], Try[TT]], /) -> Try[TT]:
         try:
-            if (result := function_(self.exception)) is None:
+            if (result := func(self.exception)) is None:
                 return cast(Failure[TT], self)
             else:
                 return result
@@ -248,11 +248,11 @@ class Success(Try[T], extractor.Extractor):
         yield self
         return self.value
 
-    def map(self, function_: Callable[[T], TT], /) -> Try[TT]:
-        return Success[TT](function_(self.value))
+    def map(self, func: Callable[[T], TT], /) -> Try[TT]:
+        return Success[TT](func(self.value))
 
-    def flat_map(self, function_: Callable[[T], Try[TT]], /) -> Try[TT]:
-        return function_(self.value)
+    def flat_map(self, func: Callable[[T], Try[TT]], /) -> Try[TT]:
+        return func(self.value)
 
     def recover(self, _: Callable[[Exception], TT], /) -> Try[TT]:
         return cast(Try[TT], self)
