@@ -1,18 +1,10 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Callable
 from copy import deepcopy
 from functools import wraps
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    Optional,
-    ParamSpec,
-    TypeAlias,
-    TypeVar,
-    overload,
-)
+from typing import Any, Generic, Optional, ParamSpec, TypeVar, overload
 
 from . import processor
 
@@ -48,7 +40,7 @@ LAST_ONE = 1
 LIMIT_NUMBER_OF_TYPE_VARIABLES = 22
 
 
-class Function:
+class Function(Callable):
     ...
 
 
@@ -63,15 +55,11 @@ class Function1(Generic[S1m, Tp], Function):
 
     apply = __call__
 
-    def compose(
-        self, other: Callable[[Sd1m], Tdp] | Function1[Sd1m, Tdp]
-    ) -> Function1[Sd1m, Tp]:
+    def compose(self, other: Callable[[S2m], S1m]) -> Function1[S2m, Tp]:
         return Function1[Sd1m, Tp](lambda arg: self(other(arg)))
 
-    def and_then(
-        self, other: Callable[[Sd1m], Tdp] | Function1[Sd1m, Tdp]
-    ) -> Function1[Tp, Tdp]:
-        return Function1[Tp, Tdp](lambda arg: other(self(arg)))
+    def and_then(self, other: Callable[[Tp], Tdp]) -> Function1[S1m, Tdp]:
+        return Function1[S1m, Tdp](lambda arg: other(self(arg)))
 
 
 class FunctionN(Function):
@@ -87,8 +75,9 @@ class Function2(Generic[S1m, S2m, Tp], FunctionN):
     def __call__(self, /, arg1: S1m, arg2: S2m) -> Tp:
         return self._func(arg1, arg2)
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -111,8 +100,9 @@ class Function3(Generic[S1m, S2m, S3m, Tp], FunctionN):
     def __call__(self, /, arg1: S1m, arg2: S2m, arg3: S3m) -> Tp:
         return self._func(arg1, arg2, arg3)
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -135,8 +125,9 @@ class Function4(Generic[S1m, S2m, S3m, S4m, Tp], FunctionN):
     def __call__(self, /, arg1: S1m, arg2: S2m, arg3: S3m, arg4: S4m) -> Tp:
         return self._func(arg1, arg2, arg3, arg4)
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -159,8 +150,9 @@ class Function5(Generic[S1m, S2m, S3m, S4m, S5m, Tp], FunctionN):
     def __call__(self, /, arg1: S1m, arg2: S2m, arg3: S3m, arg4: S4m, arg5: S5m) -> Tp:
         return self._func(arg1, arg2, arg3, arg4, arg5)
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -185,8 +177,9 @@ class Function6(Generic[S1m, S2m, S3m, S4m, S5m, S6m, Tp], FunctionN):
     ) -> Tp:
         return self._func(arg1, arg2, arg3, arg4, arg5, arg6)
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -219,8 +212,9 @@ class Function7(Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, Tp], FunctionN):
     ) -> Tp:
         return self._func(arg1, arg2, arg3, arg4, arg5, arg6, arg7)
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -256,8 +250,9 @@ class Function8(Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, Tp], FunctionN):
     ) -> Tp:
         return self._func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -296,8 +291,9 @@ class Function9(Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, Tp], Functi
     ) -> Tp:
         return self._func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -339,8 +335,9 @@ class Function10(
     ) -> Tp:
         return self._func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10)
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -387,8 +384,9 @@ class Function11(
             arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -439,8 +437,9 @@ class Function12(
             arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -505,8 +504,9 @@ class Function13(
             arg13,
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -578,8 +578,9 @@ class Function14(
             arg14,
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -697,8 +698,9 @@ class Function15(
             arg15,
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -821,8 +823,9 @@ class Function16(
             arg16,
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -950,8 +953,9 @@ class Function17(
             arg17,
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -1084,8 +1088,9 @@ class Function18(
             arg18,
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -1223,8 +1228,9 @@ class Function19(
             arg19,
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -1367,8 +1373,9 @@ class Function20(
             arg20,
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -1516,8 +1523,9 @@ class Function21(
             arg21,
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -1670,8 +1678,9 @@ class Function22(
             arg22,
         )
 
-    def apply(self, *args: ..., **kwargs: ...):
-        return self.__call__(*args, **kwargs)
+    @property
+    def apply(self):
+        return self.__call__
 
     @property
     def curried(self):
@@ -2208,8 +2217,10 @@ def function(
 
 
 def function(func: Callable[P, Tp], /):
-    arguments = deepcopy(inspect.signature(func).parameters.copy())
+    arguments = inspect.signature(func).parameters.copy()
     match partial_application_scope(arguments=arguments, function=function):
+        case 0:
+            raise TypeError(func)
         case 1:
             return Function1(func)
         case 2:
@@ -2258,15 +2269,102 @@ def function(func: Callable[P, Tp], /):
             raise TypeError(func)
 
 
-CURRY2: TypeAlias = Function1[S1m, Function1[S2m, Tp]]
-CURRY3: TypeAlias = Function1[S1m, CURRY2[S2m, S3m, Tp]]
-CURRY4: TypeAlias = Function1[S1m, CURRY3[S2m, S3m, S4m, Tp]]
-CURRY5: TypeAlias = Function1[S1m, CURRY4[S2m, S3m, S4m, S5m, Tp]]
-CURRY6: TypeAlias = Function1[S1m, CURRY5[S2m, S3m, S4m, S5m, S6m, Tp]]
-CURRY7: TypeAlias = Function1[S1m, CURRY6[S2m, S3m, S4m, S5m, S6m, S7m, Tp]]
-CURRY8: TypeAlias = Function1[S1m, CURRY7[S2m, S3m, S4m, S5m, S6m, S7m, S8m, Tp]]
-CURRY9: TypeAlias = Function1[S1m, CURRY8[S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, Tp]]
-CURRY10: TypeAlias = Function1[
+@overload
+def curry(function: Callable[[S1m, S2m], Tp], /) -> Function1[S1m, Function1[S2m, Tp]]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m], Tp], /
+) -> Function1[S1m, Function1[S2m, Function1[S3m, Tp]]]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m, S4m], Tp], /
+) -> Function1[S1m, Function1[S2m, Function1[S3m, Function1[S4m, Tp]]]]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m, S4m, S5m], Tp], /
+) -> Function1[S1m, Function1[S2m, Function1[S3m, Function1[S4m, Function1[S5m, Tp]]]]]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m], Tp], /
+) -> Function1[
+    S1m,
+    Function1[S2m, Function1[S3m, Function1[S4m, Function1[S5m, Function1[S6m, Tp]]]]],
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m], Tp], /
+) -> Function1[
+    S1m,
+    Function1[
+        S2m,
+        Function1[
+            S3m, Function1[S4m, Function1[S5m, Function1[S6m, Function1[S7m, Tp]]]]
+        ],
+    ],
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m], Tp], /
+) -> Function1[
+    S1m,
+    Function1[
+        S2m,
+        Function1[
+            S3m,
+            Function1[
+                S4m, Function1[S5m, Function1[S6m, Function1[S7m, Function1[S8m, Tp]]]]
+            ],
+        ],
+    ],
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m], Tp], /
+) -> Function1[
+    S1m,
+    Function1[
+        S2m,
+        Function1[
+            S3m,
+            Function1[
+                S4m,
+                Function1[
+                    S5m,
+                    Function1[S6m, Function1[S7m, Function1[S8m, Function1[S9m, Tp]]]],
+                ],
+            ],
+        ],
+    ],
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m], Tp],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2290,8 +2388,15 @@ CURRY10: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY11: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m], Tp],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2315,8 +2420,17 @@ CURRY11: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY12: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m], Tp
+    ],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2345,8 +2459,32 @@ CURRY12: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY13: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+        ],
+        T,
+    ],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2379,8 +2517,33 @@ CURRY13: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY14: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+        ],
+        Tp,
+    ],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2416,8 +2579,34 @@ CURRY14: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY15: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+        ],
+        Tp,
+    ],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2458,8 +2647,35 @@ CURRY15: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY16: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+        ],
+        Tp,
+    ],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2503,8 +2719,36 @@ CURRY16: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY17: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+        ],
+        Tp,
+    ],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2552,8 +2796,37 @@ CURRY17: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY18: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+            S18m,
+        ],
+        Tp,
+    ],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2604,8 +2877,38 @@ CURRY18: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY19: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+            S18m,
+            S19m,
+        ],
+        Tp,
+    ],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2661,8 +2964,39 @@ CURRY19: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY20: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+            S18m,
+            S19m,
+            S20m,
+        ],
+        Tp,
+    ],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2722,8 +3056,40 @@ CURRY20: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY21: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+            S18m,
+            S19m,
+            S20m,
+            S21m,
+        ],
+        Tp,
+    ],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2786,8 +3152,41 @@ CURRY21: TypeAlias = Function1[
             ],
         ],
     ],
-]
-CURRY22: TypeAlias = Function1[
+]:
+    ...
+
+
+@overload
+def curry(
+    function: Callable[
+        [
+            S1m,
+            S2m,
+            S3m,
+            S4m,
+            S5m,
+            S6m,
+            S7m,
+            S8m,
+            S9m,
+            S10m,
+            S11m,
+            S12m,
+            S13m,
+            S14m,
+            S15m,
+            S16m,
+            S17m,
+            S18m,
+            S19m,
+            S20m,
+            S21m,
+            S22m,
+        ],
+        Tp,
+    ],
+    /,
+) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2853,558 +3252,6 @@ CURRY22: TypeAlias = Function1[
             ],
         ],
     ],
-]
-
-
-@overload
-def curry(function: Callable[[S1m, S2m], Tp], /) -> CURRY2[S1m, S2m, Tp]:
-    ...
-
-
-@overload
-def curry(function: Callable[[S1m, S2m, S3m], Tp], /) -> CURRY3[S1m, S2m, S3m, Tp]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m], Tp], /
-) -> CURRY4[S1m, S2m, S3m, S4m, Tp]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m, S5m], Tp], /
-) -> CURRY5[S1m, S2m, S3m, S4m, S5m, Tp]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m], Tp], /
-) -> CURRY6[S1m, S2m, S3m, S4m, S5m, S6m, Tp]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m], Tp], /
-) -> CURRY7[S1m, S2m, S3m, S4m, S5m, S6m, S7m, Tp]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m], Tp], /
-) -> CURRY8[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, Tp]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m], Tp], /
-) -> CURRY9[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, Tp]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m], Tp],
-    /,
-) -> CURRY10[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, Tp]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m], Tp],
-    /,
-) -> CURRY11[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, Tp]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m], Tp
-    ],
-    /,
-) -> CURRY12[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, Tp]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [
-            S1m,
-            S2m,
-            S3m,
-            S4m,
-            S5m,
-            S6m,
-            S7m,
-            S8m,
-            S9m,
-            S10m,
-            S11m,
-            S12m,
-            S13m,
-        ],
-        T,
-    ],
-    /,
-) -> CURRY13[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, Tp]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [
-            S1m,
-            S2m,
-            S3m,
-            S4m,
-            S5m,
-            S6m,
-            S7m,
-            S8m,
-            S9m,
-            S10m,
-            S11m,
-            S12m,
-            S13m,
-            S14m,
-        ],
-        Tp,
-    ],
-    /,
-) -> CURRY14[
-    S1m,
-    S2m,
-    S3m,
-    S4m,
-    S5m,
-    S6m,
-    S7m,
-    S8m,
-    S9m,
-    S10m,
-    S11m,
-    S12m,
-    S13m,
-    S14m,
-    Tp,
-]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [
-            S1m,
-            S2m,
-            S3m,
-            S4m,
-            S5m,
-            S6m,
-            S7m,
-            S8m,
-            S9m,
-            S10m,
-            S11m,
-            S12m,
-            S13m,
-            S14m,
-            S15m,
-        ],
-        Tp,
-    ],
-    /,
-) -> CURRY15[
-    S1m,
-    S2m,
-    S3m,
-    S4m,
-    S5m,
-    S6m,
-    S7m,
-    S8m,
-    S9m,
-    S10m,
-    S11m,
-    S12m,
-    S13m,
-    S14m,
-    S15m,
-    Tp,
-]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [
-            S1m,
-            S2m,
-            S3m,
-            S4m,
-            S5m,
-            S6m,
-            S7m,
-            S8m,
-            S9m,
-            S10m,
-            S11m,
-            S12m,
-            S13m,
-            S14m,
-            S15m,
-            S16m,
-        ],
-        Tp,
-    ],
-    /,
-) -> CURRY16[
-    S1m,
-    S2m,
-    S3m,
-    S4m,
-    S5m,
-    S6m,
-    S7m,
-    S8m,
-    S9m,
-    S10m,
-    S11m,
-    S12m,
-    S13m,
-    S14m,
-    S15m,
-    S16m,
-    Tp,
-]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [
-            S1m,
-            S2m,
-            S3m,
-            S4m,
-            S5m,
-            S6m,
-            S7m,
-            S8m,
-            S9m,
-            S10m,
-            S11m,
-            S12m,
-            S13m,
-            S14m,
-            S15m,
-            S16m,
-            S17m,
-        ],
-        Tp,
-    ],
-    /,
-) -> CURRY17[
-    S1m,
-    S2m,
-    S3m,
-    S4m,
-    S5m,
-    S6m,
-    S7m,
-    S8m,
-    S9m,
-    S10m,
-    S11m,
-    S12m,
-    S13m,
-    S14m,
-    S15m,
-    S16m,
-    S17m,
-    Tp,
-]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [
-            S1m,
-            S2m,
-            S3m,
-            S4m,
-            S5m,
-            S6m,
-            S7m,
-            S8m,
-            S9m,
-            S10m,
-            S11m,
-            S12m,
-            S13m,
-            S14m,
-            S15m,
-            S16m,
-            S17m,
-            S18m,
-        ],
-        Tp,
-    ],
-    /,
-) -> CURRY18[
-    S1m,
-    S2m,
-    S3m,
-    S4m,
-    S5m,
-    S6m,
-    S7m,
-    S8m,
-    S9m,
-    S10m,
-    S11m,
-    S12m,
-    S13m,
-    S14m,
-    S15m,
-    S16m,
-    S17m,
-    S18m,
-    Tp,
-]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [
-            S1m,
-            S2m,
-            S3m,
-            S4m,
-            S5m,
-            S6m,
-            S7m,
-            S8m,
-            S9m,
-            S10m,
-            S11m,
-            S12m,
-            S13m,
-            S14m,
-            S15m,
-            S16m,
-            S17m,
-            S18m,
-            S19m,
-        ],
-        Tp,
-    ],
-    /,
-) -> CURRY19[
-    S1m,
-    S2m,
-    S3m,
-    S4m,
-    S5m,
-    S6m,
-    S7m,
-    S8m,
-    S9m,
-    S10m,
-    S11m,
-    S12m,
-    S13m,
-    S14m,
-    S15m,
-    S16m,
-    S17m,
-    S18m,
-    S19m,
-    Tp,
-]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [
-            S1m,
-            S2m,
-            S3m,
-            S4m,
-            S5m,
-            S6m,
-            S7m,
-            S8m,
-            S9m,
-            S10m,
-            S11m,
-            S12m,
-            S13m,
-            S14m,
-            S15m,
-            S16m,
-            S17m,
-            S18m,
-            S19m,
-            S20m,
-        ],
-        Tp,
-    ],
-    /,
-) -> CURRY20[
-    S1m,
-    S2m,
-    S3m,
-    S4m,
-    S5m,
-    S6m,
-    S7m,
-    S8m,
-    S9m,
-    S10m,
-    S11m,
-    S12m,
-    S13m,
-    S14m,
-    S15m,
-    S16m,
-    S17m,
-    S18m,
-    S19m,
-    S20m,
-    Tp,
-]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [
-            S1m,
-            S2m,
-            S3m,
-            S4m,
-            S5m,
-            S6m,
-            S7m,
-            S8m,
-            S9m,
-            S10m,
-            S11m,
-            S12m,
-            S13m,
-            S14m,
-            S15m,
-            S16m,
-            S17m,
-            S18m,
-            S19m,
-            S20m,
-            S21m,
-        ],
-        Tp,
-    ],
-    /,
-) -> CURRY21[
-    S1m,
-    S2m,
-    S3m,
-    S4m,
-    S5m,
-    S6m,
-    S7m,
-    S8m,
-    S9m,
-    S10m,
-    S11m,
-    S12m,
-    S13m,
-    S14m,
-    S15m,
-    S16m,
-    S17m,
-    S18m,
-    S19m,
-    S20m,
-    S21m,
-    Tp,
-]:
-    ...
-
-
-@overload
-def curry(
-    function: Callable[
-        [
-            S1m,
-            S2m,
-            S3m,
-            S4m,
-            S5m,
-            S6m,
-            S7m,
-            S8m,
-            S9m,
-            S10m,
-            S11m,
-            S12m,
-            S13m,
-            S14m,
-            S15m,
-            S16m,
-            S17m,
-            S18m,
-            S19m,
-            S20m,
-            S21m,
-            S22m,
-        ],
-        Tp,
-    ],
-    /,
-) -> CURRY22[
-    S1m,
-    S2m,
-    S3m,
-    S4m,
-    S5m,
-    S6m,
-    S7m,
-    S8m,
-    S9m,
-    S10m,
-    S11m,
-    S12m,
-    S13m,
-    S14m,
-    S15m,
-    S16m,
-    S17m,
-    S18m,
-    S19m,
-    S20m,
-    S21m,
-    S22m,
-    Tp,
 ]:
     ...
 

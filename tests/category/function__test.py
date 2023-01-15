@@ -42,6 +42,17 @@ def test_function1_apply():
 def test_function1_compose():
     from category.function_ import Function1
 
+    @Function1
+    def f(boolean: bool) -> str:
+        return str(boolean)
+
+    @Function1
+    def g(integer: int) -> bool:
+        return bool(integer)
+
+    _ = f.compose(g)
+    _ = g.compose(f)
+
     assert "arg compose2 compose1" == Function1[str, str](
         lambda string: string + " compose1"
     ).compose(Function1[str, str](lambda string: string + " compose2"))("arg")
@@ -61,6 +72,17 @@ def test_function1_compose():
 
 def test_function1_and_then():
     from category.function_ import Function1
+
+    @Function1
+    def f(boolean: bool) -> str:
+        return str(boolean)
+
+    @Function1
+    def g(integer: int) -> bool:
+        return bool(integer)
+
+    _ = f.and_then(g)
+    _ = g.and_then(f)
 
     assert "arg and_then1 and_then2" == Function1[str, str](
         lambda string: string + " and_then1"
