@@ -13,6 +13,7 @@ from .future import (
     ProcessPoolExecutionContext,
     ThreadPoolExecutionContext,
 )
+from .implicit_ import explicit, implicit
 from .monad import Monad
 from .option import VOID, Option, OptionDo, Some, Void
 from .pipeline import Pipeline
@@ -42,6 +43,8 @@ __all__ = [
     "FutureDo",
     "ProcessPoolExecutionContext",
     "ThreadPoolExecutionContext",
+    "explicit",
+    "implicit",
     "Monad",
     "Option",
     "OptionDo",
