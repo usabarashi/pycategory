@@ -128,7 +128,7 @@ def toplevel_process_function(value: int) -> int:
     return value
 
 
-@Future.hold
+@Future.hold_explicit
 def thread_function(value: int) -> int:
     if not value:
         raise ValueError("error")
@@ -137,7 +137,7 @@ def thread_function(value: int) -> int:
 @Future.with_context
 @Monad.do
 def context() -> FutureDo[int]:
-    one = yield from Future.hold(toplevel_process_function)(0)(pe)
+    one = yield from Future.hold_explicit(toplevel_process_function)(0)(pe)
     two = 2
     three = yield from thread_function(3)(te)
     return one + two + three

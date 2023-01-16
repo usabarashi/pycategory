@@ -13,7 +13,7 @@ def process_multi_context(value: int, /) -> int:
         raise ValueError(value)
 
 
-@Future.hold
+@Future.hold_explicit
 def thread_multi_context(value: int, /) -> int:
     import time
 
@@ -58,7 +58,7 @@ def test_map():
     assert Exception is type(cast(Failure[int], failure_mapped_future.value).exception)
 
     # Failure process running case
-    failure_process = Future.hold(process_multi_context)(0)(pc)
+    failure_process = Future.hold_explicit(process_multi_context)(0)(pc)
     failure_mapped_process = failure_process.map(lambda success: success + 1)(pc)
     assert failure_process is not failure_mapped_process
     assert Future is type(failure_mapped_process)
@@ -95,7 +95,7 @@ def test_map():
     assert 43 == success_mapped_future.value.get()
 
     # Success process running case
-    success_process = Future.hold(process_multi_context)(42)(pc)
+    success_process = Future.hold_explicit(process_multi_context)(42)(pc)
     success_mapped_process = success_future.map(lambda success: success + 1)(pc)
     assert success_process is not success_mapped_process
     assert Future is type(success_mapped_process)
@@ -145,7 +145,7 @@ def test_flat_map():
     )
 
     # Failure process running case
-    failure_process = Future.hold(process_multi_context)(0)(pc)
+    failure_process = Future.hold_explicit(process_multi_context)(0)(pc)
     failure_flat_mapped_process = failure_process.flat_map(
         lambda success: Future[int].successful(success + 1)
     )(pc)
@@ -162,7 +162,7 @@ def test_flat_map():
     )
 
     # Failure thread running case
-    failure_thread = Future.hold(process_multi_context)(0)(tc)
+    failure_thread = Future.hold_explicit(process_multi_context)(0)(tc)
     failure_flat_mapped_thread = failure_thread.flat_map(
         lambda success: Future[int].successful(success + 1)
     )(tc)
@@ -190,7 +190,7 @@ def test_flat_map():
     assert 43 == success_flat_mapped_future.value.get()
 
     # Success process running case
-    success_process = Future[int].hold(process_multi_context)(42)(pc)
+    success_process = Future[int].hold_explicit(process_multi_context)(42)(pc)
     success_flat_mapped_process = success_process.flat_map(
         lambda success: Future[int].successful(success + 1)
     )(pc)
@@ -224,7 +224,7 @@ def test_recover():
     pe = ProcessPoolExecutionContext(max_workers=5)
     te = ThreadPoolExecutionContext(max_workers=5)
 
-    failure_process = Future.hold(process_multi_context)(0)(pe)
+    failure_process = Future.hold_explicit(process_multi_context)(0)(pe)
     failure_recover_process = failure_process.recover(lambda exception: 42)(pe)
     assert failure_process is not failure_recover_process
     assert Success is type(failure_recover_process.value)
@@ -257,7 +257,7 @@ def test_recover_with():
     pe = ProcessPoolExecutionContext(max_workers=5)
     te = ThreadPoolExecutionContext(max_workers=5)
 
-    failure_process = Future.hold(process_multi_context)(0)(pe)
+    failure_process = Future.hold_explicit(process_multi_context)(0)(pe)
     failure_recover_process = failure_process.recover_with(
         lambda exception: Future[int].successful(42)
     )(pe)
@@ -320,7 +320,7 @@ def test_try_complete():
     assert Exception is type(cast(Failure[int], failure_future.value).exception)
 
     # Failure process case
-    failure_process = Future[int].hold(process_multi_context)(0)(pc)
+    failure_process = Future[int].hold_explicit(process_multi_context)(0)(pc)
     time.sleep(SLEEP_TIME + 1)
     assert False is failure_process.try_complete(Success(1))
     try:
@@ -351,7 +351,7 @@ def test_try_complete():
     assert 42 == success_future.value.get()
 
     # Success process case
-    success_process = Future[int].hold(process_multi_context)(42)(pc)
+    success_process = Future[int].hold_explicit(process_multi_context)(42)(pc)
     assert True is success_process.try_complete(Success(0))
     time.sleep(SLEEP_TIME + 1)
     assert 0 == success_process.result()
@@ -469,7 +469,7 @@ def test_hold():
     assert Future is type(failure_future)
     assert Failure is type(failure_future.value)
     assert ValueError is type(cast(Failure[int], failure_future.value).exception)
-    failure_future = Future.hold(process_multi_context)(0)(pe)
+    failure_future = Future.hold_explicit(process_multi_context)(0)(pe)
     assert Future is type(failure_future)
     assert Failure is type(failure_future.value)
     assert ValueError is type(cast(Failure[int], failure_future.value).exception)
@@ -480,7 +480,7 @@ def test_hold():
     assert 42 == success_future.result()
     assert Success is type(success_future.value)
     assert 42 == success_future.value.get()
-    success_future = Future.hold(process_multi_context)(42)(pe)
+    success_future = Future.hold_explicit(process_multi_context)(42)(pe)
     assert Future is type(success_future)
     assert 42 == success_future.result()
     assert Success is type(success_future.value)
@@ -498,25 +498,26 @@ def test_do():
         ProcessPoolExecutionContext,
         Success,
         ThreadPoolExecutionContext,
+        explicit,
     )
 
     pe = ProcessPoolExecutionContext(max_workers=5)
     te = ThreadPoolExecutionContext(max_workers=5)
 
-    @Future.with_context
+    @explicit[ThreadPoolExecutionContext].hold
     @Monad.do
     def safe_context() -> FutureDo[int]:
         _ = yield from Future[bool].successful(True)
-        one = yield from Future[int].hold(process_multi_context)(1)(pe)
+        one = yield from Future[int].hold_explicit(process_multi_context)(1)(pe)
         two = 2
         three = yield from thread_multi_context(0)(te)
         return one + two + three
 
     # Failure case
-    @Future.with_context
+    @explicit[ThreadPoolExecutionContext].hold
     @Monad.do
     def failure_context() -> FutureDo[int]:
-        one = yield from Future[int].hold(process_multi_context)(1)(pe)
+        one = yield from Future[int].hold_explicit(process_multi_context)(1)(pe)
         two = 2
         three = yield from thread_multi_context(0)(te)
         return one + two + three
@@ -532,10 +533,10 @@ def test_do():
     assert ValueError is type(cast(Failure[int], failure_result.value).exception)
 
     # Success case
-    @Future.with_context
+    @explicit[ThreadPoolExecutionContext].hold
     @Monad.do
     def success_context() -> FutureDo[int]:
-        one = yield from Future[int].hold(process_multi_context)(1)(pe)
+        one = yield from Future[int].hold_explicit(process_multi_context)(1)(pe)
         two = 2
         three = yield from thread_multi_context(3)(te)
         return one + two + three

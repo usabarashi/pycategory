@@ -97,6 +97,7 @@ def toplevel_process_function(value: int) -> int:
 
 def test_future():
     from category import (
+        ExecutionContext,
         Failure,
         Future,
         FutureDo,
@@ -104,21 +105,22 @@ def test_future():
         ProcessPoolExecutionContext,
         Success,
         ThreadPoolExecutionContext,
+        explicit,
     )
 
     pe = ProcessPoolExecutionContext(max_workers=5)
     te = ThreadPoolExecutionContext(max_workers=5)
 
-    @Future.hold
+    @Future.hold_explicit
     def thread_function(value: int) -> int:
         if not value:
             raise ValueError("error")
         return value
 
-    @Future.with_context
+    @explicit[ExecutionContext].hold
     @Monad.do
     def context() -> FutureDo[int]:
-        one = yield from Future.hold(toplevel_process_function)(0)(pe)
+        one = yield from Future.hold_explicit(toplevel_process_function)(0)(pe)
         two = 2
         three = yield from thread_function(3)(te)
         return one + two + three

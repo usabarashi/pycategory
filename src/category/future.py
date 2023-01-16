@@ -7,16 +7,16 @@ from concurrent.futures._base import PENDING
 from functools import wraps
 from typing import Any, Callable, ParamSpec, TypeAlias, TypeVar, cast
 
-from . import extension, monad, try_
+from . import extension, implicit_, monad, try_
 
-T = TypeVar("T", covariant=True)
-TT = TypeVar("TT")
+Sm = TypeVar("Sm", contravariant=True)
+Tm = TypeVar("Tm", covariant=True)
 U = TypeVar("U")
 P = ParamSpec("P")
 
 
 class ProcessPoolExecutionContext(concurrent.futures.ProcessPoolExecutor):
-    def submit(self, fn: Callable[..., T], /, *args: ..., **kwargs: ...) -> Future[T]:
+    def submit(self, fn: Callable[..., Sm], /, *args: ..., **kwargs: ...) -> Future[Sm]:
         with self._shutdown_lock:
             if self._broken:
                 raise concurrent.futures.process.BrokenProcessPool(self._broken)
@@ -27,7 +27,7 @@ class ProcessPoolExecutionContext(concurrent.futures.ProcessPoolExecutor):
                     "cannot schedule new futures after " "interpreter shutdown"
                 )
 
-            future = Future[T]()
+            future = Future[Sm]()
             work_item = concurrent.futures.process._WorkItem(future, fn, args, kwargs)
 
             self._pending_work_items[self._queue_count] = work_item
@@ -42,7 +42,7 @@ class ProcessPoolExecutionContext(concurrent.futures.ProcessPoolExecutor):
 
 
 class ThreadPoolExecutionContext(concurrent.futures.ThreadPoolExecutor):
-    def submit(self, fn: Callable[..., T], /, *args: ..., **kwargs: ...) -> Future[T]:
+    def submit(self, fn: Callable[..., Sm], /, *args: ..., **kwargs: ...) -> Future[Sm]:
         with self._shutdown_lock, concurrent.futures.thread._global_shutdown_lock:
             if self._broken:
                 raise concurrent.futures.thread.BrokenThreadPool(self._broken)
@@ -54,7 +54,7 @@ class ThreadPoolExecutionContext(concurrent.futures.ThreadPoolExecutor):
                     "cannot schedule new futures after " "interpreter shutdown"
                 )
 
-            future = Future[T]()
+            future = Future[Sm]()
             work_item = concurrent.futures.thread._WorkItem(future, fn, args, kwargs)
 
             self._work_queue.put(work_item)
@@ -62,7 +62,7 @@ class ThreadPoolExecutionContext(concurrent.futures.ThreadPoolExecutor):
             return future
 
 
-class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
+class Future(monad.Monad[Sm], concurrent.futures.Future[Sm], extension.Extension):
     """Future"""
 
     def __init__(self) -> None:
@@ -71,7 +71,7 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
     def unapply(self) -> tuple[()] | tuple[Any]:
         return (self.result(),)
 
-    def __iter__(self) -> Generator[Future[T], None, T]:
+    def __iter__(self) -> Generator[Future[Sm], None, Sm]:
         try:
             match self.pattern:
                 case try_.Failure() as failure:
@@ -83,99 +83,94 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
             raise
 
     @staticmethod
-    def pure(value: T) -> Future[T]:
+    def pure(value: Sm) -> Future[Sm]:
         return Future.successful(value)
 
-    def map(
-        self, func: Callable[[T], TT], /
-    ) -> Callable[[ExecutionContext], Future[TT]]:
-        def with_context(executor: ExecutionContext, /) -> Future[TT]:
-            def fold(previous_result: try_.Try[T], /) -> try_.Try[TT]:
-                match previous_result.pattern:
-                    case try_.Failure() as failure:
-                        return cast(try_.Failure[TT], failure)
-                    case try_.Success(previous_value):
-                        return try_.Success[TT](func(previous_value))
+    @implicit_.explicit[concurrent.futures.Executor].hold
+    def map(self, func: Callable[[Sm], Tm], /) -> Future[Tm]:
+        if (executor := implicit_.parameter(concurrent.futures.Executor)) is None:
+            raise implicit_.CannotFindImplicitParameter(ExecutionContext)
 
-            return self.transform(fold)(executor)
+        def fold(previous_result: try_.Try[Sm], /) -> try_.Try[Tm]:
+            match previous_result.pattern:
+                case try_.Failure() as failure:
+                    return cast(try_.Failure[Tm], failure)
+                case try_.Success(previous_value):
+                    return try_.Success[Tm](func(previous_value))
 
-        return with_context
+        return self.transform(fold)(executor)
 
-    def flat_map(
-        self, func: Callable[[T], Future[TT]], /
-    ) -> Callable[[ExecutionContext], Future[TT]]:
-        def with_context(executor: ExecutionContext, /) -> Future[TT]:
-            def fold(try__: try_.Try[T]) -> Future[TT]:
-                match try__.pattern:
-                    case try_.Failure():
-                        return cast(Future[TT], self)
-                    case try_.Success(value):
-                        try:
-                            return func(value)
-                        except Exception as exception:
-                            return Future[TT].failed(exception)
+    @implicit_.explicit[concurrent.futures.Executor].hold
+    def flat_map(self, func: Callable[[Sm], Future[Tm]], /) -> Future[Tm]:
+        if (executor := implicit_.parameter(concurrent.futures.Executor)) is None:
+            raise implicit_.CannotFindImplicitParameter(ExecutionContext)
 
-            return self.transform_with(fold)(executor)
+        def fold(try__: try_.Try[Sm]) -> Future[Tm]:
+            match try__.pattern:
+                case try_.Failure():
+                    return cast(Future[Tm], self)
+                case try_.Success(value):
+                    try:
+                        return func(value)
+                    except Exception as exception:
+                        return Future[Tm].failed(exception)
 
-        return with_context
+        return self.transform_with(fold)(executor)
 
-    def recover(
-        self, func: Callable[[Exception], TT], /
-    ) -> Callable[[ExecutionContext], Future[TT]]:
-        def with_context(executor: ExecutionContext, /) -> Future[TT]:
-            return self.transform(lambda try__: try__.recover(func))(executor)
+    @implicit_.explicit[concurrent.futures.Executor].hold
+    def recover(self, func: Callable[[Exception], Tm], /) -> Future[Tm]:
+        if (executor := implicit_.parameter(concurrent.futures.Executor)) is None:
+            raise implicit_.CannotFindImplicitParameter(ExecutionContext)
+        return self.transform(lambda try__: try__.recover(func))(executor)
 
-        return with_context
+    @implicit_.explicit[concurrent.futures.Executor].hold
+    def recover_with(self, func: Callable[[Exception], Future[Tm]], /) -> Future[Tm]:
+        if (executor := implicit_.parameter(concurrent.futures.Executor)) is None:
+            raise implicit_.CannotFindImplicitParameter(ExecutionContext)
 
-    def recover_with(
-        self, func: Callable[[Exception], Future[TT]], /
-    ) -> Callable[[ExecutionContext], Future[TT]]:
-        def with_context(executor: ExecutionContext, /) -> Future[TT]:
-            def complete(try__: try_.Try[T]) -> Future[TT]:
-                match try__.pattern:
-                    case try_.Failure() as failure:
-                        if (result := func(failure.exception)) is None:
-                            return Future[TT].failed(failure.exception)
-                        else:
-                            return result
-                    case try_.Success():
-                        return cast(Future[TT], self)
+        def complete(try__: try_.Try[Sm]) -> Future[Tm]:
+            match try__.pattern:
+                case try_.Failure() as failure:
+                    if (result := func(failure.exception)) is None:
+                        return Future[Tm].failed(failure.exception)
+                    else:
+                        return result
+                case try_.Success():
+                    return cast(Future[Tm], self)
 
-            return self.transform_with(complete)(executor)
+        return self.transform_with(complete)(executor)
 
-        return with_context
-
+    @implicit_.explicit[concurrent.futures.Executor].hold
     def transform(
-        self, try_other: Callable[[try_.Try[T]], try_.Try[TT]], /
-    ) -> Callable[[ExecutionContext], Future[TT]]:
-        def with_context(executor: ExecutionContext, /) -> Future[TT]:
-            current_future = Future[TT]()  # PENDING
-            self.on_complete(
-                lambda result: current_future.try_complete(try_other(result))
-            )(executor)
-            return current_future
+        self, try_other: Callable[[try_.Try[Sm]], try_.Try[Tm]], /
+    ) -> Future[Tm]:
+        if (executor := implicit_.parameter(concurrent.futures.Executor)) is None:
+            raise implicit_.CannotFindImplicitParameter(ExecutionContext)
+        current_future = Future[Tm]()  # PENDING
+        self.on_complete(lambda result: current_future.try_complete(try_other(result)))(
+            executor
+        )
+        return current_future
 
-        return with_context
-
+    @implicit_.explicit[concurrent.futures.Executor].hold
     def transform_with(
-        self, func: Callable[[try_.Try[T]], Future[TT]], /
-    ) -> Callable[[ExecutionContext], Future[TT]]:
-        def with_context(executor: ExecutionContext, /) -> Future[TT]:
-            current_future = Future[TT]()
+        self, func: Callable[[try_.Try[Sm]], Future[Tm]], /
+    ) -> Future[Tm]:
+        if (executor := implicit_.parameter(concurrent.futures.Executor)) is None:
+            raise implicit_.CannotFindImplicitParameter(ExecutionContext)
+        current_future = Future[Tm]()
 
-            def complete(previous_result: try_.Try[T]) -> None:
-                previous_future = func(previous_result)
-                previous_future.on_complete(
-                    lambda current_result: current_future.try_complete(current_result),
-                )(executor)
+        def complete(previous_result: try_.Try[Sm]) -> None:
+            previous_future = func(previous_result)
+            previous_future.on_complete(
+                lambda current_result: current_future.try_complete(current_result),
+            )(executor)
 
-            self.on_complete(complete)(executor)
-            return current_future
+        self.on_complete(complete)(executor)
+        return current_future
 
-        return with_context
-
-    def try_complete(self, preview_result: try_.Try[T], /) -> bool:
-        def callback(self: Future[T]):
+    def try_complete(self, preview_result: try_.Try[Sm], /) -> bool:
+        def callback(self: Future[Sm]):
             match preview_result.pattern:
                 case try_.Failure() as failure:
                     self._exception = failure.exception
@@ -198,106 +193,74 @@ class Future(concurrent.futures.Future[T], monad.Monad[T], extension.Extension):
             self.add_done_callback(fn=callback)
             return True
 
-    def on_complete(
-        self, try_complete_other: Callable[[try_.Try[T]], U], /
-    ) -> Callable[[ExecutionContext], None]:
-        def with_context(executor: ExecutionContext, /) -> None:
-            if not self.done():
-                self.add_done_callback(fn=lambda _: try_complete_other(self.value))
-            else:
-                try:
-                    try_complete_other(self.value)
-                except Exception as exception:
-                    self._exception = exception
-                    self._result = None
-
-        return with_context
+    @implicit_.explicit[concurrent.futures.Executor].hold
+    def on_complete(self, try_complete_other: Callable[[try_.Try[Sm]], U], /) -> None:
+        if not self.done():
+            self.add_done_callback(fn=lambda _: try_complete_other(self.value))
+        else:
+            try:
+                try_complete_other(self.value)
+            except Exception as exception:
+                self._exception = exception
+                self._result = None
 
     @staticmethod
-    def successful(value: T, /) -> Future[T]:
-        future = Future[T]()
+    def successful(value: Sm, /) -> Future[Sm]:
+        future = Future[Sm]()
         future.set_result(result=value)
         return future
 
     @staticmethod
-    def failed(exception: Exception, /) -> Future[T]:
-        future = Future[T]()
+    def failed(exception: Exception, /) -> Future[Sm]:
+        future = Future[Sm]()
         future.set_exception(exception=exception)
         return future
 
     @staticmethod
-    def from_try(try_value: try_.Try[T], /) -> Future[T]:
+    def from_try(try_value: try_.Try[Sm], /) -> Future[Sm]:
         match try_value.pattern:
             case try_.Failure() as failure:
-                return Future[T].failed(failure.exception)
+                return Future[Sm].failed(failure.exception)
             case try_.Success(value):
-                return Future[T].successful(value)
+                return Future[Sm].successful(value)
 
     @property
-    def value(self) -> SubType[T]:
+    def value(self) -> SubType[Sm]:
         try:
-            return try_.Success[T](self.result())
+            return try_.Success[Sm](self.result())
         except Exception as failure:
-            return try_.Failure[T](failure)
+            return try_.Failure[Sm](failure)
 
     @property
-    def pattern(self) -> SubType[T]:
+    def pattern(self) -> SubType[Sm]:
         return self.value
 
     @staticmethod
-    def with_context(
-        func: Callable[P, Future[T]]
-    ) -> Callable[P, Callable[[ExecutionContext], Future[T]]]:
+    def hold(func: Callable[P, Sm]) -> implicit_.Implicit[Callable[P, Future[Sm]]]:
         @wraps(func)
-        def wrapper(
-            *args: P.args, **kwargs: P.kwargs
-        ) -> Callable[[ExecutionContext], Future[T]]:
-            def wrapper_(executor: ExecutionContext, /) -> Future[T]:
-                return executor.submit(lambda: func(*args, **kwargs)).result()
-
-            return wrapper_
+        @implicit_.implicit[concurrent.futures.Executor].hold
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Future[Sm]:
+            if (executor := implicit_.parameter(concurrent.futures.Executor)) is None:
+                raise implicit_.CannotFindImplicitParameter(ExecutionContext)
+            return executor.submit(func, *args, **kwargs)
 
         return wrapper
 
     @staticmethod
-    def hold(
-        func: Callable[P, T]
-    ) -> Callable[P, Callable[[ExecutionContext], Future[T]]]:
-        """
-
-        Example usage of ProcessPoolExecutionContext:
-
-            ec = ProcessPoolExecutionContext(max_worker=5)
-
-            def toplevel_function(*args, **kwargs) -> T:
-                ...
-
-            _ = Future.hold(toplevel_function)(*args, **kwargs)(ec)
-
-        Example usage of ThreadPoolExecutionContext:
-
-            ec = ThreadPoolExecutionContext(max_worker=5)
-
-            @Future.hold
-            def function(*args, **kwargs) -> T:
-                ...
-
-            _ = function(*args, **kwargs)(ec)
-
-        """
-
+    def hold_explicit(
+        func: Callable[P, Sm]
+    ) -> Callable[P, Callable[[concurrent.futures.Executor], Future[Sm]]]:
         @wraps(func)
-        def wrapper(
-            *args: P.args, **kwargs: P.kwargs
-        ) -> Callable[[ExecutionContext], Future[T]]:
-            def with_context(executor: ExecutionContext, /) -> Future[T]:
-                return executor.submit(func, *args, **kwargs)
+        @implicit_.explicit[concurrent.futures.Executor].hold
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Future[Sm]:
 
-            return with_context
+            if (executor := implicit_.parameter(concurrent.futures.Executor)) is None:
+                raise implicit_.CannotFindImplicitParameter(ExecutionContext)
+            return executor.submit(func, *args, **kwargs)
 
         return wrapper
 
 
 ExecutionContext: TypeAlias = ProcessPoolExecutionContext | ThreadPoolExecutionContext
-SubType: TypeAlias = try_.Failure[T] | try_.Success[T]
-FutureDo: TypeAlias = Generator[Future[T], None, T]
+SubType: TypeAlias = try_.Failure[Sm] | try_.Success[Sm]
+FutureDo: TypeAlias = Generator[Future[Sm], None, Sm]

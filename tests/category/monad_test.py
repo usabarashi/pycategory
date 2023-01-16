@@ -6,6 +6,7 @@ def test_do():
         EitherTFutureDo,
         EitherTTry,
         EitherTTryDo,
+        ExecutionContext,
         Future,
         FutureDo,
         Monad,
@@ -15,6 +16,7 @@ def test_do():
         Success,
         ThreadPoolExecutionContext,
         TryDo,
+        explicit,
     )
 
     @Monad.do
@@ -50,7 +52,7 @@ def test_do():
 
     te = ThreadPoolExecutionContext(max_workers=5)
 
-    @Future.with_context
+    @explicit[ExecutionContext].hold
     @Monad.do
     def future_context() -> FutureDo[int]:
         _ = 42
