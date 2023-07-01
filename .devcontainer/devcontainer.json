@@ -1,80 +1,77 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.154.2/containers/python-3
 {
-	"name": "Python-category",
+	"name": "category",
 	"build": {
 		"dockerfile": "Dockerfile",
 		"context": "..",
 		"args": {
-			// Update 'VARIANT' to pick a Python version: 3, 3.6, 3.7, 3.8, 3.9
 			"VARIANT": "3.10",
-			// Options
 			"INSTALL_NODE": "true",
 			"NODE_VERSION": "lts/*"
 		}
 	},
 	"remoteEnv": {
-		"PYTHONPATH": "src",
-		"PIPENV_VENV_IN_PROJECT": "1",
+		"PYTHONPATH": "src"
 	},
-	// Set *default* container specific settings.json values on container create.
-	"settings": {
-		"[python]": {
-			"editor.tabSize": 4,
-			"editor.formatOnSave": true,
-			"editor.formatOnPaste": false,
-			"editor.formatOnType": false,
-			"editor.insertSpaces": true,
-			"editor.codeActionsOnSave": {
-				"source.organizeImports": true
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"[python]": {
+					"editor.tabSize": 4,
+					"editor.formatOnSave": true,
+					"editor.formatOnPaste": false,
+					"editor.formatOnType": false,
+					"editor.insertSpaces": true,
+					"editor.codeActionsOnSave": {
+						"source.fixAll.ruff": true,
+						"source.organizeImports.ruff": true
+					}
+				},
+				"python.pythonPath": "/workspaces/python-category/.venv/bin/python",
+				"python.analysis.typeCheckingMode": "strict",
+				"python.analysis.extraPaths": [],
+				"python.analysis.inlayHints.callArgumentNames": true,
+				"python.analysis.inlayHints.functionReturnTypes": true,
+				"python.analysis.inlayHints.variableTypes": true,
+				"python.linting.enabled": true,
+				"python.linting.pylintEnabled": false,
+				"python.linting.flake8Enabled": false,
+				"python.linting.banditEnabled": true,
+				"python.linting.banditArgs": [
+					"--ignore=B101"
+				],
+				"python.linting.mypyEnabled": false,
+				"python.formatting.provider": "black",
+				"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+				"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
+				"python.testing.pytestArgs": [
+					"tests"
+				],
+				"python.testing.unittestEnabled": false,
+				"python.testing.pytestEnabled": true,
+				"black-formatter.args": [
+					"--line-length=100"
+				],
+				"black-formatter.path": [
+					"/workspaces/python-category/.venv/bin/black"
+				],
+				"ruff.args": [
+					"--config=/workspaces/python-category/pyproject.toml"
+				],
+				"ruff.path": [
+					"/workspaces/python-category/.venv/bin/ruff"
+				]
 			},
-		},
-		"terminal.integrated.shell.linux": "/bin/bash",
-		"python.pythonPath": "${workspaceFolder}/.venv/bin/python",
-		"python.analysis.typeCheckingMode": "strict",
-		"python.analysis.extraPaths": [
-			"${workspaceFolder}/src"
-		],
-		"python.linting.enabled": true,
-		"python.linting.pylintEnabled": false,
-		"python.linting.flake8Enabled": true,
-		"python.linting.banditEnabled": true,
-		"python.linting.banditArgs": [
-			"--ignore=B101"
-		],
-		"python.linting.mypyEnabled": false,
-		"python.formatting.provider": "black",
-		"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
-		"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-		"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
-		"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
-		"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-		"python.linting.flake8Args": [
-			"--ignore=E721",
-			"--max-line-length=100"
-		],
-		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
-		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
-		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
-		"python.analysis.inlayHints.functionReturnTypes": true,
-		"python.analysis.inlayHints.variableTypes": true,
-		"python.testing.pytestArgs": [
-			"tests"
-		],
-		"python.testing.unittestEnabled": false,
-		"python.testing.pytestEnabled": true
-	},
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"ms-python.python",
-		"ms-python.vscode-pylance",
-		"streetsidesoftware.code-spell-checker"
-	],
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "pip3 install --user -r requirements.txt",
-	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-	"remoteUser": "vscode"
+			"extensions": [
+				"charliermarsh.ruff",
+				"ms-python.black-formatter",
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-vscode.makefile-tools",
+				"streetsidesoftware.code-spell-checker"
+			],
+			"remoteUser": "vscode"
+		}
+	}
 }
