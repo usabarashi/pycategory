@@ -3,9 +3,7 @@ def test_functor_law():
 
     assert functor.identity_law(Failure[int](Exception()))
     assert functor.identity_law(Success[int](42))
-    assert functor.composite_law(
-        F=Failure[int](Exception()), f=lambda v: [v], g=lambda v: (v,)
-    )
+    assert functor.composite_law(F=Failure[int](Exception()), f=lambda v: [v], g=lambda v: (v,))
     assert functor.composite_law(F=Success[int](42), f=lambda v: [v], g=lambda v: (v,))
 
 
@@ -48,15 +46,11 @@ def test_try_hold():
             raise Exception("error")
         return unmask
 
-    result = unmask_context(
-        0, unmask="John Doe.", class_=Class_(public_value=42, private_value=42)
-    )
+    result = unmask_context(0, unmask="John Doe.", class_=Class_(public_value=42, private_value=42))
     assert Failure is type(result)
     failure = cast(Failure[str], result)
     assert processor.RuntimeErrorReport is type(failure.exception.args[-1])
-    runtime_error_report = cast(
-        processor.RuntimeErrorReport, failure.exception.args[-1]
-    )
+    runtime_error_report = cast(processor.RuntimeErrorReport, failure.exception.args[-1])
     assert {
         "mask": processor.MASK,
         "unmask": "John Doe.",
@@ -66,26 +60,26 @@ def test_try_hold():
 
 
 def test_try_do():
-    from category import Failure, Monad, Right, Success, Try, TryDo
+    from category import Failure, Right, Success, Try, TryDo
 
-    @Monad.do
-    def safe_context() -> TryDo[int]:
+    @Try.do
+    def safe_context() -> TryDo[int]:  # type: ignore # Not access
         _ = yield from Success[bool](True)
         one = yield from Success[int](1)
         two = 2
         three = yield from Success[int](3)
         return one + two + three
 
-    @Monad.do
-    def outside_context() -> TryDo[int]:
+    @Try.do
+    def outside_context() -> TryDo[int]:  # type: ignore # Not access
         _ = yield from Success[bool](True)
         one = yield from Success[int](1)
         two = 2
         three = yield from Success[int](3)
-        three = yield from Right[Exception, int](42)  # Outside
-        return str(one + two + three)  # Outside
+        three = yield from Right[Exception, int](42)  # type: ignore # Error case
+        return str(one + two + three)  # type: ignore # Error case
 
-    @Monad.do
+    @Try.do
     def failure_context() -> TryDo[int]:
         one = yield from Success[int](1)
         two = 2
@@ -99,7 +93,7 @@ def test_try_do():
     except Exception as error:
         assert ValueError is type(error)
 
-    @Monad.do
+    @Try.do
     def success_context() -> TryDo[int]:
         one = yield from Success[int](1)
         two = 2
@@ -260,9 +254,7 @@ def test_success_flat_map():
     flat_mapped_failure = success.flat_map(lambda success: Failure[None](Exception()))
     assert success is not flat_mapped_failure
     assert Failure is type(flat_mapped_failure)
-    assert Success is type(
-        Success[int](0).flat_map(lambda success: Success[None](None))
-    )
+    assert Success is type(Success[int](0).flat_map(lambda success: Success[None](None)))
 
 
 def test_success_recover():
@@ -279,9 +271,7 @@ def test_success_recover_with():
     from category import Failure, Success
 
     success = Success[int](42)
-    recover_with_failure = success.recover_with(
-        lambda success: Failure[None](Exception())
-    )
+    recover_with_failure = success.recover_with(lambda success: Failure[None](Exception()))
     assert success is recover_with_failure
     assert Success is type(recover_with_failure)
     assert 42 == recover_with_failure.get()
@@ -304,9 +294,7 @@ def test_success_to_option():
 def test_success_fold():
     from category import Success
 
-    assert None is Success[int](0).fold(
-        failure=lambda failure: None, success=lambda success: None
-    )
+    assert None is Success[int](0).fold(failure=lambda failure: None, success=lambda success: None)
 
 
 def test_success_is_failure():
@@ -344,13 +332,9 @@ def test_dataclass():
         failure: Failure[int]
         success: Success[int]
 
-    dict_data = asdict(
-        AsDict(failure=Failure[int](Exception(42)), success=Success[int](42))
-    )
+    dict_data = asdict(AsDict(failure=Failure[int](Exception(42)), success=Success[int](42)))
     assert Failure is type(dict_data.get("failure", None))
-    assert Exception is type(
-        cast(Failure[int], dict_data.get("failure", None)).exception
-    )
+    assert Exception is type(cast(Failure[int], dict_data.get("failure", None)).exception)
     assert Success is type(dict_data.get("success", None))
     assert 42 == cast(Success[int], dict_data.get("success", None)).get()
 

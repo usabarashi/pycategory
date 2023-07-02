@@ -1,37 +1,36 @@
+"""Functor"""
 from __future__ import annotations
 
-from typing import Callable, Generic, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 
 from . import function_
 
-A = TypeVar("A", covariant=True)
-B = TypeVar("B", covariant=True)
-C = TypeVar("C", covariant=True)
+Ap = TypeVar("Ap", covariant=True)
+Bp = TypeVar("Bp", covariant=True)
 
 
-class Functor(Generic[A]):
+class Functor(Generic[Ap]):
     """Functor
 
     class Functor f where
         fmap :: (a -> b) -> f a -> f b
     """
 
-    def map(self, function_: Callable[[A], B], /) -> Functor[B]:
-        raise NotImplementedError
+    def map(self, function_: Callable[[Ap], Bp], /) -> Functor[Bp]:
+        raise NotImplementedError()
 
 
-def identity_law(F: Functor[A], /) -> bool:
+def identity_law(F: Functor[Any], /) -> bool:
     """fmap id = id"""
     return F.map(lambda value: value) == F
 
 
 def composite_law(
     *,
-    F: Functor[A],
-    f: Callable[[B], C],
-    g: Callable[[A], B],
+    F: Functor[Ap],
+    f: Callable[[Bp], Any],
+    g: Callable[[Ap], Bp],
 ) -> bool:
-
     f_ = function_.Function1(f)
     g_ = function_.Function1(g)
 

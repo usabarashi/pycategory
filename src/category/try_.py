@@ -18,81 +18,89 @@ from typing import (
 
 from . import collection, either, extension, extractor, monad, option, processor
 
-T = TypeVar("T", covariant=True)
-TT = TypeVar("TT")
-EE = TypeVar("EE")
+T = TypeVar("T")
+Tp = TypeVar("Tp", covariant=True)
+TTp = TypeVar("TTp", covariant=True)
+Ep = TypeVar("Ep", covariant=True)
 U = TypeVar("U")
 P = ParamSpec("P")
 
 
-class Try(ABC, monad.Monad[T], extension.Extension):
+class Try(ABC, monad.Monad[Tp], extension.Extension):
     """Try"""
 
     @abstractmethod
-    def __iter__(self) -> Generator[Try[T], None, T]:
-        raise NotImplementedError
+    def __iter__(self) -> Generator[Try[Tp], None, Tp]:
+        raise NotImplementedError()
 
     @abstractmethod
-    def map(self, func: Callable[[T], TT], /) -> Try[TT]:
-        raise NotImplementedError
+    def map(self, func: Callable[[Tp], TTp], /) -> Try[TTp]:
+        raise NotImplementedError()
 
     @staticmethod
     def pure(value: T) -> Try[T]:
         return Success[T](value)
 
     @abstractmethod
-    def flat_map(self, func: Callable[[T], Try[TT]], /) -> Try[TT]:
-        raise NotImplementedError
+    def flat_map(self, func: Callable[[Tp], Try[TTp]], /) -> Try[TTp]:  # type: ignore
+        raise NotImplementedError()
 
     @abstractmethod
-    def recover(self, func: Callable[[Exception], TT], /) -> Try[TT]:
-        raise NotImplementedError
+    def recover(self, func: Callable[[Exception], TTp], /) -> Try[TTp]:
+        raise NotImplementedError()
 
     @abstractmethod
-    def recover_with(self, func: Callable[[Exception], Try[TT]], /) -> Try[TT]:
-        raise NotImplementedError
+    def recover_with(self, func: Callable[[Exception], Try[TTp]], /) -> Try[TTp]:
+        raise NotImplementedError()
 
     @abstractproperty
-    def to_either(self) -> either.Either[Exception, T]:
-        raise NotImplementedError
+    def to_either(self) -> either.Either[Exception, Tp]:
+        raise NotImplementedError()
 
     @abstractproperty
-    def to_option(self) -> option.Option[T]:
-        raise NotImplementedError
+    def to_option(self) -> option.Option[Tp]:
+        raise NotImplementedError()
 
     @abstractmethod
     def fold(
         self,
         *,
-        failure: Callable[[Exception], TT],
-        success: Callable[[T], TT],
-    ) -> TT:
-        raise NotImplementedError
+        failure: Callable[[Exception], TTp],
+        success: Callable[[Tp], TTp],
+    ) -> TTp:
+        raise NotImplementedError()
 
     @abstractmethod
     def is_failure(self) -> bool:
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abstractmethod
     def is_success(self) -> bool:
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abstractmethod
-    def get(self) -> T:
-        raise NotImplementedError
+    def get(self) -> Tp:
+        raise NotImplementedError()
 
     @abstractmethod
-    def get_or_else(self, default: Callable[..., EE], /) -> EE | T:
-        raise NotImplementedError
+    def get_or_else(self, default: Callable[..., Ep], /) -> Ep | Tp:
+        raise NotImplementedError()
 
     @abstractproperty
-    def pattern(self) -> SubType[T]:
-        raise NotImplementedError
+    def pattern(self) -> SubType[Tp]:
+        raise NotImplementedError()
+
+    @staticmethod
+    def do(  # type: ignore
+        context: Callable[P, Generator[Try[Any], None, Tp]], /
+    ) -> Callable[P, Try[Tp]]:
+        """map, flat_map combination syntax sugar."""
+        return cast(Callable[P, Try[Tp]], monad.Monad.do(context))
 
     @overload
     @staticmethod
-    def hold(func: Callable[P, T], /) -> Callable[P, Try[T]]:
-        ...
+    def hold(func: Callable[P, Tp], /) -> Callable[P, Try[Tp]]:
+        """Try context decorator"""
 
     @overload
     @staticmethod
@@ -100,21 +108,23 @@ class Try(ABC, monad.Monad[T], extension.Extension):
         *,
         unmask: Optional[tuple[str, ...]] = None,
         debugger: Optional[Callable[[processor.Arguments], Any]] = None,
-    ) -> Callable[[Callable[P, T]], Callable[P, Try[T]]]:
-        """
+    ) -> Callable[[Callable[P, Tp]], Callable[P, Try[Tp]]]:
+        """Try context decorator
 
         Unmask and record arguments in case of Failure.
         """
 
     @staticmethod
-    def hold(
-        func: Optional[Callable[P, T]] = None,
+    def hold(  # type: ignore
+        func: Optional[Callable[P, Tp]] = None,
         /,
         *,
         unmask: Optional[tuple[str, ...]] = None,
         debugger: Optional[Callable[[processor.Arguments], Any]] = None,
-    ) -> Callable[P, Try[T]] | Callable[[Callable[P, T]], Callable[P, Try[T]]]:
-        def wrap(func: Callable[P, T], /) -> Callable[P, Try[T]]:
+    ) -> Callable[P, Try[Tp]] | Callable[[Callable[P, Tp]], Callable[P, Try[Tp]]]:
+        """Try context decorator"""
+
+        def wrap(func: Callable[P, Tp], /) -> Callable[P, Try[Tp]]:
             return _hold(func=func, unmask=unmask, debugger=debugger)
 
         if func is None:
@@ -125,14 +135,14 @@ class Try(ABC, monad.Monad[T], extension.Extension):
 
 def _hold(
     *,
-    func: Callable[P, T],
+    func: Callable[P, Tp],
     unmask: Optional[tuple[str, ...]] = None,
     debugger: Optional[Callable[[processor.Arguments], Any]] = None,
-) -> Callable[P, Try[T]]:
+) -> Callable[P, Try[Tp]]:
     @wraps(func)
-    def wrapper(*args: P.args, **kwargs: P.kwargs) -> Try[T]:
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> Try[Tp]:
         try:
-            return Success[T](func(*args, **kwargs))
+            return Success[Tp](func(*args, **kwargs))
         except Exception as exception:
             arguments = processor.arguments(func, *args, **kwargs)
             masked_arguments = processor.masking(arguments=arguments, unmask=unmask)
@@ -143,12 +153,12 @@ def _hold(
                 debug=debug,
             )
             exception.args = tuple(collection.Vector(exception.args).append(report))
-            return Failure[T](exception)
+            return Failure[Tp](exception)
 
     return wrapper
 
 
-class Failure(Try[T], extractor.Extractor):
+class Failure(Try[Tp], extractor.Extractor):
     """Failure"""
 
     __match_args__ = ("exception",)
@@ -159,53 +169,47 @@ class Failure(Try[T], extractor.Extractor):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({repr(self.exception)})"
 
-    def __eq__(self, other: Try[T]) -> bool:
+    def __eq__(self, other: Try[Tp]) -> bool:  # type: ignore
         match other.pattern:
             case Failure(exception):
                 return self.exception == exception
             case Success():
                 return False
 
-    def __iter__(self) -> Generator[Try[T], None, T]:
+    def __iter__(self) -> Generator[Try[Tp], None, Tp]:
         raise GeneratorExit(self) from self.exception
 
-    def map(self, _: Callable[[T], TT], /) -> Try[TT]:
-        return cast(Failure[TT], self)
+    def map(self, _: Callable[[Tp], TTp], /) -> Try[TTp]:
+        return cast(Failure[TTp], self)
 
-    def flat_map(self, _: Callable[[T], Try[TT]], /) -> Try[TT]:
-        return cast(Failure[TT], self)
+    def flat_map(self, _: Callable[[Tp], Try[TTp]], /) -> Try[TTp]:
+        return cast(Failure[TTp], self)
 
-    def recover(self, func: Callable[[Exception], TT], /) -> Try[TT]:
+    def recover(self, func: Callable[[Exception], TTp], /) -> Try[TTp]:
         try:
             if (result := func(self.exception)) is None:
-                return cast(Failure[TT], self)
+                return cast(Failure[TTp], self)
             else:
-                return Success[TT](result)
+                return Success[TTp](result)
         except Exception as exception:
-            return Failure[TT](exception)
+            return Failure[TTp](exception)
 
-    def recover_with(self, func: Callable[[Exception], Try[TT]], /) -> Try[TT]:
-        try:
-            if (result := func(self.exception)) is None:
-                return cast(Failure[TT], self)
-            else:
-                return result
-        except Exception as exception:
-            return Failure[TT](exception)
+    def recover_with(self, func: Callable[[Exception], Try[TTp]], /) -> Try[TTp]:
+        return func(self.exception)
 
     @property
-    def to_either(self) -> either.Either[Exception, T]:
+    def to_either(self) -> either.Either[Exception, Tp]:
         return either.Left(self.exception)
 
     @property
-    def to_option(self) -> option.Option[T]:
+    def to_option(self) -> option.Option[Tp]:
         return option.VOID
 
     def fold(
         self,
         *,
         failure: Callable[[Exception], U],
-        success: Callable[[T], U],
+        success: Callable[[Tp], U],
     ) -> U:
         return failure(self.exception)
 
@@ -215,65 +219,65 @@ class Failure(Try[T], extractor.Extractor):
     def is_success(self) -> Literal[False]:
         return False
 
-    def get(self) -> T:
+    def get(self) -> Tp:
         raise ValueError() from self.exception
 
-    def get_or_else(self, default: Callable[..., EE], /) -> EE:
+    def get_or_else(self, default: Callable[..., Ep], /) -> Ep:
         return default()
 
     @property
-    def pattern(self) -> SubType[T]:
+    def pattern(self) -> SubType[Tp]:
         return self
 
 
-class Success(Try[T], extractor.Extractor):
+class Success(Try[Tp], extractor.Extractor):
     """Success"""
 
     __match_args__ = ("value",)
 
-    def __init__(self, value: T, /):
+    def __init__(self, value: Tp, /):
         self.value = value
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.value})"
 
-    def __eq__(self, other: Try[T]) -> bool:
+    def __eq__(self, other: Try[Tp]) -> bool:  # type: ignore
         match other.pattern:
             case Failure():
                 return False
             case Success(value):
                 return self.value == value
 
-    def __iter__(self) -> Generator[Try[T], None, T]:
+    def __iter__(self) -> Generator[Try[Tp], None, Tp]:
         yield self
         return self.value
 
-    def map(self, func: Callable[[T], TT], /) -> Try[TT]:
-        return Success[TT](func(self.value))
+    def map(self, func: Callable[[Tp], TTp], /) -> Try[TTp]:
+        return Success[TTp](func(self.value))
 
-    def flat_map(self, func: Callable[[T], Try[TT]], /) -> Try[TT]:
+    def flat_map(self, func: Callable[[Tp], Try[TTp]], /) -> Try[TTp]:
         return func(self.value)
 
-    def recover(self, _: Callable[[Exception], TT], /) -> Try[TT]:
-        return cast(Try[TT], self)
+    def recover(self, _: Callable[[Exception], TTp], /) -> Try[TTp]:
+        return cast(Try[TTp], self)
 
-    def recover_with(self, _: Callable[[Exception], Try[TT]], /) -> Try[TT]:
-        return cast(Try[TT], self)
+    def recover_with(self, _: Callable[[Exception], Try[TTp]], /) -> Try[TTp]:
+        return cast(Try[TTp], self)
 
     @property
-    def to_either(self) -> either.Either[Exception, T]:
+    def to_either(self) -> either.Either[Exception, Tp]:
         return either.Right(self.value)
 
     @property
-    def to_option(self) -> option.Option[T]:
-        return option.Some[T](self.value)
+    def to_option(self) -> option.Option[Tp]:
+        return option.Some[Tp](self.value)
 
     def fold(
         self,
         *,
-        failure: Callable[[Exception], TT],
-        success: Callable[[T], TT],
-    ) -> TT:
+        failure: Callable[[Exception], TTp],
+        success: Callable[[Tp], TTp],
+    ) -> TTp:
         return success(self.value)
 
     def is_failure(self) -> Literal[False]:
@@ -282,16 +286,16 @@ class Success(Try[T], extractor.Extractor):
     def is_success(self) -> Literal[True]:
         return True
 
-    def get(self) -> T:
+    def get(self) -> Tp:
         return self.value
 
-    def get_or_else(self, default: Callable[..., EE], /) -> T:
+    def get_or_else(self, default: Callable[..., Any], /) -> Tp:
         return self.value
 
     @property
-    def pattern(self) -> SubType[T]:
+    def pattern(self) -> SubType[Tp]:
         return self
 
 
-SubType: TypeAlias = Failure[T] | Success[T]
-TryDo: TypeAlias = Generator[Try[T], None, T]
+SubType: TypeAlias = Failure[Tp] | Success[Tp]
+TryDo: TypeAlias = Generator[Try[Any], None, Tp]
