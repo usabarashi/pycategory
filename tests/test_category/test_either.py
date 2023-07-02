@@ -20,9 +20,9 @@ def test_functor_law():
 
 
 def test_either_do():
-    from category import EitherDo, Left, Monad, Right, Some, Success
+    from category import Either, EitherDo, Left, Right, Some, Success
 
-    @Monad.do
+    @Either.do
     def safe_context() -> EitherDo[IndexError | KeyError, int]:
         _ = yield from Right[IndexError, bool](True)
         one = yield from Right[IndexError, int](1)
@@ -34,7 +34,7 @@ def test_either_do():
 
     assert 6 == safe_context().get()
 
-    @Monad.do
+    @Either.do
     def outside_context() -> EitherDo[IndexError | KeyError, int]:
         _ = yield from Right[IndexError, bool](True)
         one = yield from Right[IndexError, int](1)
@@ -42,11 +42,11 @@ def test_either_do():
         three = yield from Right[KeyError, int](3)
         _ = yield from Right[IndexError, bool](False)
         _ = yield from Right[KeyError, bool](False)
-        _ = yield from Some[int](42)  # Outside
-        _ = yield from Success[int](42)  # Outside
-        _ = yield from Right[ValueError, int](42)  # Outside
-        _ = yield from Right[TypeError, int](42)  # Outside
-        return str(one + two + three)  # Outside
+        _ = yield from Some[int](42)  # type: ignore # Error case
+        _ = yield from Success[int](42)  # type: ignore # Error case
+        _ = yield from Right[ValueError, int](42)  # type: ignore # Error case
+        _ = yield from Right[TypeError, int](42)  # type: ignore # Error case
+        return str(one + two + three)  # type: ignore # Error case
 
     try:
         outside_context().get()
@@ -54,7 +54,7 @@ def test_either_do():
     except Exception as error:
         assert TypeError is type(error)
 
-    @Monad.do
+    @Either.do
     def left_context() -> EitherDo[Exception, int]:
         one = yield from Right[Exception, int](1)
         two = 2
@@ -64,12 +64,10 @@ def test_either_do():
     assert Exception is type(left_context().left().get())
     assert True is left_context().is_left()
     assert False is left_context().is_right()
-    assert type(Left[Exception, int](Exception()).left().get()) is type(
-        left_context().left().get()
-    )
+    assert type(Left[Exception, int](Exception()).left().get()) is type(left_context().left().get())
     assert None is left_context().fold(left=lambda left: None, right=lambda right: None)
 
-    @Monad.do
+    @Either.do
     def right_context() -> EitherDo[None, int]:
         one = yield from Right[None, int](1)
         two = 2
@@ -80,9 +78,7 @@ def test_either_do():
     assert False is right_context().is_left()
     assert True is right_context().is_right()
     assert Right is type(right_context())
-    assert None is right_context().fold(
-        left=lambda left: None, right=lambda right: None
-    )
+    assert None is right_context().fold(left=lambda left: None, right=lambda right: None)
     assert 6 == right_context().get()
 
 
@@ -121,9 +117,7 @@ def test_left_flat_map():
     assert Left is type(flat_mapped_left)
     assert LeftProjection is type(flat_mapped_left.left())
     assert 0 == flat_mapped_left.left().get()
-    assert 0 == left.flat_map(lambda right: Left[int, None](1)).left().get_or_else(
-        lambda: 1
-    )
+    assert 0 == left.flat_map(lambda right: Left[int, None](1)).left().get_or_else(lambda: 1)
     assert RightProjection is type(flat_mapped_left.right())
     try:
         flat_mapped_left.right().get()
@@ -143,9 +137,7 @@ def test_left_to_try():
     from category import Failure, Left, SubtypeConstraints
 
     assert Failure is type(
-        Left[TypeError, int](TypeError()).to_try(
-            SubtypeConstraints(TypeError, Exception)
-        )
+        Left[TypeError, int](TypeError()).to_try(SubtypeConstraints(TypeError, Exception))
     )
     try:
         Left[bool, int](False).to_try(SubtypeConstraints(bool, Exception))
@@ -157,9 +149,7 @@ def test_left_to_try():
 def test_left_fold():
     from category import Left
 
-    assert None is Left[None, int](None).fold(
-        left=lambda left: None, right=lambda right: None
-    )
+    assert None is Left[None, int](None).fold(left=lambda left: None, right=lambda right: None)
 
 
 def test_left_leftprojecton():
@@ -292,12 +282,8 @@ def test_right_to_try():
 def test_right_fold():
     from category import Left, Right
 
-    assert None is Left[None, int](None).fold(
-        left=lambda left: None, right=lambda right: None
-    )
-    assert None is Right[None, int](0).fold(
-        left=lambda left: None, right=lambda right: None
-    )
+    assert None is Left[None, int](None).fold(left=lambda left: None, right=lambda right: None)
+    assert None is Right[None, int](0).fold(left=lambda left: None, right=lambda right: None)
 
 
 def test_right_rightprojecton():

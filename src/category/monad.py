@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from functools import wraps
 from typing import (
+    Any,
     Callable,
     Generator,
-    Generic,
     Optional,
     ParamSpec,
     Type,
@@ -13,17 +13,16 @@ from typing import (
     cast,
 )
 
-from . import applicative_functor
+from . import applicative
 
-M = TypeVar("M", covariant=True)
-A = TypeVar("A", covariant=True)
-B = TypeVar("B", covariant=True)
+Tp = TypeVar("Tp", covariant=True)
+TTp = TypeVar("TTp", covariant=True)
 P = ParamSpec("P")
 
 FixedMonad = 0
 
 
-class Monad(Generic[A], applicative_functor.ApplicativeFunctor[A]):
+class Monad(applicative.Applicative[Tp]):
     """Monad
 
     class Monad m where
@@ -35,24 +34,24 @@ class Monad(Generic[A], applicative_functor.ApplicativeFunctor[A]):
         fail msg = error msg
     """
 
-    def __iter__(self) -> Generator[Monad[A], None, A]:
-        raise NotImplementedError
+    def __iter__(self) -> Generator[Monad[Tp], None, Tp]:
+        raise NotImplementedError()
 
-    def flat_map(self: Monad[A], function_: Callable[[A], Monad[B]], /) -> Monad[B]:
-        raise NotImplementedError
+    def flat_map(self, func: Callable[[Tp], Monad[TTp]], /) -> Monad[TTp]:
+        raise NotImplementedError()
 
     @staticmethod
-    def do(context: Callable[P, Generator[M, None, A]], /) -> Callable[P, M]:
+    def do(context: Callable[P, Generator[Monad[Any], None, Tp]], /) -> Callable[P, Monad[Tp]]:
         """map, flat_map combination syntax sugar."""
 
         @wraps(context)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> M:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Monad[Tp]:
             context_ = context(*args, **kwargs)
-            context_type: Optional[Type[Monad[A]]] = None
+            yield_state: Optional[Monad[Any]] = None
+            context_type: Optional[Type[Monad[Tp]]] = None
             try:
-                while True:
-                    yield_state = next(context_)
-                    if not isinstance(yield_state, Monad):
+                while yield_state := next(context_):
+                    if not isinstance(yield_state, Monad):  # type: ignore # Runtime type check
                         raise TypeError(yield_state)
                     match context_type:
                         case None:
@@ -60,18 +59,28 @@ class Monad(Generic[A], applicative_functor.ApplicativeFunctor[A]):
                         case _ if type(yield_state) is not context_type:
                             raise TypeError(
                                 yield_state,
-                                f"A different type ${type(yield_state)} from the context ${context_} is specified.",
+                                f"""
+                                A different type ${type(yield_state)} \
+                                from the context ${context_} is specified.
+                                """,
                             )
                         case _ if type(yield_state) is context_type:
                             # Priority is given to the value of the subgenerator's return monad.
-                            ...
+                            pass
                         case _:
                             raise ValueError(context)
+
             except GeneratorExit as exit:
-                return cast(Monad[A], exit.args[FixedMonad])
+                return cast(Monad[Tp], exit.args[FixedMonad])
+
             except StopIteration as return_:
+                if yield_state is None:
+                    raise TypeError(context, "No context type specification")
                 if context_type is None:
                     raise TypeError(context, "No context type specification")
-                return cast(Monad[A], context_type).pure(return_.value)
+                result: Tp = return_.value
+                return cast(Monad[Tp], yield_state.map(lambda _: result))
+
+            raise TypeError(context, "No context type specification")
 
         return wrapper

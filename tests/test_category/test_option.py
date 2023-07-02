@@ -8,26 +8,26 @@ def test_functor_law():
 
 
 def test_option_do():
-    from category import VOID, Monad, OptionDo, Right, Some, Void
+    from category import VOID, Option, OptionDo, Right, Some, Void
 
-    @Monad.do
-    def safe_context() -> OptionDo[int]:
+    @Option.do
+    def safe_context() -> OptionDo[int]:  # type: ignore # Not access
         _ = yield from Some[bool](True)
         one = yield from Some[int](1)
         two = 2
         three = yield from Some[int](3)
         return one + two + three
 
-    @Monad.do
-    def outside_context() -> OptionDo[int]:
+    @Option.do
+    def outside_context() -> OptionDo[int]:  # type: ignore # Not access
         _ = yield from Some[bool](True)
         one = yield from Some[int](1)
         two = 2
         three = yield from Some[int](3)
-        _ = yield from Right[Exception, int](42)  # Outside
-        return str(one + two + three)  # Outside
+        _ = yield from Right[Exception, int](42)  # type: ignore # Error case
+        return str(one + two + three)  # type: ignore # Error case
 
-    @Monad.do
+    @Option.do
     def void_context() -> OptionDo[int]:
         one = yield from Some[int](1)
         two = 2
@@ -39,7 +39,7 @@ def test_option_do():
     assert False is void_context().not_empty()
     assert None is void_context().fold(void=lambda: None, some=lambda some: None)
 
-    @Monad.do
+    @Option.do
     def some_context() -> OptionDo[int]:
         one = yield from Some[int](1)
         two = 2
@@ -209,9 +209,7 @@ def test_pattern_match():
         case _:
             assert False
 
-    match cast(Option[int], Some(41)), cast(Option[int], Some(42)), cast(
-        Option[int], Some(43)
-    ):
+    match cast(Option[int], Some(41)), cast(Option[int], Some(42)), cast(Option[int], Some(43)):
         case Some(value=x), Some(value=y), Some(value=z) if x < y < z:
             assert True
         case _:
@@ -237,9 +235,9 @@ def test_json_encode():
                 match obj:
                     case Void():
                         return None
-                    case Some(primitive) if not hasattr(primitive, "__dict__"):
-                        return primitive
-                    case Some(value) if isinstance(value, Some):
+                    case Some(primitive) if not hasattr(primitive, "__dict__"):  # type: ignore
+                        return primitive  # type: ignore
+                    case Some(value) if isinstance(value, Some):  # type: ignore
                         return recur(value)
                     case _:
                         return json.JSONEncoder.default(self, o)
