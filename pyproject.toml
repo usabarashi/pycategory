@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "category"
-version = "0.1.1"
+name = "pycategory"
+version = "0.0.0"
 description = "Python implementation of the Scala standard library."
 license = "MIT"
 authors = ["usabarashi"]
@@ -30,7 +30,7 @@ line_length = 100
 
 [tool.ruff]
 select = ["E", "F"]
-ignore = []
+ignore = ["E721"]
 fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
 unfixable = []
 line-length = 100
