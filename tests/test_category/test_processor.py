@@ -7,9 +7,7 @@ def test_masking():
     assert processor.MASK == half_masked_arguments.get("mask", None)
     assert 42 == half_masked_arguments.get("unmask", None)
 
-    masked_arguments = processor.masking(
-        arguments={"mask": 42, "unmask": 42}, unmask=None
-    )
+    masked_arguments = processor.masking(arguments={"mask": 42, "unmask": 42}, unmask=None)
     assert processor.MASK == masked_arguments.get("mask", None)
     assert processor.MASK == masked_arguments.get("unmask", None)
 
@@ -36,9 +34,7 @@ def test_apply_defaults():
     def position_or_keyword_default_arguments(arg1: int, arg2: Optional[int] = None):
         ...
 
-    arguments = inspect.signature(
-        position_or_keyword_default_arguments
-    ).parameters.copy()
+    arguments = inspect.signature(position_or_keyword_default_arguments).parameters.copy()
     position_or_keyword_defaults_applied_arguments = processor.apply_defaults(
         arguments=arguments, function=position_defaults_arguments
     )
@@ -75,9 +71,7 @@ def test_apply_parameter():
     def position_or_keyword_default_parameter(arg1: int, arg2: Optional[int] = None):
         ...
 
-    arguments = inspect.signature(
-        position_or_keyword_default_parameter
-    ).parameters.copy()
+    arguments = inspect.signature(position_or_keyword_default_parameter).parameters.copy()
     applied_position_or_keyword_arguments = processor.apply_parameters(
         arguments, *(1,), **{"arg2": 2}
     )
@@ -87,9 +81,7 @@ def test_apply_parameter():
         ...
 
     arguments = inspect.signature(keyword_only_parameter).parameters.copy()
-    applied_keyword_only_arguments = processor.apply_parameters(
-        arguments, **{"arg1": 1, "arg2": 2}
-    )
+    applied_keyword_only_arguments = processor.apply_parameters(arguments, **{"arg1": 1, "arg2": 2})
     assert {"arg1": 1, "arg2": 2} == applied_keyword_only_arguments
 
 
@@ -101,19 +93,13 @@ def test_arguments():
     def position_only_no_default(position: int, /) -> None:
         ...
 
-    assert {"position": 42} == processor.arguments(
-        position_only_no_default, *(42,), **{}
-    )
+    assert {"position": 42} == processor.arguments(position_only_no_default, *(42,), **{})
 
     def position_only_has_default(position: Optional[int] = None, /) -> None:
         ...
 
-    assert {"position": None} == processor.arguments(
-        position_only_has_default, *(), **{}
-    )
-    assert {"position": 42} == processor.arguments(
-        position_only_has_default, *(42,), **{}
-    )
+    assert {"position": None} == processor.arguments(position_only_has_default, *(), **{})
+    assert {"position": 42} == processor.arguments(position_only_has_default, *(42,), **{})
 
     def position_or_keyword_no_default(position_or_keyword: int) -> None:
         ...
@@ -143,17 +129,13 @@ def test_arguments():
     def keyword_only_no_default(*, keyword: int) -> None:
         ...
 
-    assert {"keyword": 42} == processor.arguments(
-        keyword_only_no_default, *(), **{"keyword": 42}
-    )
+    assert {"keyword": 42} == processor.arguments(keyword_only_no_default, *(), **{"keyword": 42})
 
     def keyword_only_has_default(keyword: Optional[int] = None, /) -> None:
         ...
 
     assert {"keyword": None} == processor.arguments(keyword_only_has_default, *(), **{})
-    assert {"keyword": 42} == processor.arguments(
-        keyword_only_has_default, *(), **{"keyword": 42}
-    )
+    assert {"keyword": 42} == processor.arguments(keyword_only_has_default, *(), **{"keyword": 42})
 
     def complex_no_default(
         position1: int,
@@ -559,9 +541,9 @@ def test_frame():
     from category import Either, EitherDo, Frame, Left, Right, processor
 
     def function(arg1: int, arg2: int, arg3: int) -> Frame:
-        variable1 = 42
-        variable2 = 42
-        variable3 = 42
+        variable1 = 42  # type: ignore # Frame parameter
+        variable2 = 42  # type: ignore # Frame parameter
+        variable3 = 42  # type: ignore # Frame parameter
         return Frame(unmask=("arg1", "variable1"))
 
     frame = function(arg1=42, arg2=42, arg3=42)
@@ -593,9 +575,7 @@ def test_execute_debugger():
     from category import processor
 
     assert None is processor.execute_debugger(debugger=None, arguments={"value": 42})
-    assert None is processor.execute_debugger(
-        debugger=lambda arguments: None, arguments={}
-    )
+    assert None is processor.execute_debugger(debugger=lambda arguments: None, arguments={})
     assert isinstance(
         processor.execute_debugger(
             debugger=lambda arguments: arguments["John Doe."], arguments={"value": 42}

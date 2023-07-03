@@ -1,11 +1,18 @@
-# python-category
+# category
 
-![license](https://img.shields.io/badge/license-MIT-green)
-![license](https://img.shields.io/badge/python-3.10-blue)
+# Installation
 
-## Examples
+pip install works for this library.
 
-### curry
+```console
+pip install pycategory
+```
+
+# Usage
+
+Here is an example of how to use the `category` package:
+
+## curry
 
 ```python
 from category import curry
@@ -19,7 +26,7 @@ function1 = function2(1)    # (int) -> int
 result = function1(2)       # int
 ```
 
-### Pipeline
+## Pipeline
 
 ```python
 from category import Pipeline, curry
@@ -37,15 +44,15 @@ def cubed(arg1: int, arg2: int, arg3: int) -> int:
 assert 42**3 == ~(cubed << 42 << 42 << 42)
 ```
 
-### Either
+## Either
 
 ```python
-from category import EitherDo, Frame, Left, Monad, Right
+from category import Either, EitherDo, Frame, Left, Right
 
 class Error(Frame):
     ...
 
-@Monad.do
+@MEither.do
 def context(value: int) -> EitherDo[Error, int]:
     one = yield from Left[Error, int](Error(unmask=("value",)))
     two = 2
@@ -59,12 +66,12 @@ match context(42).pattern:
         print(f"Right case {value}")
 ```
 
-### Option
+## Option
 
 ```python
-from category import VOID, Monad, OptionDo, Some, Void
+from category import VOID, Option, OptionDo, Some, Void
 
-@Monad.do
+@Option.do
 def context() -> OptionDo[int]:
     one = yield from VOID
     two = 2
@@ -78,10 +85,10 @@ match context().pattern:
         print(f"Some case {value}")
 ```
 
-### Try
+## Try
 
 ```python
-from category import Failure, Monad, Success, Try, TryDo
+from category import Failure, Success, Try, TryDo
 
 @Try.hold(unmask=("value",))
 def hold_context(value: int, /) -> int:
@@ -89,7 +96,7 @@ def hold_context(value: int, /) -> int:
         raise Exception("error")
     return value
 
-@Monad.do
+@Try.do
 def context() -> TryDo[int]:
     one = yield from hold_context(0)
     two = 2
@@ -102,49 +109,4 @@ match context().pattern:
     case Success(value):
         print(f"Success case {value}")
 
-```
-
-### Future
-
-
-```python
-from category import (
-    Failure,
-    Future,
-    FutureDo,
-    Monad,
-    ProcessPoolExecutionContext,
-    Success,
-    ThreadPoolExecutionContext,
-)
-
-pe = ProcessPoolExecutionContext(max_workers=5)
-te = ThreadPoolExecutionContext(max_workers=5)
-
-
-def toplevel_process_function(value: int) -> int:
-    if not value:
-        raise ValueError("error")
-    return value
-
-
-@Future.hold
-def thread_function(value: int) -> int:
-    if not value:
-        raise ValueError("error")
-    return value
-
-@Future.with_context
-@Monad.do
-def context() -> FutureDo[int]:
-    one = yield from Future.hold(toplevel_process_function)(0)(pe)
-    two = 2
-    three = yield from thread_function(3)(te)
-    return one + two + three
-
-match context()(pe).pattern:
-    case Failure() as failure:
-        print(f"Failure case {failure.exception}")
-    case Success(value):
-        print(f"Success case {value}")
 ```

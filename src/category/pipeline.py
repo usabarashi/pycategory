@@ -1,3 +1,4 @@
+"""Pipeline"""
 from __future__ import annotations
 
 from typing import Callable, Final, TypeVar
@@ -6,7 +7,8 @@ from . import functor
 
 T = TypeVar("T")
 A = TypeVar("A")
-B = TypeVar("B")
+Ap = TypeVar("Ap", covariant=True)
+Bp = TypeVar("Bp", covariant=True)
 
 
 class Pipeline(functor.Functor[T]):
@@ -15,14 +17,14 @@ class Pipeline(functor.Functor[T]):
     def __init__(self, value: T):
         self.value: Final[T] = value
 
-    def __call__(self: Pipeline[Callable[[A], B]], other: A, /) -> Pipeline[B]:
+    def __call__(self: Pipeline[Callable[[A], Bp]], other: A, /) -> Pipeline[Bp]:
         return Pipeline(self.value(other))
 
-    def __lshift__(self: Pipeline[Callable[[A], B]], other: A, /) -> Pipeline[B]:
+    def __lshift__(self: Pipeline[Callable[[A], Bp]], other: A, /) -> Pipeline[Bp]:
         """<<"""
         return Pipeline(self.value(other))
 
-    def __rshift__(self: Pipeline[T], function_: Callable[[T], A], /) -> Pipeline[A]:
+    def __rshift__(self: Pipeline[T], function_: Callable[[T], Ap], /) -> Pipeline[Ap]:
         """>>"""
         return Pipeline(function_(self.value))
 
@@ -30,7 +32,7 @@ class Pipeline(functor.Functor[T]):
         """~"""
         return self.value
 
-    def map(self: Pipeline[T], function_: Callable[[T], A], /) -> Pipeline[A]:
+    def map(self: Pipeline[T], function_: Callable[[T], Ap], /) -> Pipeline[Ap]:
         return Pipeline(function_(self.value))
 
     def get(self) -> T:
