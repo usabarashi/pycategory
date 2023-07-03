@@ -1,9 +1,10 @@
+"""Extension"""
 from typing import Callable, TypeVar
 
 A = TypeVar("A")
-B = TypeVar("B", covariant=True)
+Bp = TypeVar("Bp", covariant=True)
 
 
 class Extension:
-    def method(self: A, function_: Callable[[A], B], /) -> B:
+    def method(self: A, function_: Callable[[A], Bp], /) -> Bp:
         return function_(self)

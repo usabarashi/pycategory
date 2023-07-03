@@ -1,9 +1,9 @@
 def test_function1():
     from category.function_ import Function1
 
-    _ = Function1[int, None](lambda: None)
+    _ = Function1[int, None](lambda: None)  # Type Error
     _ = Function1[int, None](lambda arg1: None)
-    _ = Function1[int, None](lambda arg1, arg2: None)
+    _ = Function1[int, None](lambda arg1, arg2: None)  # Type Error
     assert Function1 is type(Function1[int, None](lambda arg1: None))
 
     def func_args0() -> None:
@@ -15,9 +15,9 @@ def test_function1():
     def func_args2(arg1: int, arg2: int) -> None:
         ...
 
-    _ = Function1[int, None](func_args0)
+    _ = Function1[int, None](func_args0)  # Type Error
     _ = Function1[int, None](func_args1)
-    _ = Function1[int, None](func_args2)
+    _ = Function1[int, None](func_args2)  # Type Error
     assert Function1 is type(Function1[int, None](func_args1))
 
 
@@ -51,7 +51,7 @@ def test_function1_compose():
         return bool(integer)
 
     _ = f.compose(g)
-    _ = g.compose(f)
+    _ = g.compose(f)  # Type Error
 
     assert "arg compose2 compose1" == Function1[str, str](
         lambda string: string + " compose1"
@@ -81,7 +81,7 @@ def test_function1_and_then():
     def g(integer: int) -> bool:
         return bool(integer)
 
-    _ = f.and_then(g)
+    _ = f.and_then(g)  # Type Error
     _ = g.and_then(f)
 
     assert "arg and_then1 and_then2" == Function1[str, str](
@@ -104,10 +104,10 @@ def test_function1_and_then():
 def test_function2():
     from category.function_ import Function2
 
-    _ = Function2[int, int, None](lambda: None)
-    _ = Function2[int, int, None](lambda arg1: None)
+    _ = Function2[int, int, None](lambda: None)  # Type Error
+    _ = Function2[int, int, None](lambda arg1: None)  # Type Error
     _ = Function2[int, int, None](lambda arg1, arg2: None)
-    _ = Function2[int, int, None](lambda arg1, arg2, arg3: None)
+    _ = Function2[int, int, None](lambda arg1, arg2, arg3: None)  # Type Error
     assert Function2 is type(Function2[int, int, None](lambda arg1, arg2: None))
     assert None is Function2[int, int, None](lambda arg1, arg2: None)(42, 42)
 
@@ -123,10 +123,10 @@ def test_function2():
     def func_args3(arg1: int, arg2: int, arg3: int) -> None:
         ...
 
-    _ = Function2[int, int, None](func_args0)
-    _ = Function2[int, int, None](func_args1)
+    _ = Function2[int, int, None](func_args0)  # Type Error
+    _ = Function2[int, int, None](func_args1)  # Type Error
     _ = Function2[int, int, None](func_args2)
-    _ = Function2[int, int, None](func_args3)
+    _ = Function2[int, int, None](func_args3)  # Type Error
     assert Function2 is type(Function2[int, int, None](func_args2))
     assert None is Function2[int, int, None](func_args2)(42, 42)
     assert None is Function2[int, int, None](func_args2)(arg1=42, arg2=42)
@@ -163,7 +163,9 @@ def test_function2_tupled():
 def test_function3():
     from category.function_ import Function3
 
-    lambda3 = lambda arg1, arg2, arg3: 42
+    def lambda3(arg1, arg2, arg3):
+        return 42
+
     function3 = Function3[int, int, int, int](lambda3)
     assert 42 == function3(arg1=42, arg2=42, arg3=42)
     assert 42 == function3.apply(arg1=42, arg2=42, arg3=42)
@@ -174,7 +176,9 @@ def test_function3():
 def test_function4():
     from category.function_ import Function4
 
-    lambda4 = lambda arg1, arg2, arg3, arg4: 42
+    def lambda4(arg1, arg2, arg3, arg4):
+        return 42
+
     function4 = Function4[int, int, int, int, int](lambda4)
     assert 42 == function4(arg1=42, arg2=42, arg3=42, arg4=42)
     assert 42 == function4.apply(arg1=42, arg2=42, arg3=42, arg4=42)
@@ -185,7 +189,9 @@ def test_function4():
 def test_function5():
     from category.function_ import Function5
 
-    lambda5 = lambda arg1, arg2, arg3, arg4, arg5: 42
+    def lambda5(arg1, arg2, arg3, arg4, arg5):
+        return 42
+
     function5 = Function5[int, int, int, int, int, int](lambda5)
     assert 42 == function5(arg1=42, arg2=42, arg3=42, arg4=42, arg5=42)
     assert 42 == function5.apply(arg1=42, arg2=42, arg3=42, arg4=42, arg5=42)
@@ -196,7 +202,9 @@ def test_function5():
 def test_function6():
     from category.function_ import Function6
 
-    lambda6 = lambda arg1, arg2, arg3, arg4, arg5, arg6: 42
+    def lambda6(arg1, arg2, arg3, arg4, arg5, arg6):
+        return 42
+
     function6 = Function6[int, int, int, int, int, int, int](lambda6)
     assert 42 == function6(arg1=42, arg2=42, arg3=42, arg4=42, arg5=42, arg6=42)
     assert 42 == function6.apply(arg1=42, arg2=42, arg3=42, arg4=42, arg5=42, arg6=42)
@@ -207,14 +215,12 @@ def test_function6():
 def test_function7():
     from category.function_ import Function7
 
-    lambda7 = lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7: 42
+    def lambda7(arg1, arg2, arg3, arg4, arg5, arg6, arg7):
+        return 42
+
     function7 = Function7[int, int, int, int, int, int, int, int](lambda7)
-    assert 42 == function7(
-        arg1=42, arg2=42, arg3=42, arg4=42, arg5=42, arg6=42, arg7=42
-    )
-    assert 42 == function7.apply(
-        arg1=42, arg2=42, arg3=42, arg4=42, arg5=42, arg6=42, arg7=42
-    )
+    assert 42 == function7(arg1=42, arg2=42, arg3=42, arg4=42, arg5=42, arg6=42, arg7=42)
+    assert 42 == function7.apply(arg1=42, arg2=42, arg3=42, arg4=42, arg5=42, arg6=42, arg7=42)
     assert 42 == function7.curried(42)(42)(42)(42)(42)(42)(42)
     assert 42 == function7.tupled((42, 42, 42, 42, 42, 42, 42))
 
@@ -222,11 +228,11 @@ def test_function7():
 def test_function8():
     from category.function_ import Function8
 
-    lambda8 = lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8: 42
+    def lambda8(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8):
+        return 42
+
     function8 = Function8[int, int, int, int, int, int, int, int, int](lambda8)
-    assert 42 == function8(
-        arg1=42, arg2=42, arg3=42, arg4=42, arg5=42, arg6=42, arg7=42, arg8=42
-    )
+    assert 42 == function8(arg1=42, arg2=42, arg3=42, arg4=42, arg5=42, arg6=42, arg7=42, arg8=42)
     assert 42 == function8.apply(
         arg1=42, arg2=42, arg3=42, arg4=42, arg5=42, arg6=42, arg7=42, arg8=42
     )
@@ -237,7 +243,9 @@ def test_function8():
 def test_function9():
     from category.function_ import Function9
 
-    lambda9 = lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9: 42
+    def lambda9(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9):
+        return 42
+
     function9 = Function9[int, int, int, int, int, int, int, int, int, int](lambda9)
     assert 42 == function9(
         arg1=42, arg2=42, arg3=42, arg4=42, arg5=42, arg6=42, arg7=42, arg8=42, arg9=42
@@ -252,10 +260,10 @@ def test_function9():
 def test_function10():
     from category.function_ import Function10
 
-    lambda10 = lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10: 42
-    function10 = Function10[int, int, int, int, int, int, int, int, int, int, int](
-        lambda10
-    )
+    def lambda10(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10):
+        return 42
+
+    function10 = Function10[int, int, int, int, int, int, int, int, int, int, int](lambda10)
     assert 42 == function10(
         arg1=42,
         arg2=42,
@@ -287,12 +295,10 @@ def test_function10():
 def test_function11():
     from category.function_ import Function11
 
-    lambda11 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11: 42
-    )
-    function11 = Function11[int, int, int, int, int, int, int, int, int, int, int, int](
-        lambda11
-    )
+    def lambda11(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11):
+        return 42
+
+    function11 = Function11[int, int, int, int, int, int, int, int, int, int, int, int](lambda11)
     assert 42 == function11(
         arg1=42,
         arg2=42,
@@ -326,12 +332,12 @@ def test_function11():
 def test_function12():
     from category.function_ import Function12
 
-    lambda12 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12: 42
+    def lambda12(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12):
+        return 42
+
+    function12 = Function12[int, int, int, int, int, int, int, int, int, int, int, int, int](
+        lambda12
     )
-    function12 = Function12[
-        int, int, int, int, int, int, int, int, int, int, int, int, int
-    ](lambda12)
     assert 42 == function12(
         arg1=42,
         arg2=42,
@@ -367,12 +373,12 @@ def test_function12():
 def test_function13():
     from category.function_ import Function13
 
-    lambda13 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13: 42
+    def lambda13(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13):
+        return 42
+
+    function13 = Function13[int, int, int, int, int, int, int, int, int, int, int, int, int, int](
+        lambda13
     )
-    function13 = Function13[
-        int, int, int, int, int, int, int, int, int, int, int, int, int, int
-    ](lambda13)
     assert 42 == function13(
         arg1=42,
         arg2=42,
@@ -410,9 +416,11 @@ def test_function13():
 def test_function14():
     from category.function_ import Function14
 
-    lambda14 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14: 42
-    )
+    def lambda14(
+        arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14
+    ):
+        return 42
+
     function14 = Function14[
         int, int, int, int, int, int, int, int, int, int, int, int, int, int, int
     ](lambda14)
@@ -448,20 +456,32 @@ def test_function14():
         arg13=42,
         arg14=42,
     )
-    assert 42 == function14.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
-        42
-    )
-    assert 42 == function14.tupled(
-        (42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42)
-    )
+    assert 42 == function14.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)
+    assert 42 == function14.tupled((42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42))
 
 
 def test_function15():
     from category.function_ import Function15
 
-    lambda15 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15: 42
-    )
+    def lambda15(
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+        arg7,
+        arg8,
+        arg9,
+        arg10,
+        arg11,
+        arg12,
+        arg13,
+        arg14,
+        arg15,
+    ):
+        return 42
+
     function15 = Function15[
         int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int
     ](lambda15)
@@ -499,20 +519,33 @@ def test_function15():
         arg14=42,
         arg15=42,
     )
-    assert 42 == function15.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
-        42
-    )(42)
-    assert 42 == function15.tupled(
-        (42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42)
-    )
+    assert 42 == function15.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)
+    assert 42 == function15.tupled((42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42))
 
 
 def test_function16():
     from category.function_ import Function16
 
-    lambda16 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16: 42
-    )
+    def lambda16(
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+        arg7,
+        arg8,
+        arg9,
+        arg10,
+        arg11,
+        arg12,
+        arg13,
+        arg14,
+        arg15,
+        arg16,
+    ):
+        return 42
+
     function16 = Function16[
         int,
         int,
@@ -568,20 +601,34 @@ def test_function16():
         arg15=42,
         arg16=42,
     )
-    assert 42 == function16.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
-        42
-    )(42)(42)
-    assert 42 == function16.tupled(
-        (42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42)
-    )
+    assert 42 == function16.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)
+    assert 42 == function16.tupled((42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42))
 
 
 def test_function17():
     from category.function_ import Function17
 
-    lambda17 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17: 42
-    )
+    def lambda17(
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+        arg7,
+        arg8,
+        arg9,
+        arg10,
+        arg11,
+        arg12,
+        arg13,
+        arg14,
+        arg15,
+        arg16,
+        arg17,
+    ):
+        return 42
+
     function17 = Function17[
         int,
         int,
@@ -640,9 +687,9 @@ def test_function17():
         arg16=42,
         arg17=42,
     )
-    assert 42 == function17.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
+    assert 42 == function17.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
         42
-    )(42)(42)(42)
+    )
     assert 42 == function17.tupled(
         (42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42)
     )
@@ -651,9 +698,28 @@ def test_function17():
 def test_function18():
     from category.function_ import Function18
 
-    lambda18 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18: 42
-    )
+    def lambda18(
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+        arg7,
+        arg8,
+        arg9,
+        arg10,
+        arg11,
+        arg12,
+        arg13,
+        arg14,
+        arg15,
+        arg16,
+        arg17,
+        arg18,
+    ):
+        return 42
+
     function18 = Function18[
         int,
         int,
@@ -715,9 +781,9 @@ def test_function18():
         arg17=42,
         arg18=42,
     )
-    assert 42 == function18.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
+    assert 42 == function18.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
         42
-    )(42)(42)(42)(42)
+    )(42)
     assert 42 == function18.tupled(
         (42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42)
     )
@@ -726,9 +792,29 @@ def test_function18():
 def test_function19():
     from category.function_ import Function19
 
-    lambda19 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19: 42
-    )
+    def lambda19(
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+        arg7,
+        arg8,
+        arg9,
+        arg10,
+        arg11,
+        arg12,
+        arg13,
+        arg14,
+        arg15,
+        arg16,
+        arg17,
+        arg18,
+        arg19,
+    ):
+        return 42
+
     function19 = Function19[
         int,
         int,
@@ -793,9 +879,9 @@ def test_function19():
         arg18=42,
         arg19=42,
     )
-    assert 42 == function19.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
+    assert 42 == function19.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
         42
-    )(42)(42)(42)(42)(42)
+    )(42)(42)
     assert 42 == function19.tupled(
         (42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42)
     )
@@ -804,9 +890,30 @@ def test_function19():
 def test_function20():
     from category.function_ import Function20
 
-    lambda20 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20: 42
-    )
+    def lambda20(
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+        arg7,
+        arg8,
+        arg9,
+        arg10,
+        arg11,
+        arg12,
+        arg13,
+        arg14,
+        arg15,
+        arg16,
+        arg17,
+        arg18,
+        arg19,
+        arg20,
+    ):
+        return 42
+
     function20 = Function20[
         int,
         int,
@@ -874,9 +981,9 @@ def test_function20():
         arg19=42,
         arg20=42,
     )
-    assert 42 == function20.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
+    assert 42 == function20.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
         42
-    )(42)(42)(42)(42)(42)(42)
+    )(42)(42)(42)
     assert 42 == function20.tupled(
         (42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42, 42)
     )
@@ -885,9 +992,31 @@ def test_function20():
 def test_function21():
     from category.function_ import Function21
 
-    lambda21 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21: 42
-    )
+    def lambda21(
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+        arg7,
+        arg8,
+        arg9,
+        arg10,
+        arg11,
+        arg12,
+        arg13,
+        arg14,
+        arg15,
+        arg16,
+        arg17,
+        arg18,
+        arg19,
+        arg20,
+        arg21,
+    ):
+        return 42
+
     function21 = Function21[
         int,
         int,
@@ -958,9 +1087,9 @@ def test_function21():
         arg20=42,
         arg21=42,
     )
-    assert 42 == function21.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
+    assert 42 == function21.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
         42
-    )(42)(42)(42)(42)(42)(42)(42)
+    )(42)(42)(42)(42)
     assert 42 == function21.tupled(
         (
             42,
@@ -991,9 +1120,32 @@ def test_function21():
 def test_function22():
     from category.function_ import Function22
 
-    lambda22 = (
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22: 42
-    )
+    def lambda22(
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+        arg6,
+        arg7,
+        arg8,
+        arg9,
+        arg10,
+        arg11,
+        arg12,
+        arg13,
+        arg14,
+        arg15,
+        arg16,
+        arg17,
+        arg18,
+        arg19,
+        arg20,
+        arg21,
+        arg22,
+    ):
+        return 42
+
     function22 = Function22[
         int,
         int,
@@ -1067,9 +1219,9 @@ def test_function22():
         arg21=42,
         arg22=42,
     )
-    assert 42 == function22.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
+    assert 42 == function22.curried(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(42)(
         42
-    )(42)(42)(42)(42)(42)(42)(42)(42)
+    )(42)(42)(42)(42)(42)
     assert 42 == function22.tupled(
         (
             42,
@@ -1141,13 +1293,9 @@ def test_function():
     assert Function7 is type(function7)
     function8 = function(lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8: 42)
     assert Function8 is type(function8)
-    function9 = function(
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9: 42
-    )
+    function9 = function(lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9: 42)
     assert Function9 is type(function9)
-    function10 = function(
-        lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10: 42
-    )
+    function10 = function(lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10: 42)
     assert Function10 is type(function10)
     function11 = function(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11: 42

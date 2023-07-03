@@ -8,9 +8,7 @@ Arguments: TypeAlias = dict[str, Any]
 MASK = "****"
 
 
-def masking(
-    *, arguments: dict[Any, Any], unmask: Optional[tuple[Any, ...]]
-) -> dict[Any, Any]:
+def masking(*, arguments: dict[Any, Any], unmask: Optional[tuple[Any, ...]]) -> dict[Any, Any]:
     return {
         key: MASK if (unmask is None) or (key not in unmask) else value
         for key, value in arguments.items()
@@ -24,13 +22,11 @@ def apply_defaults(*, arguments: Arguments, function: Callable[..., Any]) -> Arg
     - function.__kwdefaults__: keyword only default arguments.
     """
     default_list = (
-        []
-        if function.__defaults__ is None
-        else [(None, value) for value in function.__defaults__]
+        [] if function.__defaults__ is None else [(None, value) for value in function.__defaults__]
     )
     keyword_only_default_list = (
         []
-        if function.__kwdefaults__ is None
+        if cast(Optional[dict[str, Any]], function.__kwdefaults__) is None
         else [(key, value) for key, value in function.__kwdefaults__.items()]
     )
     update_arguments = deepcopy(arguments)
@@ -53,9 +49,7 @@ def apply_parameters(arguments: Arguments, /, *args: ..., **kwargs: ...) -> Argu
     """Apply parameters to arguments."""
     update_arguments = deepcopy(arguments)
     position_parameters = [(None, value) for value in args]
-    keyword_parameters = [
-        (key, value) for key, value in cast(dict[str, Any], kwargs.items())
-    ]
+    keyword_parameters = [(key, value) for key, value in cast(dict[str, Any], kwargs.items())]
     for argument_key, (parameter_key, parameter_value) in zip(
         update_arguments, position_parameters + keyword_parameters
     ):
@@ -69,18 +63,14 @@ def apply_parameters(arguments: Arguments, /, *args: ..., **kwargs: ...) -> Argu
     return update_arguments
 
 
-def arguments(
-    function: Callable[P, Any], /, *args: P.args, **kwargs: P.kwargs
-) -> Arguments:
+def arguments(function: Callable[P, Any], /, *args: P.args, **kwargs: P.kwargs) -> Arguments:
     """Derive function arguments."""
     arguments = deepcopy(inspect.signature(function).parameters.copy())
     if len(arguments) == 0:
         return arguments
 
     default_applied_arguments = apply_defaults(arguments=arguments, function=function)
-    parameter_applied_arguments = apply_parameters(
-        default_applied_arguments, *args, **kwargs
-    )
+    parameter_applied_arguments = apply_parameters(default_applied_arguments, *args, **kwargs)
 
     return parameter_applied_arguments
 
@@ -98,19 +88,13 @@ def parse(object_: Any) -> Any:
                 return inspect.signature(parse_object)
             case _ if hasattr(parse_object, "__dict__"):
                 return {
-                    recursive(key): MASK
-                    if is_private_attribute(key)
-                    else recursive(value)
-                    for key, value in dict(
-                        cast(dict[str, Any], parse_object.__dict__)
-                    ).items()
+                    recursive(key): MASK if is_private_attribute(key) else recursive(value)
+                    for key, value in dict(cast(dict[str, Any], parse_object.__dict__)).items()
                 }
             case list():
                 return [recursive(item) for item in cast(list[Any], parse_object)]
             case tuple():
-                return tuple(
-                    recursive(item) for item in cast(tuple[Any, ...], parse_object)
-                )
+                return tuple(recursive(item) for item in cast(tuple[Any, ...], parse_object))
             case set():
                 return {recursive(item) for item in cast(set[Any], parse_object)}
             case dict():
@@ -127,9 +111,7 @@ def parse(object_: Any) -> Any:
 class Frame:
     DEPTH: int = 1
 
-    def __init__(
-        self, /, depth: Optional[int] = None, unmask: Optional[tuple[str, ...]] = None
-    ):
+    def __init__(self, /, depth: Optional[int] = None, unmask: Optional[tuple[str, ...]] = None):
         target_depth = self.DEPTH if depth is None else depth
         self.filename: str = inspect.stack()[target_depth].filename
         self.line: int = inspect.stack()[target_depth].frame.f_lineno

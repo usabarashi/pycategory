@@ -1,10 +1,11 @@
+"""Function"""
 from __future__ import annotations
 
 import inspect
 from collections.abc import Callable
 from copy import deepcopy
 from functools import wraps
-from typing import Any, Generic, Optional, ParamSpec, TypeVar, overload
+from typing import Any, Generic, Optional, ParamSpec, TypeVar, cast, overload
 
 from . import processor
 
@@ -40,14 +41,14 @@ LAST_ONE = 1
 LIMIT_NUMBER_OF_TYPE_VARIABLES = 22
 
 
-class Function(Callable):
+class Function:
     ...
 
 
 class Function1(Generic[S1m, Tp], Function):
     def __init__(self, func: Callable[[S1m], Tp], /):
         if not callable(func):
-            raise TypeError
+            raise TypeError(func)
         self._func = func
 
     def __call__(self, arg: S1m, /) -> Tp:
@@ -55,10 +56,10 @@ class Function1(Generic[S1m, Tp], Function):
 
     apply = __call__
 
-    def compose(self, other: Callable[[S2m], S1m]) -> Function1[S2m, Tp]:
-        return Function1[Sd1m, Tp](lambda arg: self(other(arg)))
+    def compose(self, other: Callable[[Tdp], S1m] | Function1[Tdp, S1m]) -> Function1[Tdp, Tp]:
+        return Function1[Tdp, Tp](lambda arg: self(other(arg)))  # type: ignore # Type checker error
 
-    def and_then(self, other: Callable[[Tp], Tdp]) -> Function1[S1m, Tdp]:
+    def and_then(self, other: Callable[[Tp], Tdp] | Function1[Tp, Tdp]) -> Function1[S1m, Tdp]:
         return Function1[S1m, Tdp](lambda arg: other(self(arg)))
 
 
@@ -172,9 +173,7 @@ class Function6(Generic[S1m, S2m, S3m, S4m, S5m, S6m, Tp], FunctionN):
             raise TypeError
         self._func = func
 
-    def __call__(
-        self, /, arg1: S1m, arg2: S2m, arg3: S3m, arg4: S4m, arg5: S5m, arg6: S6m
-    ) -> Tp:
+    def __call__(self, /, arg1: S1m, arg2: S2m, arg3: S3m, arg4: S4m, arg5: S5m, arg6: S6m) -> Tp:
         return self._func(arg1, arg2, arg3, arg4, arg5, arg6)
 
     @property
@@ -222,9 +221,7 @@ class Function7(Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, Tp], FunctionN):
 
     @property
     def tupled(self):
-        def tupled_arg_function(
-            args: tuple[S1m, S2m, S3m, S4m, S5m, S6m, S7m], /
-        ) -> Tp:
+        def tupled_arg_function(args: tuple[S1m, S2m, S3m, S4m, S5m, S6m, S7m], /) -> Tp:
             return self._func(*args)
 
         return tupled_arg_function
@@ -260,18 +257,14 @@ class Function8(Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, Tp], FunctionN):
 
     @property
     def tupled(self):
-        def tupled_arg_function(
-            args: tuple[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m], /
-        ) -> Tp:
+        def tupled_arg_function(args: tuple[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m], /) -> Tp:
             return self._func(*args)
 
         return tupled_arg_function
 
 
 class Function9(Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, Tp], FunctionN):
-    def __init__(
-        self, func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m], Tp], /
-    ):
+    def __init__(self, func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m], Tp], /):
         if not callable(func):
             raise TypeError
         self._func = func
@@ -301,20 +294,14 @@ class Function9(Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, Tp], Functi
 
     @property
     def tupled(self):
-        def tupled_arg_function(
-            args: tuple[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m], /
-        ) -> Tp:
+        def tupled_arg_function(args: tuple[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m], /) -> Tp:
             return self._func(*args)
 
         return tupled_arg_function
 
 
-class Function10(
-    Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, Tp], FunctionN
-):
-    def __init__(
-        self, func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m], Tp], /
-    ):
+class Function10(Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, Tp], FunctionN):
+    def __init__(self, func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m], Tp], /):
         if not callable(func):
             raise TypeError
         self._func = func
@@ -353,9 +340,7 @@ class Function10(
         return tupled_arg_function
 
 
-class Function11(
-    Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, Tp], FunctionN
-):
+class Function11(Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, Tp], FunctionN):
     def __init__(
         self,
         func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m], Tp],
@@ -380,9 +365,7 @@ class Function11(
         arg10: S10m,
         arg11: S11m,
     ) -> Tp:
-        return self._func(
-            arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11
-        )
+        return self._func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11)
 
     @property
     def apply(self):
@@ -408,9 +391,7 @@ class Function12(
 ):
     def __init__(
         self,
-        func: Callable[
-            [S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m], Tp
-        ],
+        func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m], Tp],
         /,
     ):
         if not callable(func):
@@ -433,9 +414,7 @@ class Function12(
         arg11: S11m,
         arg12: S12m,
     ) -> Tp:
-        return self._func(
-            arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12
-        )
+        return self._func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12)
 
     @property
     def apply(self):
@@ -462,9 +441,7 @@ class Function13(
 ):
     def __init__(
         self,
-        func: Callable[
-            [S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m], Tp
-        ],
+        func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m], Tp],
         /,
     ):
         if not callable(func):
@@ -509,15 +486,13 @@ class Function13(
         return self.__call__
 
     @property
-    def curried(self):
-        return curry(self._func)
+    def curried(self):  # type: ignore # Type inference
+        return curry(self._func)  # type: ignore # Type inference
 
     @property
     def tupled(self):
         def tupled_arg_function(
-            args: tuple[
-                S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m
-            ],
+            args: tuple[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m],
             /,
         ) -> Tp:
             return self._func(*args)
@@ -526,9 +501,7 @@ class Function13(
 
 
 class Function14(
-    Generic[
-        S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, S14m, Tp
-    ],
+    Generic[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, S14m, Tp],
     FunctionN,
 ):
     def __init__(
@@ -1736,9 +1709,7 @@ def function(func: Callable[[S1m, S2m, S3m], Tp], /) -> Function3[S1m, S2m, S3m,
 
 
 @overload
-def function(
-    func: Callable[[S1m, S2m, S3m, S4m], Tp], /
-) -> Function4[S1m, S2m, S3m, S4m, Tp]:
+def function(func: Callable[[S1m, S2m, S3m, S4m], Tp], /) -> Function4[S1m, S2m, S3m, S4m, Tp]:
     ...
 
 
@@ -1801,25 +1772,17 @@ def function(
 
 @overload
 def function(
-    func: Callable[
-        [S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m], Tp
-    ],
+    func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m], Tp],
     /,
-) -> Function13[
-    S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, Tp
-]:
+) -> Function13[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, Tp]:
     ...
 
 
 @overload
 def function(
-    func: Callable[
-        [S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, S14m], Tp
-    ],
+    func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, S14m], Tp],
     /,
-) -> Function14[
-    S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, S14m, Tp
-]:
+) -> Function14[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, S14m, Tp]:
     ...
 
 
@@ -2216,55 +2179,55 @@ def function(
     ...
 
 
-def function(func: Callable[P, Tp], /):
+def function(func: Callable[P, Tp], /):  # type: ignore # Type inference
     arguments = inspect.signature(func).parameters.copy()
     match partial_application_scope(arguments=arguments, function=function):
         case 0:
             raise TypeError(func)
         case 1:
-            return Function1(func)
+            return Function1(func)  # type: ignore # Type inference
         case 2:
-            return Function2(func)
+            return Function2(func)  # type: ignore # Type inference
         case 3:
-            return Function3(func)
+            return Function3(func)  # type: ignore # Type inference
         case 4:
-            return Function4(func)
+            return Function4(func)  # type: ignore # Type inference
         case 5:
-            return Function5(func)
+            return Function5(func)  # type: ignore # Type inference
         case 6:
-            return Function6(func)
+            return Function6(func)  # type: ignore # Type inference
         case 7:
-            return Function7(func)
+            return Function7(func)  # type: ignore # Type inference
         case 8:
-            return Function8(func)
+            return Function8(func)  # type: ignore # Type inference
         case 9:
-            return Function9(func)
+            return Function9(func)  # type: ignore # Type inference
         case 10:
-            return Function10(func)
+            return Function10(func)  # type: ignore # Type inference
         case 11:
-            return Function11(func)
+            return Function11(func)  # type: ignore # Type inference
         case 12:
-            return Function12(func)
+            return Function12(func)  # type: ignore # Type inference
         case 13:
-            return Function13(func)
+            return Function13(func)  # type: ignore # Type inference
         case 14:
-            return Function14(func)
+            return Function14(func)  # type: ignore # Type inference
         case 15:
-            return Function15(func)
+            return Function15(func)  # type: ignore # Type inference
         case 16:
-            return Function16(func)
+            return Function16(func)  # type: ignore # Type inference
         case 17:
-            return Function17(func)
+            return Function17(func)  # type: ignore # Type inference
         case 18:
-            return Function18(func)
+            return Function18(func)  # type: ignore # Type inference
         case 19:
-            return Function19(func)
+            return Function19(func)  # type: ignore # Type inference
         case 20:
-            return Function20(func)
+            return Function20(func)  # type: ignore # Type inference
         case 21:
-            return Function21(func)
+            return Function21(func)  # type: ignore # Type inference
         case 22:
-            return Function22(func)
+            return Function22(func)  # type: ignore # Type inference
         case _:
             raise TypeError(func)
 
@@ -2312,9 +2275,7 @@ def curry(
     S1m,
     Function1[
         S2m,
-        Function1[
-            S3m, Function1[S4m, Function1[S5m, Function1[S6m, Function1[S7m, Tp]]]]
-        ],
+        Function1[S3m, Function1[S4m, Function1[S5m, Function1[S6m, Function1[S7m, Tp]]]]],
     ],
 ]:
     ...
@@ -2329,9 +2290,7 @@ def curry(
         S2m,
         Function1[
             S3m,
-            Function1[
-                S4m, Function1[S5m, Function1[S6m, Function1[S7m, Function1[S8m, Tp]]]]
-            ],
+            Function1[S4m, Function1[S5m, Function1[S6m, Function1[S7m, Function1[S8m, Tp]]]]],
         ],
     ],
 ]:
@@ -2426,9 +2385,7 @@ def curry(
 
 @overload
 def curry(
-    function: Callable[
-        [S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m], Tp
-    ],
+    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m], Tp],
     /,
 ) -> Function1[
     S1m,
@@ -2448,9 +2405,7 @@ def curry(
                                 S8m,
                                 Function1[
                                     S9m,
-                                    Function1[
-                                        S10m, Function1[S11m, Function1[S12m, Tp]]
-                                    ],
+                                    Function1[S10m, Function1[S11m, Function1[S12m, Tp]]],
                                 ],
                             ],
                         ],
@@ -2481,7 +2436,7 @@ def curry(
             S12m,
             S13m,
         ],
-        T,
+        Tp,
     ],
     /,
 ) -> Function1[
@@ -2632,9 +2587,7 @@ def curry(
                                                 S12m,
                                                 Function1[
                                                     S13m,
-                                                    Function1[
-                                                        S14m, Function1[S15m, Tp]
-                                                    ],
+                                                    Function1[S14m, Function1[S15m, Tp]],
                                                 ],
                                             ],
                                         ],
@@ -2703,9 +2656,7 @@ def curry(
                                                     S13m,
                                                     Function1[
                                                         S14m,
-                                                        Function1[
-                                                            S15m, Function1[S16m, Tp]
-                                                        ],
+                                                        Function1[S15m, Function1[S16m, Tp]],
                                                     ],
                                                 ],
                                             ],
@@ -2944,9 +2895,7 @@ def curry(
                                                                     S17m,
                                                                     Function1[
                                                                         S18m,
-                                                                        Function1[
-                                                                            S19m, Tp
-                                                                        ],
+                                                                        Function1[S19m, Tp],
                                                                     ],
                                                                 ],
                                                             ],
@@ -3257,9 +3206,7 @@ def curry(
 
 
 def _total_application(function: Callable[..., Tp], arguments: dict[str, Any]) -> Tp:
-    defaults_applied_arguments = processor.apply_defaults(
-        arguments=arguments, function=function
-    )
+    defaults_applied_arguments = processor.apply_defaults(arguments=arguments, function=function)
     partial_range = partial_application_scope(
         arguments=defaults_applied_arguments, function=function
     )
@@ -3277,7 +3224,9 @@ def partial_application_scope(
     """
     defaults_size = 0 if function.__defaults__ is None else len(function.__defaults__)
     kwdefaults_size = (
-        +0 if function.__kwdefaults__ is None else len(function.__kwdefaults__)
+        +0
+        if cast(Optional[dict[str, Any]], function.__kwdefaults__) is None
+        else len(function.__kwdefaults__)
     )
     return len(arguments) - (defaults_size + kwdefaults_size)
 
@@ -3286,7 +3235,7 @@ def next_partial_position(position: int, /) -> int:
     return position + 1
 
 
-def curry(func: Callable[P, Tp], /):
+def curry(func: Callable[P, Tp], /):  # type: ignore # Type inference
     """currying
 
     - Only positional arguments are supported.
@@ -3304,42 +3253,41 @@ def curry(func: Callable[P, Tp], /):
         arguments=initial_arguments, function=func
     ):
         raise TypeError(
-            "The number of Type variables that can be parsed by the signature has exceeded the limit.",
+            """
+            The number of Type variables
+            that can be parsed by the signature has exceeded the limit.
+            """,
             func,
             initial_arguments,
         )
 
     @wraps(func)
-    def closure(
+    def closure(  # type: ignore # Type inference
         *,
         function: Callable[P, Tp],
         arguments: processor.Arguments,
         position: int,
     ):
-        def partial_application(value: Optional[Any] = None, /):
+        def partial_application(value: Optional[Any] = None, /):  # type: ignore # Type inference
             key = list(arguments)[position]
             partial_applied_arguments = deepcopy(arguments)
             partial_applied_arguments[key] = value
             if (
                 position
-                < partial_application_scope(
-                    arguments=partial_applied_arguments, function=function
-                )
+                < partial_application_scope(arguments=partial_applied_arguments, function=function)
                 - LAST_ONE
             ):
-                return closure(
+                return closure(  # type: ignore # Type inference
                     function=function,
                     arguments=partial_applied_arguments,
                     position=next_partial_position(position),
                 )
             else:
-                return _total_application(
-                    function=function, arguments=partial_applied_arguments
-                )
+                return _total_application(function=function, arguments=partial_applied_arguments)
 
-        return Function1(partial_application)
+        return Function1(partial_application)  # type: ignore # Type inference
 
-    return closure(
+    return closure(  # type: ignore # Type inference
         function=func,
         arguments=initial_arguments,
         position=0,

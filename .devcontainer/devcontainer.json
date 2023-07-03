@@ -11,9 +11,13 @@
 			"NODE_VERSION": "lts/*"
 		}
 	},
+	"workspaceFolder": "/workspaces/pycategory",
 	"remoteEnv": {
 		"PYTHONPATH": "src"
 	},
+	"mounts": [
+		"source=${localEnv:HOME}/.config,target=/vscode/.config,type=bind,consistency=cached"
+	],
 	"customizations": {
 		"vscode": {
 			"settings": {
@@ -28,7 +32,7 @@
 						"source.organizeImports.ruff": true
 					}
 				},
-				"python.pythonPath": "/workspaces/python-category/.venv/bin/python",
+				"python.pythonPath": "${workspaceFolder}/.venv/bin/python",
 				"python.analysis.typeCheckingMode": "strict",
 				"python.analysis.extraPaths": [],
 				"python.analysis.inlayHints.callArgumentNames": true,
@@ -43,7 +47,7 @@
 				],
 				"python.linting.mypyEnabled": false,
 				"python.formatting.provider": "black",
-				"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+				"python.formatting.blackPath": "${workspaceFolder}/.venv/bin/black",
 				"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
 				"python.testing.pytestArgs": [
 					"tests"
@@ -54,13 +58,13 @@
 					"--line-length=100"
 				],
 				"black-formatter.path": [
-					"/workspaces/python-category/.venv/bin/black"
+					"${workspaceFolder}/.venv/bin/black"
 				],
 				"ruff.args": [
-					"--config=/workspaces/python-category/pyproject.toml"
+					"--config=${workspaceFolder}/pyproject.toml"
 				],
 				"ruff.path": [
-					"/workspaces/python-category/.venv/bin/ruff"
+					"${workspaceFolder}/.venv/bin/ruff"
 				]
 			},
 			"extensions": [
