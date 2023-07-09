@@ -52,7 +52,7 @@ from category import Either, EitherDo, Frame, Left, Right
 class Error(Frame):
     ...
 
-@MEither.do
+@Either.do
 def context(value: int) -> EitherDo[Error, int]:
     one = yield from Left[Error, int](Error(unmask=("value",)))
     two = 2
