@@ -5,10 +5,10 @@ help:
 	@cat $(firstword $(MAKEFILE_LIST))
 
 test:
-	black --check src
-	ruff check src
-	pyright src
-	pytest tests
+	poetry run black --check src
+	poetry run ruff check src
+	poetry run pyright src
+	poetry run pytest tests
 
 build:
 	poetry build
