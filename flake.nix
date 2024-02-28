@@ -10,6 +10,7 @@
     {
       devShells."aarch64-darwin".default = pkgs.mkShell {
         buildInputs = with pkgs; [
+          act
           poetry
           python310
         ];
