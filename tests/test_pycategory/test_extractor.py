@@ -1,5 +1,5 @@
 def test_apply():
-    from category import Extractor
+    from pycategory import Extractor
 
     class Unit(Extractor):
         ...
@@ -28,7 +28,7 @@ def test_apply():
 
 
 def test_unapply():
-    from category import Extractor
+    from pycategory import Extractor
 
     class Unit(Extractor):
         ...
@@ -57,7 +57,7 @@ def test_unapply():
 
 
 def test_structural_pattern_match():
-    from category import Extractor
+    from pycategory import Extractor
 
     class Unit(Extractor):
         ...

@@ -1,5 +1,5 @@
 def test_masking():
-    from category import processor
+    from pycategory import processor
 
     half_masked_arguments = processor.masking(
         arguments={"mask": 42, "unmask": 42}, unmask=("unmask",)
@@ -17,7 +17,7 @@ def test_apply_defaults():
     from copy import deepcopy
     from typing import Optional
 
-    from category import processor
+    from pycategory import processor
 
     def position_defaults_arguments(arg1: int, arg2: Optional[int] = None, /):
         ...
@@ -58,7 +58,7 @@ def test_apply_parameter():
     import inspect
     from typing import Optional
 
-    from category import processor
+    from pycategory import processor
 
     def position_only_parameter(arg1: int, arg2: Optional[int] = None, /):
         ...
@@ -88,7 +88,7 @@ def test_apply_parameter():
 def test_arguments():
     from typing import Optional
 
-    from category import processor
+    from pycategory import processor
 
     def position_only_no_default(position: int, /) -> None:
         ...
@@ -433,7 +433,7 @@ def test_arguments():
 
 
 def test_is_private():
-    from category import processor
+    from pycategory import processor
 
     assert False is processor.is_private_attribute("public")
     assert True is processor.is_private_attribute("_private")
@@ -443,7 +443,7 @@ def test_parse():
     import inspect
     from typing import Any, Callable
 
-    from category import processor
+    from pycategory import processor
 
     class Sample:
         def __init__(
@@ -538,7 +538,7 @@ def test_parse():
 
 
 def test_frame():
-    from category import Either, EitherDo, Frame, Left, Right, processor
+    from pycategory import Either, EitherDo, Frame, Left, Right, processor
 
     def function(arg1: int, arg2: int, arg3: int) -> Frame:
         variable1 = 42  # type: ignore # Frame parameter
@@ -572,7 +572,7 @@ def test_frame():
 
 
 def test_execute_debugger():
-    from category import processor
+    from pycategory import processor
 
     assert None is processor.execute_debugger(debugger=None, arguments={"value": 42})
     assert None is processor.execute_debugger(debugger=lambda arguments: None, arguments={})

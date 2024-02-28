@@ -1,5 +1,5 @@
 def test___init__():
-    from category import Pipeline
+    from pycategory import Pipeline
 
     assert Pipeline is type(Pipeline(42))
     assert 42 == Pipeline(42).value
@@ -12,7 +12,7 @@ def test___init__():
 
 
 def test____call__():
-    from category import Pipeline
+    from pycategory import Pipeline
 
     def function(value: int) -> int:
         return value
@@ -22,7 +22,7 @@ def test____call__():
 
 
 def test___lshift__():
-    from category import Pipeline, curry
+    from pycategory import Pipeline, curry
 
     @curry
     def function(arg1: int, arg2: int) -> int:
@@ -32,7 +32,7 @@ def test___lshift__():
 
 
 def test___rshift__():
-    from category import Pipeline
+    from pycategory import Pipeline
 
     def function(value: int) -> int:
         return value
@@ -42,7 +42,7 @@ def test___rshift__():
 
 
 def test___invert__():
-    from category import Pipeline
+    from pycategory import Pipeline
 
     def function(value: int) -> int:
         return value
@@ -51,6 +51,6 @@ def test___invert__():
 
 
 def test_get__():
-    from category import Pipeline
+    from pycategory import Pipeline
 
     assert 42 == Pipeline(42).get()
