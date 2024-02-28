@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pycategory"
-version = "0.1.1"
+version = "0.1.2"
 description = "Python implementation of the Scala standard library."
 license = "MIT"
 authors = ["usabarashi"]
