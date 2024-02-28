@@ -1,5 +1,5 @@
 def test_functor_law():
-    from category import VOID, Some, functor
+    from pycategory import VOID, Some, functor
 
     assert functor.identity_law(VOID)
     assert functor.identity_law(Some[int](42))
@@ -8,7 +8,7 @@ def test_functor_law():
 
 
 def test_option_do():
-    from category import VOID, Option, OptionDo, Right, Some, Void
+    from pycategory import VOID, Option, OptionDo, Right, Some, Void
 
     @Option.do
     def safe_context() -> OptionDo[int]:  # type: ignore # Not access
@@ -54,14 +54,14 @@ def test_option_do():
 
 
 def test_void():
-    from category import VOID, Void
+    from pycategory import VOID, Void
 
     assert Void is type(VOID)
     assert Void is type(eval(f"{repr(VOID)}"))
 
 
 def test_void_map():
-    from category import VOID, Void
+    from pycategory import VOID, Void
 
     void = VOID
     mapped_void = void.map(lambda some: 42)
@@ -70,7 +70,7 @@ def test_void_map():
 
 
 def test_void_flat_map():
-    from category import Some, Void
+    from pycategory import Some, Void
 
     void = Void[int]()
     flat_mapped_void = void.flat_map(lambda some: Some[int](42))
@@ -79,25 +79,25 @@ def test_void_flat_map():
 
 
 def test_void_fold():
-    from category import VOID
+    from pycategory import VOID
 
     assert False is VOID.fold(void=lambda: False, some=lambda some: True)
 
 
 def test_void_is_empty():
-    from category import VOID
+    from pycategory import VOID
 
     assert True is VOID.is_empty()
 
 
 def test_void_not_empty():
-    from category import VOID
+    from pycategory import VOID
 
     assert False is VOID.not_empty()
 
 
 def test_void_get():
-    from category import VOID
+    from pycategory import VOID
 
     try:
         VOID.get()
@@ -107,20 +107,20 @@ def test_void_get():
 
 
 def test_void_get_or_else():
-    from category import VOID
+    from pycategory import VOID
 
     assert False is VOID.get_or_else(lambda: False)
 
 
 def test_some():
-    from category import Some
+    from pycategory import Some
 
     assert Some is type(Some[int](42))
     assert Some is type(eval(f"{repr(Some[int](42))}"))
 
 
 def test_some_map():
-    from category import Some
+    from pycategory import Some
 
     some = Some[int](42)
     mapped_some = some.map(lambda some: some + 1)
@@ -130,7 +130,7 @@ def test_some_map():
 
 
 def test_some_flat_map():
-    from category import Some
+    from pycategory import Some
 
     some = Some[int](42)
     flat_mapped_some = some.flat_map(lambda some: Some[int](some + 1))
@@ -140,31 +140,31 @@ def test_some_flat_map():
 
 
 def test_some_fold():
-    from category import Some
+    from pycategory import Some
 
     assert True is Some[int](42).fold(void=lambda: False, some=lambda some: True)
 
 
 def test_some_is_empty():
-    from category import Some
+    from pycategory import Some
 
     assert False is Some[int](42).is_empty()
 
 
 def test_some_not_empty():
-    from category import Some
+    from pycategory import Some
 
     assert True is Some[int](42).not_empty()
 
 
 def test_some_get():
-    from category import Some
+    from pycategory import Some
 
     assert 42 == Some[int](42).get()
 
 
 def test_some_get_or_else():
-    from category import Some
+    from pycategory import Some
 
     assert 42 == Some[int](42).get_or_else(lambda: 8)
 
@@ -173,7 +173,7 @@ def test_dataclass():
     from dataclasses import asdict, dataclass
     from typing import cast
 
-    from category import VOID, Some, Void
+    from pycategory import VOID, Some, Void
 
     @dataclass(frozen=True)
     class AsDict:
@@ -189,7 +189,7 @@ def test_dataclass():
 def test_pattern_match():
     from typing import cast
 
-    from category import VOID, Option, Some, Void
+    from pycategory import VOID, Option, Some, Void
 
     match cast(Option[int], VOID):
         case Void():
@@ -227,7 +227,7 @@ def test_json_encode():
     from dataclasses import asdict, dataclass
     from typing import Any, cast
 
-    from category import VOID, Some, Void
+    from pycategory import VOID, Some, Void
 
     class OptionEncoder(json.JSONEncoder):
         def default(self, o: Any) -> Any:

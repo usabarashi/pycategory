@@ -1,5 +1,5 @@
 def test_functor_law():
-    from category import Failure, Success, functor
+    from pycategory import Failure, Success, functor
 
     assert functor.identity_law(Failure[int](Exception()))
     assert functor.identity_law(Success[int](42))
@@ -10,7 +10,7 @@ def test_functor_law():
 def test_try_hold():
     from typing import cast
 
-    from category import Failure, Success, Try, processor
+    from pycategory import Failure, Success, Try, processor
 
     @Try.hold
     def multi_context(value: int, /) -> int:
@@ -60,7 +60,7 @@ def test_try_hold():
 
 
 def test_try_do():
-    from category import Failure, Right, Success, Try, TryDo
+    from pycategory import Failure, Right, Success, Try, TryDo
 
     @Try.do
     def safe_context() -> TryDo[int]:  # type: ignore # Not access
@@ -137,14 +137,14 @@ def test_try_do():
 
 
 def test_failure():
-    from category import Failure
+    from pycategory import Failure
 
     assert Failure is type(Failure[int](Exception()))
     assert Failure is type(eval(f"{repr(Failure[int](Exception()))}"))
 
 
 def test_failure_map():
-    from category import Failure
+    from pycategory import Failure
 
     failure = Failure[int](Exception())
     mapped_failure = failure.map(lambda success: None)
@@ -153,7 +153,7 @@ def test_failure_map():
 
 
 def test_failure_flat_map():
-    from category import Failure, Success
+    from pycategory import Failure, Success
 
     failure = Failure[int](Exception())
     flat_mapped_failure = failure.flat_map(lambda success: Success[bool](True))
@@ -162,7 +162,7 @@ def test_failure_flat_map():
 
 
 def test_failure_recover():
-    from category import Failure, Success
+    from pycategory import Failure, Success
 
     failure = Failure[int](Exception())
     recover_failure = failure.recover(lambda exception: 42)
@@ -172,7 +172,7 @@ def test_failure_recover():
 
 
 def test_failure_recover_with():
-    from category import Failure, Success
+    from pycategory import Failure, Success
 
     failure = Failure[int](Exception())
     recover_with_failure = failure.recover_with(lambda exception: Success[int](42))
@@ -182,20 +182,20 @@ def test_failure_recover_with():
 
 
 def test_failure_to_either():
-    from category import Failure, Left
+    from pycategory import Failure, Left
 
     assert Left is type(Failure[int](Exception()).to_either)
     assert None is Failure[int](Exception()).to_either.get_or_else(lambda: None)
 
 
 def test_failure_to_option():
-    from category import Failure, Void
+    from pycategory import Failure, Void
 
     assert Void is type(Failure[int](Exception()).to_option)
 
 
 def test_failure_fold():
-    from category import Failure
+    from pycategory import Failure
 
     assert False is Failure[int](Exception()).fold(
         failure=lambda failure: False, success=lambda success: True
@@ -203,19 +203,19 @@ def test_failure_fold():
 
 
 def test_failure_is_failure():
-    from category import Failure
+    from pycategory import Failure
 
     assert True is Failure[int](Exception()).is_failure()
 
 
 def test_failure_is_success():
-    from category import Failure
+    from pycategory import Failure
 
     assert False is Failure[int](Exception()).is_success()
 
 
 def test_failure_get():
-    from category import Failure
+    from pycategory import Failure
 
     try:
         Failure[int](Exception()).get()
@@ -225,20 +225,20 @@ def test_failure_get():
 
 
 def test_failure_get_or_else():
-    from category import Failure
+    from pycategory import Failure
 
     assert False is Failure[int](Exception()).get_or_else(lambda: False)
 
 
 def test_success():
-    from category import Success
+    from pycategory import Success
 
     assert Success is type(Success[int](42))
     assert Success is type(eval(f"{repr(Success[int](42))}"))
 
 
 def test_success_map():
-    from category import Success
+    from pycategory import Success
 
     success = Success[int](0)
     mapped_success = success.map(lambda success: None)
@@ -248,7 +248,7 @@ def test_success_map():
 
 
 def test_success_flat_map():
-    from category import Failure, Success
+    from pycategory import Failure, Success
 
     success = Success[int](0)
     flat_mapped_failure = success.flat_map(lambda success: Failure[None](Exception()))
@@ -258,7 +258,7 @@ def test_success_flat_map():
 
 
 def test_success_recover():
-    from category import Success
+    from pycategory import Success
 
     success = Success[int](42)
     recover_success = success.recover(lambda success: None)
@@ -268,7 +268,7 @@ def test_success_recover():
 
 
 def test_success_recover_with():
-    from category import Failure, Success
+    from pycategory import Failure, Success
 
     success = Success[int](42)
     recover_with_failure = success.recover_with(lambda success: Failure[None](Exception()))
@@ -278,45 +278,45 @@ def test_success_recover_with():
 
 
 def test_success_to_either():
-    from category import Right, Success
+    from pycategory import Right, Success
 
     assert Right is type(Success[int](42).to_either)
     assert 42 == Success[int](42).to_either.get_or_else(lambda: None)
 
 
 def test_success_to_option():
-    from category import Some, Success
+    from pycategory import Some, Success
 
     assert Some is type(Success[int](42).to_option)
     assert 42 == Success[int](42).to_option.get_or_else(lambda: None)
 
 
 def test_success_fold():
-    from category import Success
+    from pycategory import Success
 
     assert None is Success[int](0).fold(failure=lambda failure: None, success=lambda success: None)
 
 
 def test_success_is_failure():
-    from category import Success
+    from pycategory import Success
 
     assert False is Success[int](0).is_failure()
 
 
 def test_success_is_success():
-    from category import Success
+    from pycategory import Success
 
     assert True is Success[int](0).is_success()
 
 
 def test_success_get():
-    from category import Success
+    from pycategory import Success
 
     assert 1 == Success[int](1).get()
 
 
 def test_success_get_or_else():
-    from category import Success
+    from pycategory import Success
 
     assert 1 == Success[int](1).get_or_else(lambda: Exception())
 
@@ -325,7 +325,7 @@ def test_dataclass():
     from dataclasses import asdict, dataclass
     from typing import cast
 
-    from category import Failure, Success
+    from pycategory import Failure, Success
 
     @dataclass(frozen=True)
     class AsDict:
@@ -342,7 +342,7 @@ def test_dataclass():
 def test_pattern_match():
     from typing import cast
 
-    from category import Failure, Success, Try
+    from pycategory import Failure, Success, Try
 
     match cast(Try[int], Failure[int](Exception(42))):
         case Failure():

@@ -1,7 +1,7 @@
 from dataclasses import asdict, dataclass, field
 from typing import Generic, TypeVar
 
-from category import Vector
+from pycategory import Vector
 
 T = TypeVar("T")
 

@@ -1,4 +1,4 @@
-# category
+# pycategory
 
 # Installation
 
@@ -10,12 +10,12 @@ pip install pycategory
 
 # Usage
 
-Here is an example of how to use the `category` package:
+Here is an example of how to use the `pycategory` package:
 
 ## curry
 
 ```python
-from category import curry
+from pycategory import curry
 
 @curry
 def function(arg1: int, /, arg2: int, arg3: int = 3, *, arg4: int = 4) -> int:
@@ -29,7 +29,7 @@ result = function1(2)       # int
 ## Pipeline
 
 ```python
-from category import Pipeline, curry
+from pycategory import Pipeline, curry
 
 def squared(value: int) -> int:
     return value**2
@@ -47,7 +47,7 @@ assert 42**3 == ~(cubed << 42 << 42 << 42)
 ## Either
 
 ```python
-from category import Either, EitherDo, Frame, Left, Right
+from pycategory import Either, EitherDo, Frame, Left, Right
 
 class Error(Frame):
     ...
@@ -69,7 +69,7 @@ match context(42).pattern:
 ## Option
 
 ```python
-from category import VOID, Option, OptionDo, Some, Void
+from pycategory import VOID, Option, OptionDo, Some, Void
 
 @Option.do
 def context() -> OptionDo[int]:
@@ -88,7 +88,7 @@ match context().pattern:
 ## Try
 
 ```python
-from category import Failure, Success, Try, TryDo
+from pycategory import Failure, Success, Try, TryDo
 
 @Try.hold(unmask=("value",))
 def hold_context(value: int, /) -> int:
