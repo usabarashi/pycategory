@@ -10,7 +10,7 @@ keywords = [
     "Functional",
     "Scala",
 ]
-packages = [{include = "category", from = "src"}]
+packages = [{include = "pycategory", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
