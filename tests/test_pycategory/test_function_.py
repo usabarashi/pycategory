@@ -1,5 +1,5 @@
 def test_function1():
-    from category.function_ import Function1
+    from pycategory.function_ import Function1
 
     _ = Function1[int, None](lambda: None)  # Type Error
     _ = Function1[int, None](lambda arg1: None)
@@ -24,7 +24,7 @@ def test_function1():
 def test_function1___call__():
     from typing import Any
 
-    from category.function_ import Function1
+    from pycategory.function_ import Function1
 
     result = Function1[Any, None](lambda a: None)(42)
     assert None is result
@@ -33,14 +33,14 @@ def test_function1___call__():
 def test_function1_apply():
     from typing import Any
 
-    from category.function_ import Function1
+    from pycategory.function_ import Function1
 
     result = Function1[Any, None](lambda a: None).apply(42)
     assert None is result
 
 
 def test_function1_compose():
-    from category.function_ import Function1
+    from pycategory.function_ import Function1
 
     @Function1
     def f(boolean: bool) -> str:
@@ -71,7 +71,7 @@ def test_function1_compose():
 
 
 def test_function1_and_then():
-    from category.function_ import Function1
+    from pycategory.function_ import Function1
 
     @Function1
     def f(boolean: bool) -> str:
@@ -102,7 +102,7 @@ def test_function1_and_then():
 
 
 def test_function2():
-    from category.function_ import Function2
+    from pycategory.function_ import Function2
 
     _ = Function2[int, int, None](lambda: None)  # Type Error
     _ = Function2[int, int, None](lambda arg1: None)  # Type Error
@@ -133,35 +133,35 @@ def test_function2():
 
 
 def test_function2___call__():
-    from category.function_ import Function2
+    from pycategory.function_ import Function2
 
     result = Function2[int, int, None](lambda arg1, arg2: None)(42, 42)
     assert None is result
 
 
 def test_function2_apply():
-    from category.function_ import Function2
+    from pycategory.function_ import Function2
 
     result = Function2[int, int, None](lambda arg1, arg2: None).apply(42, 42)
     assert None is result
 
 
 def test_function2_curried():
-    from category.function_ import Function2
+    from pycategory.function_ import Function2
 
     curried = Function2[int, int, None](lambda arg1, arg2: None).curried
     assert None is curried(42)(42)
 
 
 def test_function2_tupled():
-    from category.function_ import Function2
+    from pycategory.function_ import Function2
 
     tupled = Function2[int, int, None](lambda arg1, arg2: None).tupled
     assert None is tupled((42, 42))
 
 
 def test_function3():
-    from category.function_ import Function3
+    from pycategory.function_ import Function3
 
     def lambda3(arg1, arg2, arg3):
         return 42
@@ -174,7 +174,7 @@ def test_function3():
 
 
 def test_function4():
-    from category.function_ import Function4
+    from pycategory.function_ import Function4
 
     def lambda4(arg1, arg2, arg3, arg4):
         return 42
@@ -187,7 +187,7 @@ def test_function4():
 
 
 def test_function5():
-    from category.function_ import Function5
+    from pycategory.function_ import Function5
 
     def lambda5(arg1, arg2, arg3, arg4, arg5):
         return 42
@@ -200,7 +200,7 @@ def test_function5():
 
 
 def test_function6():
-    from category.function_ import Function6
+    from pycategory.function_ import Function6
 
     def lambda6(arg1, arg2, arg3, arg4, arg5, arg6):
         return 42
@@ -213,7 +213,7 @@ def test_function6():
 
 
 def test_function7():
-    from category.function_ import Function7
+    from pycategory.function_ import Function7
 
     def lambda7(arg1, arg2, arg3, arg4, arg5, arg6, arg7):
         return 42
@@ -226,7 +226,7 @@ def test_function7():
 
 
 def test_function8():
-    from category.function_ import Function8
+    from pycategory.function_ import Function8
 
     def lambda8(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8):
         return 42
@@ -241,7 +241,7 @@ def test_function8():
 
 
 def test_function9():
-    from category.function_ import Function9
+    from pycategory.function_ import Function9
 
     def lambda9(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9):
         return 42
@@ -258,7 +258,7 @@ def test_function9():
 
 
 def test_function10():
-    from category.function_ import Function10
+    from pycategory.function_ import Function10
 
     def lambda10(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10):
         return 42
@@ -293,7 +293,7 @@ def test_function10():
 
 
 def test_function11():
-    from category.function_ import Function11
+    from pycategory.function_ import Function11
 
     def lambda11(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11):
         return 42
@@ -330,7 +330,7 @@ def test_function11():
 
 
 def test_function12():
-    from category.function_ import Function12
+    from pycategory.function_ import Function12
 
     def lambda12(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12):
         return 42
@@ -371,7 +371,7 @@ def test_function12():
 
 
 def test_function13():
-    from category.function_ import Function13
+    from pycategory.function_ import Function13
 
     def lambda13(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13):
         return 42
@@ -414,7 +414,7 @@ def test_function13():
 
 
 def test_function14():
-    from category.function_ import Function14
+    from pycategory.function_ import Function14
 
     def lambda14(
         arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14
@@ -461,7 +461,7 @@ def test_function14():
 
 
 def test_function15():
-    from category.function_ import Function15
+    from pycategory.function_ import Function15
 
     def lambda15(
         arg1,
@@ -524,7 +524,7 @@ def test_function15():
 
 
 def test_function16():
-    from category.function_ import Function16
+    from pycategory.function_ import Function16
 
     def lambda16(
         arg1,
@@ -606,7 +606,7 @@ def test_function16():
 
 
 def test_function17():
-    from category.function_ import Function17
+    from pycategory.function_ import Function17
 
     def lambda17(
         arg1,
@@ -696,7 +696,7 @@ def test_function17():
 
 
 def test_function18():
-    from category.function_ import Function18
+    from pycategory.function_ import Function18
 
     def lambda18(
         arg1,
@@ -790,7 +790,7 @@ def test_function18():
 
 
 def test_function19():
-    from category.function_ import Function19
+    from pycategory.function_ import Function19
 
     def lambda19(
         arg1,
@@ -888,7 +888,7 @@ def test_function19():
 
 
 def test_function20():
-    from category.function_ import Function20
+    from pycategory.function_ import Function20
 
     def lambda20(
         arg1,
@@ -990,7 +990,7 @@ def test_function20():
 
 
 def test_function21():
-    from category.function_ import Function21
+    from pycategory.function_ import Function21
 
     def lambda21(
         arg1,
@@ -1118,7 +1118,7 @@ def test_function21():
 
 
 def test_function22():
-    from category.function_ import Function22
+    from pycategory.function_ import Function22
 
     def lambda22(
         arg1,
@@ -1251,8 +1251,8 @@ def test_function22():
 
 
 def test_function():
-    from category import function
-    from category.function_ import (
+    from pycategory import function
+    from pycategory.function_ import (
         Function1,
         Function2,
         Function3,

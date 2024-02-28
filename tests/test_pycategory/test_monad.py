@@ -1,5 +1,5 @@
 def test_do():
-    from category import (
+    from pycategory import (
         Either,
         EitherDo,
         Option,

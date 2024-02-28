@@ -1,5 +1,5 @@
 def test_method():
-    from category import Extension
+    from pycategory import Extension
 
     class Plain(Extension):
         def __init__(self, value: int):

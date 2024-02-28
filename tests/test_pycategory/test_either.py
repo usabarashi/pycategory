@@ -1,5 +1,5 @@
 def test_functor_law():
-    from category import Left, Right, functor
+    from pycategory import Left, Right, functor
 
     assert functor.identity_law(
         Left[Exception, int](Exception()),
@@ -20,7 +20,7 @@ def test_functor_law():
 
 
 def test_either_do():
-    from category import Either, EitherDo, Left, Right, Some, Success
+    from pycategory import Either, EitherDo, Left, Right, Some, Success
 
     @Either.do
     def safe_context() -> EitherDo[IndexError | KeyError, int]:
@@ -83,14 +83,14 @@ def test_either_do():
 
 
 def test_left():
-    from category import Left
+    from pycategory import Left
 
     assert Left is type(Left[int, None](42))
     assert Left is type(eval(f"{Left[int, None](42)}"))
 
 
 def test_left_map():
-    from category import Left, LeftProjection, RightProjection
+    from pycategory import Left, LeftProjection, RightProjection
 
     left = Left[int, None](0)
     mapped_left = left.map(lambda right: right)
@@ -109,7 +109,7 @@ def test_left_map():
 
 
 def test_left_flat_map():
-    from category import Left, LeftProjection, RightProjection
+    from pycategory import Left, LeftProjection, RightProjection
 
     left = Left[int, None](0)
     flat_mapped_left = left.flat_map(lambda right: Left[int, None](0))
@@ -128,13 +128,13 @@ def test_left_flat_map():
 
 
 def test_left_to_option():
-    from category import Left, Void
+    from pycategory import Left, Void
 
     assert Void() is Left[None, int](None).to_option
 
 
 def test_left_to_try():
-    from category import Failure, Left, SubtypeConstraints
+    from pycategory import Failure, Left, SubtypeConstraints
 
     assert Failure is type(
         Left[TypeError, int](TypeError()).to_try(SubtypeConstraints(TypeError, Exception))
@@ -147,20 +147,20 @@ def test_left_to_try():
 
 
 def test_left_fold():
-    from category import Left
+    from pycategory import Left
 
     assert None is Left[None, int](None).fold(left=lambda left: None, right=lambda right: None)
 
 
 def test_left_leftprojecton():
-    from category import Left, LeftProjection
+    from pycategory import Left, LeftProjection
 
     assert LeftProjection is type(eval(f"{Left[int, None](42).left()}"))
     assert LeftProjection is type(eval(f"{Left[int, None](42).left()}"))
 
 
 def test_left_leftprojection_get():
-    from category import Left, Right
+    from pycategory import Left, Right
 
     assert 0 == Left[int, None](0).left().get()
     assert 0 == Left[int, None](0).left().get_or_else(lambda: 0)
@@ -173,13 +173,13 @@ def test_left_leftprojection_get():
 
 
 def test_left_rightprojecton():
-    from category import Left, RightProjection
+    from pycategory import Left, RightProjection
 
     assert RightProjection is type(Left[int, None](0).right())
 
 
 def test_left_rightprojecton_get():
-    from category import Left
+    from pycategory import Left
 
     try:
         Left[int, None](0).right().get()
@@ -190,19 +190,19 @@ def test_left_rightprojecton_get():
 
 
 def test_left_is_left():
-    from category import Left
+    from pycategory import Left
 
     assert True is Left[Exception, int](Exception()).is_left()
 
 
 def test_left_is_right():
-    from category import Left
+    from pycategory import Left
 
     assert False is Left[Exception, int](Exception()).is_right()
 
 
 def test_left_get():
-    from category import Left
+    from pycategory import Left
 
     try:
         Left[Exception, int](Exception()).get()
@@ -212,20 +212,20 @@ def test_left_get():
 
 
 def test_left_get_or_else():
-    from category import Left
+    from pycategory import Left
 
     assert False is Left[Exception, int](Exception()).get_or_else(lambda: False)
 
 
 def test_right():
-    from category import Right
+    from pycategory import Right
 
     assert Right is type(Right[None, int](42))
     assert Right is type(eval(f"{Right[None, int](42)}"))
 
 
 def test_right_map():
-    from category import LeftProjection, Right, RightProjection
+    from pycategory import LeftProjection, Right, RightProjection
 
     right = Right[None, int](0)
     mapped_right = right.map(lambda right: right)
@@ -244,7 +244,7 @@ def test_right_map():
 
 
 def test_right_flat_map():
-    from category import LeftProjection, Right, RightProjection
+    from pycategory import LeftProjection, Right, RightProjection
 
     right = Right[None, int](0)
     flat_mapped_right = right.flat_map(lambda right: Right[None, int](right + 1))
@@ -262,14 +262,14 @@ def test_right_flat_map():
 
 
 def test_right_to_option():
-    from category import Right, Some
+    from pycategory import Right, Some
 
     assert Some is type(Right[None, int](42).to_option)
     assert 42 == Right[None, int](42).to_option.get_or_else(lambda: 0)
 
 
 def test_right_to_try():
-    from category import Right, SubtypeConstraints, Success
+    from pycategory import Right, SubtypeConstraints, Success
 
     assert Success is type(
         Right[TypeError, int](42).to_try(SubtypeConstraints(TypeError, Exception))
@@ -280,34 +280,34 @@ def test_right_to_try():
 
 
 def test_right_fold():
-    from category import Left, Right
+    from pycategory import Left, Right
 
     assert None is Left[None, int](None).fold(left=lambda left: None, right=lambda right: None)
     assert None is Right[None, int](0).fold(left=lambda left: None, right=lambda right: None)
 
 
 def test_right_rightprojecton():
-    from category import Right, RightProjection
+    from pycategory import Right, RightProjection
 
     assert RightProjection is type(Right[None, int](42).right())
     assert RightProjection is type(eval(f"{Right[None, int](42).right()}"))
 
 
 def test_right_rightprojection_get():
-    from category import Right
+    from pycategory import Right
 
     assert 0 == Right[None, int](0).right().get()
     assert 0 == Right[None, int](0).right().get_or_else(lambda: 0)
 
 
 def test_right_leftprojecton():
-    from category import LeftProjection, Right
+    from pycategory import LeftProjection, Right
 
     assert LeftProjection is type(Right[None, int](0).left())
 
 
 def test_right_leftprojecton_get():
-    from category import Right
+    from pycategory import Right
 
     try:
         Right[None, int](0).left().get()
@@ -319,25 +319,25 @@ def test_right_leftprojecton_get():
 
 
 def test_right_is_left():
-    from category import Right
+    from pycategory import Right
 
     assert False is Right[Exception, int](1).is_left()
 
 
 def test_right_is_right():
-    from category import Right
+    from pycategory import Right
 
     assert True is Right[Exception, int](1).is_right()
 
 
 def test_right_get():
-    from category import Right
+    from pycategory import Right
 
     assert 1 == Right[Exception, int](1).get()
 
 
 def test_right_get_or_else():
-    from category import Right
+    from pycategory import Right
 
     assert 1 == Right[Exception, int](1).get_or_else(lambda: False)
 
@@ -346,7 +346,7 @@ def test_dataclass():
     from dataclasses import asdict, dataclass
     from typing import cast
 
-    from category import Left, Right
+    from pycategory import Left, Right
 
     @dataclass(frozen=True)
     class AsDict:
@@ -363,7 +363,7 @@ def test_dataclass():
 def test_pattern_match():
     from typing import cast
 
-    from category import Either, Left, Right
+    from pycategory import Either, Left, Right
 
     match cast(Either[None, int], Left[None, int](None)):
         case Left(None):
