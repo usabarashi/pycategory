@@ -78,7 +78,7 @@ class Void(Option[Tp]):
         return f"{self.__class__.__name__}()"
 
     def __iter__(self) -> Generator[Option[Tp], None, Tp]:
-        raise GeneratorExit(self)
+        raise monad.ShortCircuit(self)
 
     def map(self, _: Callable[[Tp], TTp], /) -> Option[TTp]:
         return cast(Void[TTp], self)

@@ -116,7 +116,7 @@ class Left(Either[Lp, Rp], extractor.Extractor):
                 return False
 
     def __iter__(self) -> Generator[Either[Lp, Rp], None, Rp]:
-        raise GeneratorExit(self)
+        raise monad.ShortCircuit(self)
 
     def map(self, _: Callable[[Rp], RRp], /) -> Either[Lp, RRp]:
         return cast(Left[Lp, RRp], self)
