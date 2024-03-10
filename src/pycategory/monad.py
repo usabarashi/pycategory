@@ -8,7 +8,6 @@ from typing import (
     Generator,
     Optional,
     ParamSpec,
-    Type,
     TypeVar,
     cast,
 )
@@ -19,7 +18,13 @@ Tp = TypeVar("Tp", covariant=True)
 TTp = TypeVar("TTp", covariant=True)
 P = ParamSpec("P")
 
-FixedMonad = 0
+
+class ShortCircuit(GeneratorExit):
+    args: tuple[Monad[Any], ...]
+
+    @property
+    def state(self) -> Monad[Any]:
+        return self.args[0]
 
 
 class Monad(applicative.Applicative[Tp]):
@@ -35,6 +40,10 @@ class Monad(applicative.Applicative[Tp]):
     """
 
     def __iter__(self) -> Generator[Monad[Tp], None, Tp]:
+        """
+
+        :raises ShortCircuit: In case of short-circuit evaluation of flat_map.
+        """
         raise NotImplementedError()
 
     def flat_map(self, func: Callable[[Tp], Monad[TTp]], /) -> Monad[TTp]:
@@ -42,45 +51,46 @@ class Monad(applicative.Applicative[Tp]):
 
     @staticmethod
     def do(context: Callable[P, Generator[Monad[Any], None, Tp]], /) -> Callable[P, Monad[Tp]]:
-        """map, flat_map combination syntax sugar."""
+        """Syntax Sugar for Monadic Compositions."""
 
         @wraps(context)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Monad[Tp]:
+        def trampoline(*args: P.args, **kwargs: P.kwargs) -> Monad[Tp]:
             context_ = context(*args, **kwargs)
-            yield_state: Optional[Monad[Any]] = None
-            context_type: Optional[Type[Monad[Tp]]] = None
+            yield_: Optional[Monad[Any]] = None
+            composite: Optional[Monad[Tp]] = None
             try:
-                while yield_state := next(context_):
-                    if not isinstance(yield_state, Monad):  # type: ignore # Runtime type check
-                        raise TypeError(yield_state)
-                    match context_type:
+                while yield_ := next(context_):
+                    # Runtime type check
+                    if not isinstance(yield_, Monad):  # type: ignore
+                        raise TypeError(
+                            yield_, f"""${type(yield_)} cannot be monadic composition."""
+                        )
+                    match composite:
                         case None:
-                            context_type = type(yield_state)
-                        case _ if type(yield_state) is not context_type:
+                            composite = yield_
+                        case _ if type(yield_) is not type(composite):
                             raise TypeError(
-                                yield_state,
+                                yield_,
                                 f"""
-                                A different type ${type(yield_state)} \
-                                from the context ${context_} is specified.
+                                ${type(yield_)} cannot be \
+                                monadic composition \
+                                with ${type(composite)}.
                                 """,
                             )
-                        case _ if type(yield_state) is context_type:
-                            # Priority is given to the value of the subgenerator's return monad.
-                            pass
+                        case _ if type(yield_) is type(composite):
+                            composite = composite.flat_map(lambda _: cast(Monad[Any], yield_))
                         case _:
                             raise ValueError(context)
 
-            except GeneratorExit as exit:
-                return cast(Monad[Tp], exit.args[FixedMonad])
+            except ShortCircuit as short_circuit:
+                return cast(Monad[Tp], short_circuit.state)
 
             except StopIteration as return_:
-                if yield_state is None:
-                    raise TypeError(context, "No context type specification")
-                if context_type is None:
-                    raise TypeError(context, "No context type specification")
+                if composite is None:
+                    raise TypeError(context, "Not a monadic composition.")
                 result: Tp = return_.value
-                return cast(Monad[Tp], yield_state.map(lambda _: result))
+                return cast(Monad[Tp], composite.map(lambda _: result))
 
-            raise TypeError(context, "No context type specification")
+            raise ValueError(context)
 
-        return wrapper
+        return trampoline

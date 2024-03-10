@@ -177,7 +177,7 @@ class Failure(Try[Tp], extractor.Extractor):
                 return False
 
     def __iter__(self) -> Generator[Try[Tp], None, Tp]:
-        raise GeneratorExit(self) from self.exception
+        raise monad.ShortCircuit(self) from self.exception
 
     def map(self, _: Callable[[Tp], TTp], /) -> Try[TTp]:
         return cast(Failure[TTp], self)
