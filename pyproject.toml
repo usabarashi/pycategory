@@ -16,7 +16,7 @@ packages = [{include = "pycategory", from = "src"}]
 python = "^3.10"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.3.0"
+black = ">=23.3,<25.0"
 ruff = "^0.0.275"
 pyright = "^1.1.316"
 pytest = "^7.4.0"
