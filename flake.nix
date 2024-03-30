@@ -12,7 +12,7 @@
         buildInputs = with pkgs; [
           act
           poetry
-          python310
+          python312
         ];
       };
     };
