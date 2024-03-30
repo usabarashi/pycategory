@@ -16,10 +16,10 @@ packages = [{include = "pycategory", from = "src"}]
 python = "^3.12"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.3.0"
-ruff = "^0.3.4"
-pyright = "^1.1.316"
-pytest = "^7.4.0"
+black = "*"
+ruff = "*"
+pyright = "*"
+pytest = "*"
 
 [build-system]
 requires = ["poetry-core"]
