@@ -1,13 +1,11 @@
 def test_apply():
     from pycategory import Extractor
 
-    class Unit(Extractor):
-        ...
+    class Unit(Extractor): ...
 
     assert Unit is type(Unit.apply())
 
     class Tuple1(Extractor):
-
         __match_args__ = ("value",)
 
         def __init__(self, value: int):
@@ -16,7 +14,6 @@ def test_apply():
     assert Tuple1 is type(Tuple1.apply(42))
 
     class TupleN(Extractor):
-
         __match_args__ = ("int_", "str_", "bool_")
 
         def __init__(self, int_: int, str_: str, bool_: bool):
@@ -30,13 +27,11 @@ def test_apply():
 def test_unapply():
     from pycategory import Extractor
 
-    class Unit(Extractor):
-        ...
+    class Unit(Extractor): ...
 
     assert () == Unit.apply().unapply()
 
     class Tuple1(Extractor):
-
         __match_args__ = ("value",)
 
         def __init__(self, value: int):
@@ -45,7 +40,6 @@ def test_unapply():
     assert (42,) == Tuple1.apply(42).unapply()
 
     class TupleN(Extractor):
-
         __match_args__ = ("int_", "str_", "bool_")
 
         def __init__(self, int_: int, str_: str, bool_: bool):
@@ -59,8 +53,7 @@ def test_unapply():
 def test_structural_pattern_match():
     from pycategory import Extractor
 
-    class Unit(Extractor):
-        ...
+    class Unit(Extractor): ...
 
     match Unit.apply():
         case Unit():
@@ -69,7 +62,6 @@ def test_structural_pattern_match():
             assert False
 
     class Tuple1(Extractor):
-
         __match_args__ = ("value",)
 
         def __init__(self, value: int):
@@ -82,7 +74,6 @@ def test_structural_pattern_match():
             assert False
 
     class TupleN(Extractor):
-
         __match_args__ = ("int_", "str_", "bool_")
 
         def __init__(self, int_: int, str_: str, bool_: bool):

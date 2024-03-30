@@ -1,4 +1,5 @@
 """Extension"""
+
 from typing import Callable, TypeVar
 
 A = TypeVar("A")

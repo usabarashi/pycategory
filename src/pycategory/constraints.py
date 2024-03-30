@@ -1,4 +1,5 @@
 """Constraints"""
+
 from typing import Generic, Type, TypeVar
 
 From = TypeVar("From", covariant=False)
