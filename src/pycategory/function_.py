@@ -1,4 +1,5 @@
 """Function"""
+
 from __future__ import annotations
 
 import inspect
@@ -41,8 +42,7 @@ LAST_ONE = 1
 LIMIT_NUMBER_OF_TYPE_VARIABLES = 22
 
 
-class Function:
-    ...
+class Function: ...
 
 
 class Function1(Generic[S1m, Tp], Function):
@@ -63,8 +63,7 @@ class Function1(Generic[S1m, Tp], Function):
         return Function1[S1m, Tdp](lambda arg: other(self(arg)))
 
 
-class FunctionN(Function):
-    ...
+class FunctionN(Function): ...
 
 
 class Function2(Generic[S1m, S2m, Tp], FunctionN):
@@ -1694,96 +1693,82 @@ class Function22(
 
 
 @overload
-def function(func: Callable[[S1m], Tp], /) -> Function1[S1m, Tp]:
-    ...
+def function(func: Callable[[S1m], Tp], /) -> Function1[S1m, Tp]: ...
 
 
 @overload
-def function(func: Callable[[S1m, S2m], Tp], /) -> Function2[S1m, S2m, Tp]:
-    ...
+def function(func: Callable[[S1m, S2m], Tp], /) -> Function2[S1m, S2m, Tp]: ...
 
 
 @overload
-def function(func: Callable[[S1m, S2m, S3m], Tp], /) -> Function3[S1m, S2m, S3m, Tp]:
-    ...
+def function(func: Callable[[S1m, S2m, S3m], Tp], /) -> Function3[S1m, S2m, S3m, Tp]: ...
 
 
 @overload
-def function(func: Callable[[S1m, S2m, S3m, S4m], Tp], /) -> Function4[S1m, S2m, S3m, S4m, Tp]:
-    ...
+def function(func: Callable[[S1m, S2m, S3m, S4m], Tp], /) -> Function4[S1m, S2m, S3m, S4m, Tp]: ...
 
 
 @overload
 def function(
     func: Callable[[S1m, S2m, S3m, S4m, S5m], Tp], /
-) -> Function5[S1m, S2m, S3m, S4m, S5m, Tp]:
-    ...
+) -> Function5[S1m, S2m, S3m, S4m, S5m, Tp]: ...
 
 
 @overload
 def function(
     func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m], Tp], /
-) -> Function6[S1m, S2m, S3m, S4m, S5m, S6m, Tp]:
-    ...
+) -> Function6[S1m, S2m, S3m, S4m, S5m, S6m, Tp]: ...
 
 
 @overload
 def function(
     func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m], Tp], /
-) -> Function7[S1m, S2m, S3m, S4m, S5m, S6m, S7m, Tp]:
-    ...
+) -> Function7[S1m, S2m, S3m, S4m, S5m, S6m, S7m, Tp]: ...
 
 
 @overload
 def function(
     func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m], Tp], /
-) -> Function8[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, Tp]:
-    ...
+) -> Function8[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, Tp]: ...
 
 
 @overload
 def function(
     func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m], Tp], /
-) -> Function9[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, Tp]:
-    ...
+) -> Function9[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, Tp]: ...
 
 
 @overload
 def function(
     func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m], Tp], /
-) -> Function10[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, Tp]:
-    ...
+) -> Function10[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, Tp]: ...
 
 
 @overload
 def function(
     func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m], Tp], /
-) -> Function11[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, Tp]:
-    ...
+) -> Function11[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, Tp]: ...
 
 
 @overload
 def function(
     func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m], Tp],
     /,
-) -> Function12[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, Tp]:
-    ...
+) -> Function12[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, Tp]: ...
 
 
 @overload
 def function(
     func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m], Tp],
     /,
-) -> Function13[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, Tp]:
-    ...
+) -> Function13[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, Tp]: ...
 
 
 @overload
 def function(
     func: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, S14m], Tp],
     /,
-) -> Function14[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, S14m, Tp]:
-    ...
+) -> Function14[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, S14m, Tp]: ...
 
 
 @overload
@@ -1811,8 +1796,7 @@ def function(
     /,
 ) -> Function15[
     S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m, S10m, S11m, S12m, S13m, S14m, S15m, Tp
-]:
-    ...
+]: ...
 
 
 @overload
@@ -1857,8 +1841,7 @@ def function(
     S15m,
     S16m,
     Tp,
-]:
-    ...
+]: ...
 
 
 @overload
@@ -1905,8 +1888,7 @@ def function(
     S16m,
     S17m,
     Tp,
-]:
-    ...
+]: ...
 
 
 @overload
@@ -1955,8 +1937,7 @@ def function(
     S17m,
     S18m,
     Tp,
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2007,8 +1988,7 @@ def function(
     S18m,
     S19m,
     Tp,
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2061,8 +2041,7 @@ def function(
     S19m,
     S20m,
     Tp,
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2117,8 +2096,7 @@ def function(
     S20m,
     S21m,
     Tp,
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2175,8 +2153,7 @@ def function(
     S21m,
     S22m,
     Tp,
-]:
-    ...
+]: ...
 
 
 def function(func: Callable[P, Tp], /):  # type: ignore # Type inference
@@ -2233,58 +2210,46 @@ def function(func: Callable[P, Tp], /):  # type: ignore # Type inference
 
 
 @overload
-def curry(function: Callable[[S1m, S2m], Tp], /) -> Function1[S1m, Function1[S2m, Tp]]:
-    ...
+def curry(function: Callable[[S1m, S2m], Tp], /) -> Function1[S1m, Function1[S2m, Tp]]: ...
 
 
 @overload
 def curry(
     function: Callable[[S1m, S2m, S3m], Tp], /
-) -> Function1[S1m, Function1[S2m, Function1[S3m, Tp]]]:
-    ...
+) -> Function1[S1m, Function1[S2m, Function1[S3m, Tp]]]: ...
 
 
 @overload
 def curry(
     function: Callable[[S1m, S2m, S3m, S4m], Tp], /
-) -> Function1[S1m, Function1[S2m, Function1[S3m, Function1[S4m, Tp]]]]:
-    ...
+) -> Function1[S1m, Function1[S2m, Function1[S3m, Function1[S4m, Tp]]]]: ...
 
 
 @overload
 def curry(
     function: Callable[[S1m, S2m, S3m, S4m, S5m], Tp], /
-) -> Function1[S1m, Function1[S2m, Function1[S3m, Function1[S4m, Function1[S5m, Tp]]]]]:
-    ...
+) -> Function1[S1m, Function1[S2m, Function1[S3m, Function1[S4m, Function1[S5m, Tp]]]]]: ...
 
 
 @overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m], Tp], /
-) -> Function1[
+def curry(function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m], Tp], /) -> Function1[
     S1m,
     Function1[S2m, Function1[S3m, Function1[S4m, Function1[S5m, Function1[S6m, Tp]]]]],
-]:
-    ...
+]: ...
 
 
 @overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m], Tp], /
-) -> Function1[
+def curry(function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m], Tp], /) -> Function1[
     S1m,
     Function1[
         S2m,
         Function1[S3m, Function1[S4m, Function1[S5m, Function1[S6m, Function1[S7m, Tp]]]]],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m], Tp], /
-) -> Function1[
+def curry(function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m], Tp], /) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2293,14 +2258,11 @@ def curry(
             Function1[S4m, Function1[S5m, Function1[S6m, Function1[S7m, Function1[S8m, Tp]]]]],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
-def curry(
-    function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m], Tp], /
-) -> Function1[
+def curry(function: Callable[[S1m, S2m, S3m, S4m, S5m, S6m, S7m, S8m, S9m], Tp], /) -> Function1[
     S1m,
     Function1[
         S2m,
@@ -2315,8 +2277,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2347,8 +2308,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2379,8 +2339,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2414,8 +2373,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2472,8 +2430,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2534,8 +2491,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2600,8 +2556,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2670,8 +2625,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2747,8 +2701,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2828,8 +2781,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -2913,8 +2865,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -3005,8 +2956,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -3101,8 +3051,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -3201,8 +3150,7 @@ def curry(
             ],
         ],
     ],
-]:
-    ...
+]: ...
 
 
 def _total_application(function: Callable[..., Tp], arguments: dict[str, Any]) -> Tp:

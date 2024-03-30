@@ -1,4 +1,5 @@
 """Extractor"""
+
 from typing import Any
 
 

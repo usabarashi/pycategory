@@ -19,8 +19,7 @@ def test_apply_defaults():
 
     from pycategory import processor
 
-    def position_defaults_arguments(arg1: int, arg2: Optional[int] = None, /):
-        ...
+    def position_defaults_arguments(arg1: int, arg2: Optional[int] = None, /): ...
 
     arguments = inspect.signature(position_defaults_arguments).parameters.copy()
     position_defaults_applied_arguments = processor.apply_defaults(
@@ -31,8 +30,7 @@ def test_apply_defaults():
     assert_arguments |= {"arg2": None}
     assert assert_arguments == position_defaults_applied_arguments
 
-    def position_or_keyword_default_arguments(arg1: int, arg2: Optional[int] = None):
-        ...
+    def position_or_keyword_default_arguments(arg1: int, arg2: Optional[int] = None): ...
 
     arguments = inspect.signature(position_or_keyword_default_arguments).parameters.copy()
     position_or_keyword_defaults_applied_arguments = processor.apply_defaults(
@@ -42,8 +40,7 @@ def test_apply_defaults():
     assert_arguments |= {"arg2": None}
     assert assert_arguments == position_or_keyword_defaults_applied_arguments
 
-    def keyword_defaults_arguments(*, arg1: int, arg2: Optional[int] = None):
-        ...
+    def keyword_defaults_arguments(*, arg1: int, arg2: Optional[int] = None): ...
 
     arguments = inspect.signature(keyword_defaults_arguments).parameters.copy()
     keyword_defaults_applied_arguments = processor.apply_defaults(
@@ -60,16 +57,14 @@ def test_apply_parameter():
 
     from pycategory import processor
 
-    def position_only_parameter(arg1: int, arg2: Optional[int] = None, /):
-        ...
+    def position_only_parameter(arg1: int, arg2: Optional[int] = None, /): ...
 
     arguments = inspect.signature(position_only_parameter).parameters.copy()
     applied_position_only_arguments = processor.apply_parameters(arguments, *(1, 2))
     assert id(arguments) != id(applied_position_only_arguments)
     assert {"arg1": 1, "arg2": 2} == applied_position_only_arguments
 
-    def position_or_keyword_default_parameter(arg1: int, arg2: Optional[int] = None):
-        ...
+    def position_or_keyword_default_parameter(arg1: int, arg2: Optional[int] = None): ...
 
     arguments = inspect.signature(position_or_keyword_default_parameter).parameters.copy()
     applied_position_or_keyword_arguments = processor.apply_parameters(
@@ -77,8 +72,7 @@ def test_apply_parameter():
     )
     assert {"arg1": 1, "arg2": 2} == applied_position_or_keyword_arguments
 
-    def keyword_only_parameter(*, arg1: int, arg2: Optional[int] = None):
-        ...
+    def keyword_only_parameter(*, arg1: int, arg2: Optional[int] = None): ...
 
     arguments = inspect.signature(keyword_only_parameter).parameters.copy()
     applied_keyword_only_arguments = processor.apply_parameters(arguments, **{"arg1": 1, "arg2": 2})
@@ -90,19 +84,16 @@ def test_arguments():
 
     from pycategory import processor
 
-    def position_only_no_default(position: int, /) -> None:
-        ...
+    def position_only_no_default(position: int, /) -> None: ...
 
     assert {"position": 42} == processor.arguments(position_only_no_default, *(42,), **{})
 
-    def position_only_has_default(position: Optional[int] = None, /) -> None:
-        ...
+    def position_only_has_default(position: Optional[int] = None, /) -> None: ...
 
     assert {"position": None} == processor.arguments(position_only_has_default, *(), **{})
     assert {"position": 42} == processor.arguments(position_only_has_default, *(42,), **{})
 
-    def position_or_keyword_no_default(position_or_keyword: int) -> None:
-        ...
+    def position_or_keyword_no_default(position_or_keyword: int) -> None: ...
 
     assert {"position_or_keyword": 42} == processor.arguments(
         position_or_keyword_no_default, *(42,), **{}
@@ -113,8 +104,7 @@ def test_arguments():
 
     def position_or_keyword_has_default(
         position_or_keyword: Optional[int] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     assert {"position_or_keyword": None} == processor.arguments(
         position_or_keyword_has_default, *(), **{}
@@ -126,13 +116,11 @@ def test_arguments():
         position_or_keyword_has_default, *(), **{"position_or_keyword": 42}
     )
 
-    def keyword_only_no_default(*, keyword: int) -> None:
-        ...
+    def keyword_only_no_default(*, keyword: int) -> None: ...
 
     assert {"keyword": 42} == processor.arguments(keyword_only_no_default, *(), **{"keyword": 42})
 
-    def keyword_only_has_default(keyword: Optional[int] = None, /) -> None:
-        ...
+    def keyword_only_has_default(keyword: Optional[int] = None, /) -> None: ...
 
     assert {"keyword": None} == processor.arguments(keyword_only_has_default, *(), **{})
     assert {"keyword": 42} == processor.arguments(keyword_only_has_default, *(), **{"keyword": 42})
@@ -146,8 +134,7 @@ def test_arguments():
         *,
         keyword1: int,
         keyword2: int,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     assert {
         "position1": 0,
@@ -207,8 +194,7 @@ def test_arguments():
         *,
         keyword1: Optional[int] = None,
         keyword2: Optional[int] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     assert {
         "position1": 0,
@@ -316,8 +302,7 @@ def test_arguments():
         *,
         keyword1: Optional[int] = None,
         keyword2: Optional[int] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     assert {
         "position1": 0,
@@ -394,8 +379,7 @@ def test_arguments():
         *,
         keyword1: int,
         keyword2: Optional[int] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     assert {
         "position1": 0,
@@ -554,8 +538,7 @@ def test_frame():
     assert processor.MASK == frame.variables.get("variable2", None)
     assert processor.MASK == frame.variables.get("variable3", None)
 
-    class Error(Frame):
-        ...
+    class Error(Frame): ...
 
     @Either.do
     def context(*, mask: int, unmask: int) -> EitherDo[Error, int]:

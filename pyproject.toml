@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pycategory"
 version = "0.1.2"
-description = "Python implementation of the Scala standard library."
+description = ""
 license = "MIT"
 authors = ["usabarashi"]
 readme = "README.md"
@@ -13,13 +13,13 @@ keywords = [
 packages = [{include = "pycategory", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.3.0"
-ruff = "^0.0.275"
-pyright = "^1.1.316"
-pytest = "^7.4.0"
+black = "*"
+ruff = "*"
+pyright = "*"
+pytest = "*"
 
 [build-system]
 requires = ["poetry-core"]
@@ -29,9 +29,9 @@ build-backend = "poetry.core.masonry.api"
 line_length = 100
 
 [tool.ruff]
-select = ["E", "F"]
-ignore = ["E721"]
-fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
-unfixable = ["F841"]
+lint.select = ["E", "F"]
+lint.ignore = ["E721"]
+lint.fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
+lint.unfixable = ["F841"]
 line-length = 100
-target-version = "py310"
+target-version = "py312"
