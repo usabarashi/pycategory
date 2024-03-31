@@ -6,10 +6,7 @@ license = "MIT"
 authors = ["usabarashi"]
 readme = "README.md"
 repository = "https://github.com/usabarashi/pycategory"
-keywords = [
-    "Functional",
-    "Scala",
-]
+keywords = ["Functional"]
 packages = [{include = "pycategory", from = "src"}]
 
 [tool.poetry.dependencies]
@@ -19,6 +16,7 @@ python = "^3.12"
 black = "*"
 ruff = "*"
 pyright = "*"
+import-linter = "*"
 pytest = "*"
 
 [build-system]

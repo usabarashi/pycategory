@@ -2,22 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, Callable
 
-from . import function_
-
-Ap = TypeVar("Ap", covariant=True)
-Bp = TypeVar("Bp", covariant=True)
+from pycategory import function_
 
 
-class Functor(Generic[Ap]):
+class Functor[A]:
     """Functor
 
     class Functor f where
         fmap :: (a -> b) -> f a -> f b
     """
 
-    def map(self, function_: Callable[[Ap], Bp], /) -> Functor[Bp]:
+    def map[B](self, function_: Callable[[A], B], /) -> Functor[B]:
         raise NotImplementedError()
 
 
@@ -26,12 +23,9 @@ def identity_law(F: Functor[Any], /) -> bool:
     return F.map(lambda value: value) == F
 
 
-def composite_law(
-    *,
-    F: Functor[Ap],
-    f: Callable[[Bp], Any],
-    g: Callable[[Ap], Bp],
-) -> bool:
+def composite_law[
+    A, B
+](*, F: Functor[A], f: Callable[[B], Any], g: Callable[[A], B],) -> bool:
     f_ = function_.Function1(f)
     g_ = function_.Function1(g)
 

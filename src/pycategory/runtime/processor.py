@@ -1,21 +1,20 @@
 import inspect
 from copy import deepcopy
-from typing import Any, Callable, NamedTuple, Optional, ParamSpec, TypeAlias, cast
+from typing import Any, Callable, NamedTuple, Optional, cast
 
-P = ParamSpec("P")
-Arguments: TypeAlias = dict[str, Any]
+type Arguments = dict[str, Any]
 
 MASK = "****"
 
 
-def masking(*, arguments: dict[Any, Any], unmask: Optional[tuple[Any, ...]]) -> dict[Any, Any]:
+def masking(*, arguments: Arguments, unmask: Optional[tuple[str, ...]]) -> Arguments:
     return {
         key: MASK if (unmask is None) or (key not in unmask) else value
         for key, value in arguments.items()
     }
 
 
-def apply_defaults(*, arguments: Arguments, function: Callable[..., Any]) -> Arguments:
+def apply_defaults(arguments: Arguments, function: Callable[..., Any]) -> Arguments:
     """Apply default arguments to arguments.
 
     - function.__defaults__: position or keyword defaults arguments.
@@ -63,7 +62,7 @@ def apply_parameters(arguments: Arguments, /, *args: ..., **kwargs: ...) -> Argu
     return update_arguments
 
 
-def arguments(function: Callable[P, Any], /, *args: P.args, **kwargs: P.kwargs) -> Arguments:
+def arguments[**P](function: Callable[P, Any], /, *args: P.args, **kwargs: P.kwargs) -> Arguments:
     """Derive function arguments."""
     arguments = deepcopy(inspect.signature(function).parameters.copy())
     if len(arguments) == 0:

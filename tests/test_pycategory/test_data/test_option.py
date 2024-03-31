@@ -1,5 +1,8 @@
+from pycategory.trait import functor
+
+
 def test_functor_law():
-    from pycategory import VOID, Some, functor
+    from pycategory import VOID, Some
 
     assert functor.identity_law(VOID)
     assert functor.identity_law(Some[int](42))

@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-from typing import Callable, TypeVar
+from typing import Callable
 
-from . import functor
-
-A = TypeVar("A")
-Ap = TypeVar("Ap", covariant=True)
-Bp = TypeVar("Bp", covariant=True)
+from pycategory.trait import functor
 
 
-class Applicative(functor.Functor[Ap]):
+class Applicative[A](functor.Functor[A]):
     """Applicative Functor
 
     class (Functor f) => Applicative f where
@@ -21,8 +17,7 @@ class Applicative(functor.Functor[Ap]):
     def pure(value: A) -> Applicative[A]:
         raise NotImplementedError()
 
-    def ap(
-        self: Applicative[Ap],
-        other: Applicative[Callable[[Ap], Bp]],
-    ) -> Applicative[Bp]:
+    def ap[
+        B
+    ](self, other: Applicative[Callable[[A], B]],) -> Applicative[B]:
         raise NotImplementedError()

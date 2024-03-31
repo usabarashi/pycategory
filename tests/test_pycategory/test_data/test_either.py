@@ -1,5 +1,8 @@
+from pycategory.trait import functor
+
+
 def test_functor_law():
-    from pycategory import Left, Right, functor
+    from pycategory import Left, Right
 
     assert functor.identity_law(
         Left[Exception, int](Exception()),
@@ -23,25 +26,25 @@ def test_either_do():
     from pycategory import Either, EitherDo, Left, Right, Some, Success
 
     @Either.do
-    def safe_context() -> EitherDo[IndexError | KeyError, int]:
+    def safe_context() -> EitherDo[IndexError, int]:
         _ = yield from Right[IndexError, bool](True)
         one = yield from Right[IndexError, int](1)
         two = 2
-        three = yield from Right[KeyError, int](3)
+        three = yield from Right[IndexError, int](3)
         _ = yield from Right[IndexError, bool](False)
-        _ = yield from Right[KeyError, bool](False)
+        _ = yield from Right[IndexError, bool](False)
         return one + two + three
 
     assert 6 == safe_context().get()
 
     @Either.do
-    def outside_context() -> EitherDo[IndexError | KeyError, int]:
+    def outside_context() -> EitherDo[IndexError, int]:
         _ = yield from Right[IndexError, bool](True)
         one = yield from Right[IndexError, int](1)
         two = 2
-        three = yield from Right[KeyError, int](3)
+        three = yield from Right[IndexError, int](3)
         _ = yield from Right[IndexError, bool](False)
-        _ = yield from Right[KeyError, bool](False)
+        _ = yield from Right[IndexError, bool](False)
         _ = yield from Some[int](42)  # type: ignore # Error case
         _ = yield from Success[int](42)  # type: ignore # Error case
         _ = yield from Right[ValueError, int](42)  # type: ignore # Error case

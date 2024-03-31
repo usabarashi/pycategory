@@ -8,6 +8,7 @@ test:
 	poetry run black --check src
 	poetry run ruff check src
 	poetry run pyright src
+	poetry run lint-imports
 	poetry run pytest tests
 
 build:

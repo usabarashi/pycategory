@@ -3,7 +3,7 @@ import pytest
 
 def test_implicit_given():
     import inspect
-    from pycategory.implicit import Implicit, _IMPLICIT
+    from pycategory.type.implicit import Implicit, _IMPLICIT
 
     Implicit.given(42)
     Implicit.given("42")
@@ -16,7 +16,7 @@ def test_implicit_given():
 
 
 def test_implicit_use():
-    from pycategory.implicit import Implicit, ImplicitError
+    from pycategory.type.implicit import Implicit, ImplicitError
 
     Implicit.given(42)
     Implicit.given("42")
@@ -28,7 +28,7 @@ def test_implicit_use():
 
 
 def test_implicit_constructor():
-    from pycategory.implicit import Implicit
+    from pycategory.type.implicit import Implicit
 
     def no_args() -> int:
         return 42
@@ -47,7 +47,7 @@ def test_implicit_constructor():
 
 
 def test_implicit_usage_decorator():
-    from pycategory.implicit import Implicit
+    from pycategory.type.implicit import Implicit
 
     @Implicit.usage(int, str)
     def no_args() -> int:
@@ -64,7 +64,7 @@ def test_implicit_usage_decorator():
 
 
 def test_implicit_constructor___call__():
-    from pycategory.implicit import Implicit, ImplicitError
+    from pycategory.type.implicit import Implicit, ImplicitError
 
     def no_args() -> int:
         return 42
@@ -88,7 +88,7 @@ def test_implicit_constructor___call__():
 
 
 def test_implicit_decorator___call__():
-    from pycategory.implicit import Implicit, ImplicitError
+    from pycategory.type.implicit import Implicit, ImplicitError
 
     @Implicit.usage(int, str)
     def implicit_no_args() -> int:
@@ -110,15 +110,15 @@ def test_implicit_decorator___call__():
 
 
 def test_implicit_constructor_use():
-    from pycategory.implicit import Implicit, ImplicitError
+    from pycategory.type.implicit import Implicit, ImplicitError
 
-    def no_args() -> int:
-        return Implicit.use(int)
+    def no_args() -> str:
+        return Implicit.use(str)
 
     implicit_no_args = Implicit(no_args, int, str)
 
-    def has_args(a: int, b: str) -> int:
-        return Implicit.use(int)
+    def has_args(a: int, b: str) -> str:
+        return Implicit.use(str)
 
     implicit_has_args = Implicit(has_args, int, str)
 
@@ -129,20 +129,20 @@ def test_implicit_constructor_use():
 
     Implicit.given(42)
     Implicit.given("42")
-    assert 42 == implicit_no_args()
-    assert 42 == implicit_has_args(42, "42")
+    assert "42" == implicit_no_args()
+    assert "42" == implicit_has_args(42, "42")
 
 
 def test_implicit_decorator_use():
-    from pycategory.implicit import Implicit, ImplicitError
+    from pycategory.type.implicit import Implicit, ImplicitError
 
     @Implicit.usage(int, str)
-    def implicit_no_args() -> int:
-        return Implicit.use(int)
+    def implicit_no_args() -> str:
+        return Implicit.use(str)
 
     @Implicit.usage(int, str)
-    def implicit_has_args(a: int, b: str) -> int:
-        return Implicit.use(int)
+    def implicit_has_args(a: int, b: str) -> str:
+        return Implicit.use(str)
 
     with pytest.raises(ImplicitError):
         implicit_no_args()
@@ -151,15 +151,15 @@ def test_implicit_decorator_use():
 
     Implicit.given(42)
     Implicit.given("42")
-    assert 42 == implicit_no_args()
-    assert 42 == implicit_has_args(42, "42")
+    assert "42" == implicit_no_args()
+    assert "42" == implicit_has_args(42, "42")
 
 
 def test_implicit_constructor_nest():
-    from pycategory.implicit import Implicit
+    from pycategory.type.implicit import Implicit
 
     def no_args():
-        return Implicit.use(int)
+        return Implicit.use(str)
 
     def has_args(a: int, b: str):
         implicit_no_args = Implicit(no_args, int, str)
@@ -169,15 +169,15 @@ def test_implicit_constructor_nest():
 
     Implicit.given(42)
     Implicit.given("42")
-    assert 42 == implicit_has_args(42, "42")()
+    assert "42" == implicit_has_args(42, "42")()
 
 
 def test_implicit_decorator_nest():
-    from pycategory.implicit import Implicit
+    from pycategory.type.implicit import Implicit
 
     @Implicit.usage(int, str)
     def implicit_no_args():
-        return Implicit.use(int)
+        return Implicit.use(str)
 
     @Implicit.usage(int, str)
     def implicit_has_args(a: int, b: str):
@@ -185,4 +185,4 @@ def test_implicit_decorator_nest():
 
     Implicit.given(42)
     Implicit.given("42")
-    assert 42 == implicit_has_args(42, "42")()
+    assert "42" == implicit_has_args(42, "42")()
