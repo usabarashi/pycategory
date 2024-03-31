@@ -3,21 +3,9 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Optional,
-    ParamSpec,
-    TypeVar,
-    cast,
-)
+from typing import Any, Callable, Generator, Optional, cast
 
-from . import applicative
-
-Tp = TypeVar("Tp", covariant=True)
-TTp = TypeVar("TTp", covariant=True)
-P = ParamSpec("P")
+from pycategory.trait import applicative
 
 
 class ShortCircuit(GeneratorExit):
@@ -28,7 +16,7 @@ class ShortCircuit(GeneratorExit):
         return self.args[0]
 
 
-class Monad(applicative.Applicative[Tp]):
+class Monad[A](applicative.Applicative[A]):
     """Monad
 
     class Monad m where
@@ -40,25 +28,25 @@ class Monad(applicative.Applicative[Tp]):
         fail msg = error msg
     """
 
-    def __iter__(self) -> Generator[Monad[Tp], None, Tp]:
+    def __iter__(self) -> Generator[Monad[A], None, A]:
         """
 
         :raises ShortCircuit: In case of short-circuit evaluation of flat_map.
         """
         raise NotImplementedError()
 
-    def flat_map(self, func: Callable[[Tp], Monad[TTp]], /) -> Monad[TTp]:
+    def flat_map[B](self, func: Callable[[A], Monad[B]], /) -> Monad[B]:
         raise NotImplementedError()
 
     @staticmethod
-    def do(context: Callable[P, Generator[Monad[Any], None, Tp]], /) -> Callable[P, Monad[Tp]]:
+    def do[**P](context: Callable[P, Generator[Monad[Any], None, A]], /) -> Callable[P, Monad[A]]:
         """Syntax Sugar for Monadic Compositions."""
 
         @wraps(context)
-        def trampoline(*args: P.args, **kwargs: P.kwargs) -> Monad[Tp]:
+        def trampoline(*args: P.args, **kwargs: P.kwargs) -> Monad[A]:
             context_ = context(*args, **kwargs)
             yield_: Optional[Monad[Any]] = None
-            composite: Optional[Monad[Tp]] = None
+            composite: Optional[Monad[A]] = None
             try:
                 while yield_ := next(context_):
                     # Runtime type check
@@ -84,13 +72,13 @@ class Monad(applicative.Applicative[Tp]):
                             raise ValueError(context)
 
             except ShortCircuit as short_circuit:
-                return cast(Monad[Tp], short_circuit.state)
+                return cast(Monad[A], short_circuit.state)
 
             except StopIteration as return_:
                 if composite is None:
                     raise TypeError(context, "Not a monadic composition.")
-                result: Tp = return_.value
-                return cast(Monad[Tp], composite.map(lambda _: result))
+                result: A = return_.value
+                return cast(Monad[A], composite.map(lambda _: result))
 
             raise ValueError(context)
 

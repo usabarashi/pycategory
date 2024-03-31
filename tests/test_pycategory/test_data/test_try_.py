@@ -1,5 +1,9 @@
+from pycategory.trait import functor
+from pycategory.runtime import processor
+
+
 def test_functor_law():
-    from pycategory import Failure, Success, functor
+    from pycategory import Failure, Success
 
     assert functor.identity_law(Failure[int](Exception()))
     assert functor.identity_law(Success[int](42))
@@ -10,7 +14,7 @@ def test_functor_law():
 def test_try_hold():
     from typing import cast
 
-    from pycategory import Failure, Success, Try, processor
+    from pycategory import Failure, Success, Try
 
     @Try.hold
     def multi_context(value: int, /) -> int:

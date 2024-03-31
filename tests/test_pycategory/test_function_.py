@@ -1244,7 +1244,7 @@ def test_function22():
 
 
 def test_function():
-    from pycategory import function
+    from pycategory import extend
     from pycategory.function_ import (
         Function1,
         Function2,
@@ -1270,71 +1270,71 @@ def test_function():
         Function22,
     )
 
-    function1 = function(lambda arg: 42)
+    function1 = extend(lambda arg: 42)
     assert Function1 is type(function1)
-    function2 = function(lambda arg1, arg2: 42)
+    function2 = extend(lambda arg1, arg2: 42)
     assert Function2 is type(function2)
-    function3 = function(lambda arg1, arg2, arg3: 42)
+    function3 = extend(lambda arg1, arg2, arg3: 42)
     assert Function3 is type(function3)
-    function4 = function(lambda arg1, arg2, arg3, arg4: 42)
+    function4 = extend(lambda arg1, arg2, arg3, arg4: 42)
     assert Function4 is type(function4)
-    function5 = function(lambda arg1, arg2, arg3, arg4, arg5: 42)
+    function5 = extend(lambda arg1, arg2, arg3, arg4, arg5: 42)
     assert Function5 is type(function5)
-    function6 = function(lambda arg1, arg2, arg3, arg4, arg5, arg6: 42)
+    function6 = extend(lambda arg1, arg2, arg3, arg4, arg5, arg6: 42)
     assert Function6 is type(function6)
-    function7 = function(lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7: 42)
+    function7 = extend(lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7: 42)
     assert Function7 is type(function7)
-    function8 = function(lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8: 42)
+    function8 = extend(lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8: 42)
     assert Function8 is type(function8)
-    function9 = function(lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9: 42)
+    function9 = extend(lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9: 42)
     assert Function9 is type(function9)
-    function10 = function(lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10: 42)
+    function10 = extend(lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10: 42)
     assert Function10 is type(function10)
-    function11 = function(
+    function11 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11: 42
     )
     assert Function11 is type(function11)
-    function12 = function(
+    function12 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12: 42
     )
     assert Function12 is type(function12)
-    function13 = function(
+    function13 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13: 42
     )
     assert Function13 is type(function13)
-    function14 = function(
+    function14 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14: 42
     )
     assert Function14 is type(function14)
-    function15 = function(
+    function15 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15: 42
     )
     assert Function15 is type(function15)
-    function16 = function(
+    function16 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16: 42
     )
     assert Function16 is type(function16)
-    function17 = function(
+    function17 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17: 42
     )
     assert Function17 is type(function17)
-    function18 = function(
+    function18 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18: 42
     )
     assert Function18 is type(function18)
-    function19 = function(
+    function19 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, ar19: 42
     )
     assert Function19 is type(function19)
-    function20 = function(
+    function20 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, ar19, arg20: 42
     )
     assert Function20 is type(function20)
-    function21 = function(
+    function21 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, ar19, arg20, arg21: 42
     )
     assert Function21 is type(function21)
-    function22 = function(
+    function22 = extend(
         lambda arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, ar19, arg20, arg21, arg22: 42
     )
     assert Function22 is type(function22)

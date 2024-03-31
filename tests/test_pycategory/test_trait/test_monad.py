@@ -12,11 +12,11 @@ def test_do():
     )
 
     @Either.do
-    def either_context() -> EitherDo[IndexError | KeyError, int]:
+    def either_context() -> EitherDo[IndexError, int]:
         _ = 42
         result = yield from Right[IndexError, int](42)
         _ = True
-        _ = yield from Right[KeyError, int](42)
+        _ = yield from Right[IndexError, int](42)
         _ = yield from Right[IndexError, bool](True)
         return result
 

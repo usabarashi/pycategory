@@ -9,8 +9,7 @@ _IMPLICIT = "__implicit__"
 _IMPLICIT_FUNCTION = "__implicit_function__"
 
 
-class ImplicitError(ValueError):
-    pass
+class ImplicitError(ValueError): ...
 
 
 class Implicit[**P, T, *U]:
@@ -57,7 +56,8 @@ class Implicit[**P, T, *U]:
             if (implicit_parameter := getattr(callers_func, _IMPLICIT, None)) is None:
                 raise ImplicitError(f"Expected {implicit_type} to be given")
             if implicit_type in implicit_parameter:
-                return implicit_parameter[implicit_type]
+                current_implicit[implicit_type] = implicit_parameter[implicit_type]
+                continue
 
             raise ImplicitError(f"Expected {implicit_type} to be given")
 
@@ -104,7 +104,7 @@ class Implicit[**P, T, *U]:
             if (callers_frame := current_frame.f_back) is None:
                 raise RuntimeError("An unexpected error occurred")
 
-            # Local scope case
+            # Local scope cas"e
             if (implicit_parameters := callers_frame.f_locals.get(_IMPLICIT)) is not None:
                 if implicit_type in implicit_parameters:
                     return implicit_parameters[implicit_type]

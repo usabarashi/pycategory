@@ -1,0 +1,13 @@
+[importlinter]
+root_packages =
+    pycategory
+include_external_packages = True
+
+[importlinter:contract:layers]
+name=the main layers
+type=layers
+layers =
+    pycategory.data
+    pycategory.syntax
+    pycategory.abstract
+    pycategory.runtime
