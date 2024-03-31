@@ -8,6 +8,6 @@ name=the main layers
 type=layers
 layers =
     pycategory.data
-    pycategory.syntax
-    pycategory.abstract
+    pycategory.trait
+    pycategory.type
     pycategory.runtime
