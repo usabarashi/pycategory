@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from collections.abc import Generator
 from typing import Any, Callable, Final, Literal, cast
 
@@ -35,7 +35,8 @@ class Either[L, R](extension.Extension, monad.Monad[R], ABC):
         """
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def to_option(self) -> option.Option[R]:
         raise NotImplementedError()
 
@@ -71,7 +72,8 @@ class Either[L, R](extension.Extension, monad.Monad[R], ABC):
     def get_or_else[LL](self, default: Callable[..., LL], /) -> LL | R:
         raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def pattern(self) -> SubType[L, R]:
         raise NotImplementedError()
 
