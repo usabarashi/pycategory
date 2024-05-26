@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from collections.abc import Generator
 from functools import wraps
 from typing import Any, Callable, Final, Literal, Optional, cast, overload
@@ -40,11 +40,13 @@ class Try[A](extension.Extension, monad.Monad[A], ABC):
     def recover_with[E](self, func: Callable[[Exception], Try[E]], /) -> Try[E]:
         raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def to_either(self) -> either.Either[Exception, A]:
         raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def to_option(self) -> option.Option[A]:
         raise NotImplementedError()
 
@@ -70,7 +72,8 @@ class Try[A](extension.Extension, monad.Monad[A], ABC):
     def get_or_else[E](self, default: Callable[..., E], /) -> E | A:
         raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def pattern(self) -> SubType[A]:
         raise NotImplementedError()
 

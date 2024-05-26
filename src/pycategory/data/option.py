@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from collections.abc import Generator
 from typing import Any, Callable, Final, Literal, cast
 
@@ -49,7 +49,8 @@ class Option[A](extension.Extension, monad.Monad[A], ABC):
     def get_or_else[E](self, default: Callable[..., E], /) -> E | A:
         raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def pattern(self) -> SubType[A]:
         raise NotImplementedError()
 
