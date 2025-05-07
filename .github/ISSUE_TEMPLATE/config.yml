@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: GitHub Discussions
-    url: https://github.com/usabarashi/pycategory/discussions
-    about: Please ask and answer questions here.
+  - name: Important Notice
+    url: https://github.com/usabarashi/pycategory/issues/new?template=bug_report.md
+    about: This project only accepts bug reports. Feature requests and questions are not accepted at this time. Please use the Bug Report template for reporting bugs only.
